@@ -109,4 +109,8 @@ public class DocTableModel extends AbstractTableModel {
         return;
     }
     
+    public String getDocTextAtIndex(int rowIndex) {
+        return visibleDocs.get(rowIndex).getText();
+    }
+    
 }

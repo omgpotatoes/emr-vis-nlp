@@ -2,6 +2,7 @@ package emr_vis_nlp.model;
 
 import emr_vis_nlp.controller.MainController;
 import java.io.File;
+import java.util.List;
 
 /**
  * Empty model for use when no dataset is loaded.
@@ -23,31 +24,32 @@ public class NullMainModel implements MainModel {
 
     @Override
     public void loadDataFromDoclist(String doclistPath) {
-        // shouldn't happen
         throw new UnsupportedOperationException();
     }
 
     @Override
     public void loadDataFromDoclist(File doclist) {
-        // shouldn't happen
         throw new UnsupportedOperationException();
     }
 
     @Override
     public void applySimpleStringFilter(String str) {
-        // shouldn't happen
         throw new UnsupportedOperationException();
     }
 
     @Override
     public DocTableModel buildSimpleDocTableModel() {
-        // shouldn't happen
         throw new UnsupportedOperationException();
     }
     
     @Override
     public AttrTableModel buildSimpleAttrSelectionTableModel() {
-        // shouldn't happen
         throw new UnsupportedOperationException();
     }
+    
+    @Override
+    public void setSelectedAttributes(List<Boolean> selectedAttributes) {
+        throw new UnsupportedOperationException();
+    }
+    
 }

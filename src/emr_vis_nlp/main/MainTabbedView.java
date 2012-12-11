@@ -60,6 +60,11 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jScrollPane2 = new javax.swing.JScrollPane();
         jTableAttrSelection = new javax.swing.JTable();
         jPanel2 = new javax.swing.JPanel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        jTableAttrSelection2 = new javax.swing.JTable();
+        jLabelSearch1 = new javax.swing.JLabel();
+        jTextFieldSearch1 = new javax.swing.JTextField();
+        jPanelDocTreeHolder = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -150,15 +155,81 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         jTabbedPane1.addTab("Document Table", jPanel1);
 
+        jTableAttrSelection2.setAutoCreateRowSorter(true);
+        jTableAttrSelection2.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Attribute Name", "Enabled?"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Boolean.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, true
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane3.setViewportView(jTableAttrSelection2);
+
+        jLabelSearch1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabelSearch1.setText("Search:");
+
+        jTextFieldSearch1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jTextFieldSearch1ActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanelDocTreeHolderLayout = new javax.swing.GroupLayout(jPanelDocTreeHolder);
+        jPanelDocTreeHolder.setLayout(jPanelDocTreeHolderLayout);
+        jPanelDocTreeHolderLayout.setHorizontalGroup(
+            jPanelDocTreeHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 598, Short.MAX_VALUE)
+        );
+        jPanelDocTreeHolderLayout.setVerticalGroup(
+            jPanelDocTreeHolderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 795, Short.MAX_VALUE)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 166, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabelSearch1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jTextFieldSearch1)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanelDocTreeHolder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 543, Short.MAX_VALUE)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanelDocTreeHolder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabelSearch1)
+                            .addComponent(jTextFieldSearch1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 488, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         jTabbedPane1.addTab("Document Map", jPanel2);
@@ -238,13 +309,16 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         String currentText = jTextFieldSearch.getText();
         
         if (docTableModelSorter != null) {
+            // TODO finish building filter
             
         }
         
         
-        // TODO proper filtering which first updates the controller
-        
     }//GEN-LAST:event_jTextFieldSearchActionPerformed
+
+    private void jTextFieldSearch1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldSearch1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jTextFieldSearch1ActionPerformed
 
     public void rebuildDocumentTable() {
         
@@ -258,6 +332,15 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         
     }
     
+    public void resetAttributeSelectionTable() {
+        
+        TableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModel();
+        attrSelectionTableModel = newAttrSelectionTableModel;
+        jTableAttrSelection.setModel(attrSelectionTableModel);
+        jTableAttrSelection2.setModel(attrSelectionTableModel);
+        
+    }
+    
     @Override
     public void resetAllViews() {
         
@@ -268,9 +351,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         rebuildDocumentTable();
         
         // query for new backend for attribute table, load
-        TableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModel();
-        attrSelectionTableModel = newAttrSelectionTableModel;
-        jTableAttrSelection.setModel(attrSelectionTableModel);
+        resetAttributeSelectionTable();
         
         // TODO
         
@@ -348,6 +429,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JFileChooser jFileChooser1;
     private javax.swing.JLabel jLabelSearch;
+    private javax.swing.JLabel jLabelSearch1;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenu jMenuFile;
     private javax.swing.JMenuItem jMenuItemLoadDataset;
@@ -355,11 +437,15 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanelDocTreeHolder;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTableAttrSelection;
+    private javax.swing.JTable jTableAttrSelection2;
     private javax.swing.JTable jTableSimpleDocs;
     private javax.swing.JTextField jTextFieldSearch;
+    private javax.swing.JTextField jTextFieldSearch1;
     // End of variables declaration//GEN-END:variables
 }
