@@ -5,6 +5,7 @@ import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.view.MainView;
 import java.io.File;
 import java.util.List;
+import javax.swing.JComponent;
 import javax.swing.table.TableModel;
 
 /**
@@ -27,4 +28,8 @@ public interface MainController {
     
     public void attributeSelectionUpdated(List<Boolean> attributesEnabled);
     
+//    public DocumentTreeMapView buildDocTreeMapView();
+    public JComponent buildDocTreeMapViewComponent();
+    
 }
+

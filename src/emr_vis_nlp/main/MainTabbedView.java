@@ -7,6 +7,7 @@ import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.model.NullMainModel;
 import emr_vis_nlp.view.MainView;
 import java.io.File;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
@@ -28,6 +29,9 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private TableRowSorter<TableModel> docTableModelSorter;
     /** backing model for the simple attribute selection table */
     private TableModel attrSelectionTableModel;
+    /** treemap-holding object for document-oriented layout */
+//    private DocumentTreeMapView docTreeMapView;
+    private JComponent docTreeMapViewComponent;
     
     /**
      * Creates new form MainTabbedView
@@ -341,6 +345,16 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         
     }
     
+    public void rebuildDocumentTreeMapView() {
+        
+//        docTreeMapView = controller.buildDocTreeMapView();
+        docTreeMapViewComponent = controller.buildDocTreeMapViewComponent();
+        jPanelDocTreeHolder.removeAll();
+        jPanelDocTreeHolder.add(docTreeMapViewComponent);
+        jPanelDocTreeHolder.validate();
+        
+    }
+    
     @Override
     public void resetAllViews() {
         
@@ -353,7 +367,10 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         // query for new backend for attribute table, load
         resetAttributeSelectionTable();
         
-        // TODO
+        // query, reload document tree view
+        rebuildDocumentTreeMapView();
+        
+        // TODO layout additional panels...
         
         
         

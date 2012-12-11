@@ -3,9 +3,12 @@ package emr_vis_nlp.controller;
 
 import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.model.MpqaColonMainModel;
+import emr_vis_nlp.view.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JComponent;
 import javax.swing.table.TableModel;
 
 /**
@@ -87,6 +90,33 @@ public class DefaultMainController implements MainController {
         
         // indicate to main view that all relevant displays should be redrawn / rebuilt
         view.attributeSelectionChanged();
+        
+    }
+    
+    @Override
+    public JComponent buildDocTreeMapViewComponent() {
+        
+        // get selected attributes
+        // FIXME provide proper ordering controls!
+//        List<String> selectedAttrsForTree = new ArrayList<>();
+//        List<String> allAttributes = model.getAllAttributes();
+//        List<Boolean> allSelectedAttributes = model.getAllSelectedAttributes();
+//        for (int a=0; a<allAttributes.size(); a++) {
+//            String attr = allAttributes.get(a);
+//            boolean isSelected = allSelectedAttributes.get(a);
+//            if (isSelected) {
+//                selectedAttrsForTree.add(attr);
+//            }
+//        }
+        
+        
+        List<String> selectedAttrsForTree = new ArrayList<>();
+        selectedAttrsForTree.add("Indicator_1");
+        selectedAttrsForTree.add("Indicator_21");
+        selectedAttrsForTree.add("Indicator_19");
+        
+        JComponent docTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapComponent(model.getAllDocuments(), model.getAllSelectedDocuments(), selectedAttrsForTree);
+        return docTreeMapViewComponent;
         
     }
     

@@ -1,6 +1,7 @@
 package emr_vis_nlp.model;
 
 import emr_vis_nlp.controller.MainController;
+import emr_vis_nlp.model.mpqa_colon.Document;
 import java.io.File;
 import java.util.List;
 
@@ -49,6 +50,26 @@ public class NullMainModel implements MainModel {
     
     @Override
     public void setSelectedAttributes(List<Boolean> selectedAttributes) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Document> getAllDocuments() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Boolean> getAllSelectedDocuments() {
+        throw new UnsupportedOperationException();
+    }
+    
+    @Override
+    public List<String> getAllAttributes() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Boolean> getAllSelectedAttributes() {
         throw new UnsupportedOperationException();
     }
     

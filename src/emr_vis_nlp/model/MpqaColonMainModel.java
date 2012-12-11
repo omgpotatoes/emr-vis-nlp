@@ -123,4 +123,24 @@ public class MpqaColonMainModel implements MainModel {
             attributeEnabledList.add(true);
         }
     }
+
+    @Override
+    public List<Document> getAllDocuments() {
+        return documentList;
+    }
+
+    @Override
+    public List<Boolean> getAllSelectedDocuments() {
+        return documentEnabledList;
+    }
+    
+    @Override
+    public List<String> getAllAttributes() {
+        return attributeList;
+    }
+
+    @Override
+    public List<Boolean> getAllSelectedAttributes() {
+        return attributeEnabledList;
+    }
 }
