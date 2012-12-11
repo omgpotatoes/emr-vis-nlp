@@ -44,6 +44,7 @@ import prefuse.visual.sort.TreeDepthItemSorter;
 public class DocumentTreeMapView extends Display {
     
     private static final String label = "documentTreeMapView";
+    private static final String nodeName = "name";
     
     private static final String tree = "tree";
     private static final String treeNodes = "tree.nodes";
@@ -136,7 +137,7 @@ public class DocumentTreeMapView extends Display {
         
         treemap.addControlListener(new ControlAdapter() {
             public void itemEntered(VisualItem item, MouseEvent e) {
-                title.setText(item.getString(label));
+                title.setText(item.getString(nodeName));
             }
             public void itemExited(VisualItem item, MouseEvent e) {
                 title.setText(null);
@@ -238,7 +239,8 @@ public class DocumentTreeMapView extends Display {
             // if a top-level node, draw the category name
             if ( ((NodeItem)item).getDepth() == 1 ) {
                 Rectangle2D b = item.getBounds();
-                String s = item.getString(m_label);
+//                String s = item.getString(m_label);
+                String s = item.getString(nodeName);
                 Font f = item.getFont();
                 FontMetrics fm = g.getFontMetrics(f);
                 int w = fm.stringWidth(s);
