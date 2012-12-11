@@ -27,8 +27,8 @@ public class DocumentMedColon extends Document {
     private String databaseRoot;
     
     // TODO remove these maps, migrate to attributes map
-    private Map<String, String> vars;
-    private Map<String, Integer> indicators;
+//    private Map<String, String> vars;
+//    private Map<String, Integer> indicators;
     
     private boolean isPathologyPresent;
     
@@ -46,9 +46,12 @@ public class DocumentMedColon extends Document {
         textInstances = new ArrayList<>();
         isActive = true;
         databaseRoot = "";
-        vars = new HashMap<>();
-        indicators = new HashMap<>();
+//        vars = new HashMap<>();
+//        indicators = new HashMap<>();
+        
         isPathologyPresent = false;
+        
+        attributes.put("name", name);
 
     }
 
@@ -67,6 +70,7 @@ public class DocumentMedColon extends Document {
         docPath = el.getFirstChild().getNodeValue().trim();
         rawName = docPath;
         name = docPath;
+        attributes.put("name", name);
 
         if (databaseRoot.charAt(0) != '\\' && databaseRoot.charAt(0) != '/' && databaseRoot.charAt(1) != ':') {
             databaseRoot = rootPath + databaseRoot;
@@ -80,8 +84,8 @@ public class DocumentMedColon extends Document {
         // read the files: everything in docs/id/ and man_anns/id/
         //  will definitely be report.txt, may also be pathology.txt
         textInstances = new ArrayList<>();
-        vars = new HashMap<>();
-        indicators = new HashMap<>();
+//        vars = new HashMap<>();
+//        indicators = new HashMap<>();
         try {
 
             // read docs/id/report.txt
@@ -129,11 +133,13 @@ public class DocumentMedColon extends Document {
                         String varType = varSplitter.next().toLowerCase();
 
                         if (varType.equals("var")) {
-                            vars.put(var, val);
+//                            vars.put(var, val);
+                            attributes.put(var, val);
                         } else if (varType.equals("indicator")) {
                             try {
                                 int valInt = Integer.parseInt(val);
-                                indicators.put(var, valInt);
+//                                indicators.put(var, valInt);
+                                attributes.put(var, val);
                             } catch (ClassCastException e) {
                                 assert false;
                                 e.printStackTrace();
@@ -143,7 +149,8 @@ public class DocumentMedColon extends Document {
                             // unrecognized type; toss it in vars for now?
                             assert false;
                             System.out.println("DocumentMedColon: unrecognized varType: " + varType);
-                            vars.put(var, val);
+//                            vars.put(var, val);
+                                attributes.put(var, val);
 
                         }
 
@@ -213,11 +220,13 @@ public class DocumentMedColon extends Document {
                         String varType = varSplitter.next().toLowerCase();
 
                         if (varType.equals("var")) {
-                            vars.put(var, val);
+//                            vars.put(var, val);
+                                attributes.put(var, val);
                         } else if (varType.equals("indicator")) {
                             try {
                                 int valInt = Integer.parseInt(val);
-                                indicators.put(var, valInt);
+//                                indicators.put(var, valInt);
+                                attributes.put(var, val);
                             } catch (ClassCastException e) {
                                 assert false;
                                 e.printStackTrace();
@@ -227,7 +236,8 @@ public class DocumentMedColon extends Document {
                             // unrecognized type; toss it in vars for now?
                             assert false;
                             System.out.println("DocumentMedColon: unrecognized varType: " + varType);
-                            vars.put(var, val);
+//                            vars.put(var, val);
+                                attributes.put(var, val);
 
                         }
 
@@ -259,13 +269,13 @@ public class DocumentMedColon extends Document {
 
     }
 
-    public Map<String, String> getVars() {
-        return vars;
-    }
-
-    public Map<String, Integer> getIndicators() {
-        return indicators;
-    }
+//    public Map<String, String> getVars() {
+//        return vars;
+//    }
+//
+//    public Map<String, Integer> getIndicators() {
+//        return indicators;
+//    }
 
     public static List<Document> buildDatasetMed(Element doclistRoot, String rootPath, String databaseRoot) {
 

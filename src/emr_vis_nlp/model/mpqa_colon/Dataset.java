@@ -72,6 +72,32 @@ public abstract class Dataset {
     public String getType() {
         return type;
     }
+    
+    public List<String> getAllAttributesFromDocs() {
+        
+        // loop through all docs, keeping track of keys for both 
+        List<String> allAttrs = new ArrayList<>();
+        Map<String, Boolean> allAttrsMap = new HashMap<>();
+        
+        // ensure that "name" attr is 1st
+        allAttrs.add("name");
+        allAttrsMap.put("name", true);
+        
+        for (Document doc : documents) {
+            
+            Map<String, String> attributes = doc.getAttributes();
+            for (String key : attributes.keySet()) {
+                if (!allAttrsMap.containsKey(key)) {
+                    allAttrsMap.put(key, true);
+                    allAttrs.add(key);
+                }
+            }
+            
+        }
+        
+        return allAttrs;
+        
+    }
 
     public abstract void writeDoclist();
 
@@ -207,6 +233,10 @@ public abstract class Dataset {
 //
 //    }
 
+    
+    
+    
+    
     public static Dataset loadDatasetFromDoclist(File doclistFile) {
         return loadDatasetFromDoclist(doclistFile.getAbsolutePath());
     }
@@ -248,4 +278,7 @@ public abstract class Dataset {
         return dataset;
 
     }
+    
+    
+    
 }

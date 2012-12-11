@@ -16,18 +16,15 @@ import java.util.*;
  */
 public abstract class Document {
 
-//    public static String DOCUMENT_TYPE_ARGSUBJ = "documentarguing";
     public static String DOCUMENT_TYPE_COLON = "documentcolonoscopy";
-    public static StanfordCoreNLP pipeline = null;
-    public static List<String> stopwordList = null;
-    public static String stopwordsFilePath = "resources/stopwords.txt";
-    public static String stopwordsEHRFilePath = "resources/stopwords_ehr.txt";
+    
     protected List<TextInstance> textInstances;
+    protected Map<String, String> attributes;
+    
     protected boolean isActive = false;
     protected String name = "";
     // rawName = what's literally in the file; use this if present instead of rebuilding
     protected String rawName = "";
-    protected Map<String, String> attributes;
     protected String docPath = "";
     // contains version of document which has been processed by Stanford parser
     protected String parsedText;
@@ -91,50 +88,51 @@ public abstract class Document {
         return text;
 
     }
-
-    /**
-     * builds a version of the document after parsing via Stanford. Purpose:
-     * tokenization, decapitalization, etc.
-     */
-    public void buildParsedText() {
-
-        if (pipeline == null) {
-
-            Properties props = new Properties();
-            props.put("annotators", "tokenize, ssplit, pos, lemma");
-            pipeline = new StanfordCoreNLP(props);
-
-        }
-
-        parsedText = "";
-
-        for (TextInstance textInstance : textInstances) {
-
-            String origText = textInstance.getTextStr();
-
-            edu.stanford.nlp.pipeline.Annotation sentAnnot = new edu.stanford.nlp.pipeline.Annotation(origText);
-            pipeline.annotate(sentAnnot);
-
-            String newText = "";
-            for (CoreLabel token : sentAnnot.get(TokensAnnotation.class)) {
-                newText += token.get(TextAnnotation.class) + " ";
-            }
-
-            parsedText += newText;
-
-        }
-        
-        // debug
-        //System.out.println("debug: built new parsed text:\n"+parsedText);
-
-    }
-
-    public String getParsedText() {
-        if (parsedText.equals("")) {
-            buildParsedText();
-        }
-        return parsedText;
-    }
+    
+    // parsing is no longer a concern of this class
+//    /**
+//     * builds a version of the document after parsing via Stanford. Purpose:
+//     * tokenization, decapitalization, etc.
+//     */
+//    public void buildParsedText() {
+//
+//        if (pipeline == null) {
+//
+//            Properties props = new Properties();
+//            props.put("annotators", "tokenize, ssplit, pos, lemma");
+//            pipeline = new StanfordCoreNLP(props);
+//
+//        }
+//
+//        parsedText = "";
+//
+//        for (TextInstance textInstance : textInstances) {
+//
+//            String origText = textInstance.getTextStr();
+//
+//            edu.stanford.nlp.pipeline.Annotation sentAnnot = new edu.stanford.nlp.pipeline.Annotation(origText);
+//            pipeline.annotate(sentAnnot);
+//
+//            String newText = "";
+//            for (CoreLabel token : sentAnnot.get(TokensAnnotation.class)) {
+//                newText += token.get(TextAnnotation.class) + " ";
+//            }
+//
+//            parsedText += newText;
+//
+//        }
+//        
+//        // debug
+//        //System.out.println("debug: built new parsed text:\n"+parsedText);
+//
+//    }
+//
+//    public String getParsedText() {
+//        if (parsedText.equals("")) {
+//            buildParsedText();
+//        }
+//        return parsedText;
+//    }
 
     // TODO refactor parsing, similarity code
 //    /**

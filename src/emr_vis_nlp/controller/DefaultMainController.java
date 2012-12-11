@@ -5,6 +5,8 @@ import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.model.MpqaColonMainModel;
 import emr_vis_nlp.view.MainView;
 import java.io.File;
+import java.util.List;
+import javax.swing.table.TableModel;
 
 /**
  *
@@ -41,5 +43,51 @@ public class DefaultMainController implements MainController {
         
     }
     
+    /**
+     * Filters documents according to presence of string.
+     * 
+     * @param str 
+     */
+    @Override
+    public void applySimpleStringFilter(String str) {
+        model.applySimpleStringFilter(str);
+        // update components as appropriate
+        // TODO
+        view.resetAllViews();
+        
+    }
+    
+    /**
+     * Supplies a new table model to the visualization, in the event that data 
+     * is changed or a new filter is applied.
+     * 
+     * @return 
+     */
+    @Override
+    public TableModel buildSimpleDocTableModel() {
+        TableModel docTableModel = model.buildSimpleDocTableModel();
+        return docTableModel;
+    }
+    
+    /**
+     * Supplies a new table model for the attribute selection table.
+     * 
+     * @return 
+     */
+    @Override
+    public TableModel buildSimpleAttrSelectionTableModel() {
+        TableModel attrSelectionTableModel = model.buildSimpleAttrSelectionTableModel();
+        return attrSelectionTableModel;
+    }
+    
+    @Override
+    public void attributeSelectionUpdated(List<Boolean> newSelectedAttributes) {
+        // update selection in model
+        model.setSelectedAttributes(newSelectedAttributes);
+        
+        // indicate to main view that all relevant displays should be redrawn / rebuilt
+        view.attributeSelectionChanged();
+        
+    }
     
 }

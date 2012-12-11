@@ -28,6 +28,7 @@ public class DatasetMedColonDoclist extends Dataset {
     // path to the root of the MPQA-style "database"
     protected String databaseRoot;
     protected List<String> allVarsAndIndis;
+    protected List<String> allAttributeNames;
     
     public DatasetMedColonDoclist(Element el, String rootPath, String path) {
         super(path);
@@ -115,19 +116,30 @@ public class DatasetMedColonDoclist extends Dataset {
         for (Document doc : documents) {
             
             DocumentMedColon medDoc = (DocumentMedColon)doc;
-            Map<String, String> vars = medDoc.getVars();
-            for (String key : vars.keySet()) {
-                if (!allVarsAndIndisMap.containsKey(key)) {
-                    allVarsAndIndisMap.put(key, true);
-                    allVarsAndIndis.add(key);
-                }
-            }
             
-            Map<String, Integer> indicators = medDoc.getIndicators();
-            for (String key : indicators.keySet()) {
+//            Map<String, String> vars = medDoc.getVars();
+//            for (String key : vars.keySet()) {
+//                if (!allVarsAndIndisMap.containsKey(key)) {
+//                    allVarsAndIndisMap.put(key, true);
+//                    allVarsAndIndis.add(key);
+//                }
+//            }
+//            
+//            Map<String, Integer> indicators = medDoc.getIndicators();
+//            for (String key : indicators.keySet()) {
+//                if (!allVarsAndIndisMap.containsKey(key)) {
+//                	// debug
+//                	//System.out.println("debug: adding attr name \""+key+"\" to allVarsAndIndis");
+//                    allVarsAndIndisMap.put(key, true);
+//                    allVarsAndIndis.add(key);
+//                }
+//            }
+            
+            // we've moved away from hard-coding var, indi distinction; attribute-focus instead
+            // TODO finish var/indi -> arrtibute refactoring
+            Map<String, String> attributes = medDoc.getAttributes();
+            for (String key : attributes.keySet()) {
                 if (!allVarsAndIndisMap.containsKey(key)) {
-                	// debug
-                	//System.out.println("debug: adding attr name \""+key+"\" to allVarsAndIndis");
                     allVarsAndIndisMap.put(key, true);
                     allVarsAndIndis.add(key);
                 }

@@ -9,4 +9,6 @@ public interface MainView {
     
     public void resetAllViews();
     
+    public void attributeSelectionChanged();
+    
 }
