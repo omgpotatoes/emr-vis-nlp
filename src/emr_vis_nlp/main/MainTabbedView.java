@@ -330,6 +330,12 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         docTableModelSorter = new TableRowSorter<>(docTableModel);
         jTableSimpleDocs.setRowSorter(docTableModelSorter);
         
+        // TODO build filter for table
+        // idea: rather than writing custom filter, simply set "text" as a 
+        //  row, allow for sorting in this manner?
+        // similarly, allow for sorting by values, by augmenting attribute 
+        //  cells with attr name?
+        
     }
     
     public void resetAttributeSelectionTable() {

@@ -5,7 +5,6 @@ import emr_vis_nlp.model.mpqa_colon.Document;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
-import java.util.TreeMap;
 import javax.swing.*;
 import prefuse.Display;
 import prefuse.Visualization;
@@ -15,8 +14,6 @@ import prefuse.action.animate.ColorAnimator;
 import prefuse.action.assignment.ColorAction;
 import prefuse.action.layout.graph.SquarifiedTreeMapLayout;
 import prefuse.controls.ControlAdapter;
-import prefuse.data.Tree;
-import prefuse.data.io.TreeMLReader;
 import prefuse.data.query.SearchQueryBinding;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.ShapeRenderer;
@@ -36,14 +33,14 @@ import prefuse.visual.sort.TreeDepthItemSorter;
  * Responsibility of class is to represent collection of documents as a 
  * treemap responsive to the controller. 
  * 
- * note: code adopted (in part) from the Prefuse TreeMap demo at: 
+ * note: code adopted from the Prefuse TreeMap demo at: 
  * http://prefuse.org/gallery/treemap/TreeMap.java
  *
  * @author alexander.p.conrad@gmail.com
  */
 public class DocumentTreeMapView extends Display {
     
-    private static final String label = "documentTreeMapView";
+//    private static final String label = "documentTreeMapView";
     private static final String nodeName = "name";
     
     private static final String tree = "tree";
@@ -59,7 +56,8 @@ public class DocumentTreeMapView extends Display {
         m_vis.setVisible(treeEdges, null, false);
             
         m_vis.setRendererFactory(
-            new DefaultRendererFactory(new TreeMapRenderer(label)));
+//            new DefaultRendererFactory(new TreeMapRenderer(label)));
+            new DefaultRendererFactory(new TreeMapRenderer(nodeName)));
                        
         // border colors
         final ColorAction borderColor = new BorderColorAction(treeNodes);
@@ -80,34 +78,46 @@ public class DocumentTreeMapView extends Display {
         // create the single filtering and layout action list
         ActionList layout = new ActionList();
         layout.add(new SquarifiedTreeMapLayout(tree));
+//        layout.add(new RadialTreeLayout(tree));
+//        layout.add(new NodeLinkTreeLayout(tree));
+//        layout.add(new BalloonTreeLayout(tree));
         layout.add(fillColor);
         layout.add(borderColor);
         layout.add(new RepaintAction());
         m_vis.putAction("layout", layout);
         
         // initialize our display
-        setSize(700,600);
-        setItemSorter(new TreeDepthItemSorter());
+        setSize(700, 600);
+//        setItemSorter(new TreeDepthItemSorter());   // draws parents on top; appearance is correct, but hovering doesn't work!
+        setItemSorter(new TreeDepthItemSorter(true));  // draws children on top; hovering works correctly, but higher-level groupings not visible!
         addControlListener(new ControlAdapter() {
+
             public void itemEntered(VisualItem item, MouseEvent e) {
-                item.setStrokeColor(borderColor.getColor(item));
-                item.getVisualization().repaint();
+//                if (((NodeItem) item).getChildCount() == 0) {
+                    // only draw border if a leaf
+                    item.setStrokeColor(borderColor.getColor(item));
+                    item.getVisualization().repaint();
+//                }
             }
+
             public void itemExited(VisualItem item, MouseEvent e) {
-                item.setStrokeColor(item.getEndStrokeColor());
-                item.getVisualization().repaint();
+//                if (((NodeItem) item).getChildCount() == 0) {
+                    // only draw border if a leaf
+                    item.setStrokeColor(item.getEndStrokeColor());
+                    item.getVisualization().repaint();
+//                }
             }           
         });
         
-//        searchQ = new SearchQueryBinding(vt.getNodeTable(), label);
-//        m_vis.addFocusGroup(Visualization.SEARCH_ITEMS, searchQ.getSearchSet());
-//        searchQ.getPredicate().addExpressionListener(new UpdateListener() {
-//            public void update(Object src) {
-//                m_vis.cancel("animatePaint");
-//                m_vis.run("fullPaint");
-//                m_vis.run("animatePaint");
-//            }
-//        });
+        searchQ = new SearchQueryBinding(vt.getNodeTable(), nodeName);
+        m_vis.addFocusGroup(Visualization.SEARCH_ITEMS, searchQ.getSearchSet());
+        searchQ.getPredicate().addExpressionListener(new UpdateListener() {
+            public void update(Object src) {
+                m_vis.cancel("animatePaint");
+                m_vis.run("fullPaint");
+                m_vis.run("animatePaint");
+            }
+        });
         
         // perform layout
         m_vis.run("layout");
@@ -124,31 +134,41 @@ public class DocumentTreeMapView extends Display {
         final DocumentTreeMapView treemap = new DocumentTreeMapView(t);
         
         // create a search panel for the tree map
-//        JSearchPanel search = treemap.getSearchQuery().createSearchPanel();
-//        search.setShowResultCount(true);
-//        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
-//        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+        JSearchPanel search = treemap.getSearchQuery().createSearchPanel();
+        search.setShowResultCount(true);
+        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
+        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
         
         final JFastLabel title = new JFastLabel("                 ");
         title.setPreferredSize(new Dimension(350, 20));
         title.setVerticalAlignment(SwingConstants.BOTTOM);
-        title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
+        title.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
         title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
-        
+
         treemap.addControlListener(new ControlAdapter() {
+
+            @Override
             public void itemEntered(VisualItem item, MouseEvent e) {
-                title.setText(item.getString(nodeName));
+//                if (((NodeItem) item).getChildCount() == 0) {
+                    // only write title if a leaf
+                    title.setText(item.getString(nodeName));
+//                }
             }
+
+            @Override
             public void itemExited(VisualItem item, MouseEvent e) {
-                title.setText(null);
+//                if (((NodeItem) item).getChildCount() == 0) {
+                    // only write title if a leaf
+                    title.setText(null);
+//                }
             }
         });
-        
-//        Box box = UILib.getBox(new Component[]{title,search}, true, 10, 3, 0);
+
+        Box box = UILib.getBox(new Component[]{title,search}, true, 10, 3, 0);
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(treemap, BorderLayout.CENTER);
-//        panel.add(box, BorderLayout.SOUTH);
+        panel.add(box, BorderLayout.SOUTH);
         UILib.setColor(panel, Color.BLACK, Color.GRAY);
         return panel;
     }
@@ -223,10 +243,12 @@ public class DocumentTreeMapView extends Display {
         public int getRenderType(VisualItem item) {
             if ( ((NodeItem)item).getChildCount() == 0 ) {
                 // if a leaf node, both draw and fill the node
-                return RENDER_TYPE_DRAW_AND_FILL;
+//                return RENDER_TYPE_DRAW_AND_FILL;
+                return RENDER_TYPE_DRAW;
             } else {
                 // if not a leaf, only draw the node outline
                 return RENDER_TYPE_DRAW;
+//                return RENDER_TYPE_NONE;
             }
         }
         protected Shape getRawShape(VisualItem item) {
@@ -237,7 +259,7 @@ public class DocumentTreeMapView extends Display {
         public void render(Graphics2D g, VisualItem item) {
             super.render(g, item);
             // if a top-level node, draw the category name
-            if ( ((NodeItem)item).getDepth() == 1 ) {
+//            if ( ((NodeItem)item).getDepth() == 1 ) {
                 Rectangle2D b = item.getBounds();
 //                String s = item.getString(m_label);
                 String s = item.getString(nodeName);
@@ -248,7 +270,7 @@ public class DocumentTreeMapView extends Display {
                 g.setColor(Color.LIGHT_GRAY);
                 g.drawString(s, (float)(b.getCenterX()-w/2.0),
                                 (float)(b.getCenterY()+h/2));
-            }
+//            }
         }
         
     } // end of inner class NodeRenderer

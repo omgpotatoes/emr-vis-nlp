@@ -248,6 +248,9 @@ public class DocumentTree extends Tree {
         nodeCounter++;
 
         
+        // TODO : instead of building tables manually, perhaps we should instead create an empty tree, then build up the tree through method calls? 
+        
+        
         // finally, built and return the Tree object!
         DocumentTree tree = new DocumentTree(nodes, edges, visibleDocs, docIndices, orderedAttributes);
         
