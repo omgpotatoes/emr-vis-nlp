@@ -1,14 +1,15 @@
-
 package emr_vis_nlp.main;
 
 import emr_vis_nlp.controller.DefaultMainController;
 import emr_vis_nlp.controller.MainController;
+import emr_vis_nlp.model.DocTableModel;
 import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.model.NullMainModel;
 import emr_vis_nlp.view.MainView;
 import java.io.File;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -23,25 +24,43 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
      * this MainView's governing MainController
      */
     private MainController controller;
-    /** backing model for the simple document-oriented table view */
+    /**
+     * backing model for the simple document-oriented table view
+     */
     private TableModel docTableModel;
-    /** sorter for the document-oriented table view */
+    /**
+     * sorter for the document-oriented table view
+     */
     private TableRowSorter<TableModel> docTableModelSorter;
-    /** backing model for the simple attribute selection table */
+    /**
+     * backing model for the simple attribute selection table
+     */
     private TableModel attrSelectionTableModel;
-    /** treemap-holding object for document-oriented layout */
+    /**
+     * treemap-holding object for document-oriented layout
+     */
 //    private DocumentTreeMapView docTreeMapView;
     private JComponent docTreeMapViewComponent;
-    
+
     /**
      * Creates new form MainTabbedView
      */
     public MainTabbedView(MainController controller) {
-        
+        super("emr-vis-nlp | main");
+
         this.controller = controller;
-        
+
         // initialize GUI components
         initComponents();
+
+        // initialize event listeners
+        initListeners();
+
+    }
+
+    private void initListeners() {
+        // area for explicitly initializing custom listeners
+        
         
     }
 
@@ -98,6 +117,13 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
             }
         ));
+        jTableSimpleDocs.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        jTableSimpleDocs.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jTableSimpleDocs.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jTableSimpleDocsMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(jTableSimpleDocs);
 
         jTableAttrSelection.setAutoCreateRowSorter(true);
@@ -304,110 +330,151 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     }//GEN-LAST:event_jMenuItemLoadDatasetActionPerformed
 
     private void jTextFieldSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldSearchActionPerformed
-        
+
         // whenever text is updated, perform filtering
         String currentText = jTextFieldSearch.getText();
-        
+
         if (docTableModelSorter != null) {
             // TODO finish building filter
             
+            
         }
-        
-        
+
+
     }//GEN-LAST:event_jTextFieldSearchActionPerformed
 
     private void jTextFieldSearch1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldSearch1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jTextFieldSearch1ActionPerformed
 
-    public void rebuildDocumentTable() {
+    private void jTableSimpleDocsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableSimpleDocsMouseClicked
         
+        // listens for double-click on an item from the table, in order to load the details window for the given document
+        int numClicks = evt.getClickCount();
+        // get selected table index
+        int selectedDocRowIndexRaw = jTableSimpleDocs.getSelectedRow();
+        
+        if (numClicks >= 2) {
+            
+            int selectedDocRowIndexModel = jTableSimpleDocs.convertRowIndexToModel(selectedDocRowIndexRaw);
+            int globalDocIndex = selectedDocRowIndexModel;
+            try {
+                globalDocIndex = ((DocTableModel)docTableModel).getGlobalIndexForModelRow(selectedDocRowIndexModel);
+            } catch (ClassCastException e) {
+                e.printStackTrace();
+                System.out.println("err?: could not cast docTableModel?");
+            }
+            
+            // debug
+//            System.out.println("debug: double++-click (" + numClicks + ") on selected row: " + globalDocIndex +" (raw="+selectedDocRowIndexRaw+", model="+selectedDocRowIndexModel+")");
+
+            // create and display new popup for selected document
+            final JFrame newPopup = controller.buildDocDetailsWindow(globalDocIndex);
+            java.awt.EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                    newPopup.setVisible(true);
+                }
+            });
+            
+        }
+        
+    }//GEN-LAST:event_jTableSimpleDocsMouseClicked
+
+    public void rebuildDocumentTable() {
+
         // query for new backend for the simple document table, load
         docTableModel = controller.buildSimpleDocTableModel();
         jTableSimpleDocs.setModel(docTableModel);
-        
+
         // build sorter for the table
         docTableModelSorter = new TableRowSorter<>(docTableModel);
         jTableSimpleDocs.setRowSorter(docTableModelSorter);
-        
+
         // TODO build filter for table
         // idea: rather than writing custom filter, simply set "text" as a 
         //  row, allow for sorting in this manner?
         // similarly, allow for sorting by values, by augmenting attribute 
         //  cells with attr name?
-        
+
     }
-    
+
     public void resetAttributeSelectionTable() {
-        
+
         TableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModel();
+//        TableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModelFocusOnly();
         attrSelectionTableModel = newAttrSelectionTableModel;
         jTableAttrSelection.setModel(attrSelectionTableModel);
         jTableAttrSelection2.setModel(attrSelectionTableModel);
-        
+
     }
-    
+
     public void rebuildDocumentTreeMapView() {
-        
+
 //        docTreeMapView = controller.buildDocTreeMapView();
         docTreeMapViewComponent = controller.buildDocTreeMapViewComponent();
 //        jPanelDocTreeHolder.removeAll();
 //        jPanelDocTreeHolder.add(docTreeMapViewComponent);
 //        jPanelDocTreeHolder.validate();
         jSplitPaneDocMap.setBottomComponent(docTreeMapViewComponent);
-        
+
     }
-    
+
     @Override
     public void resetAllViews() {
-        
+
         // reset all views in this MainView; 
         // query MainController for new data (model may have changed)
-        
+
         // rebuild simple document table view
         rebuildDocumentTable();
-        
+
         // query for new backend for attribute table, load
         resetAttributeSelectionTable();
-        
+
         // query, reload document tree view
         rebuildDocumentTreeMapView();
-        
+
         // TODO layout additional panels...
-        
-        
-        
+
+
+
     }
-    
+
     @Override
     public void attributeSelectionChanged() {
-        
+
         // update relevant panes
-        
+
         // update simple document table
         // ask controller for a new model, with current column selections
         rebuildDocumentTable();
-        
+
     }
-    
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        
+
+
+
         // setup controller
         MainController controller = new DefaultMainController();
-        
+
         // setup model
         MainModel model = new NullMainModel(controller);
         controller.setModel(model);
-        
+
         // setup view
         final MainView mainView = new MainTabbedView(controller);
         controller.setView(mainView);
-        
-        
-        
+
+        // if doclist was passed on command line, load it
+        if (args.length != 0) {
+            String doclistPathFromArgs = args[0];
+            controller.loadDoclist(new File(doclistPathFromArgs));
+        }
+
         /*
          * Set the Nimbus look and feel
          */
@@ -434,15 +501,15 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             java.util.logging.Logger.getLogger(MainTabbedView.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-        
-        
+
+
         /*
          * Create and display the form
          */
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                ((MainTabbedView)mainView).setVisible(true);
+                ((MainTabbedView) mainView).setVisible(true);
             }
         });
     }

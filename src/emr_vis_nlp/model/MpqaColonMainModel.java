@@ -4,9 +4,7 @@ import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.model.mpqa_colon.Dataset;
 import emr_vis_nlp.model.mpqa_colon.Document;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.InputMismatchException;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -39,6 +37,15 @@ public class MpqaColonMainModel implements MainModel {
      * this MainModel's governing MainController
      */
     private MainController controller;
+    
+    /**
+     * Attributes to be passed along to the front-end
+     */
+    private static List<String> focusAttrs = null;
+    /**
+     * Map of focus attrs
+     */
+    private static Map<String, Boolean> focusAttrsMap = null;
 
     public MpqaColonMainModel(MainController controller) {
 
@@ -65,6 +72,8 @@ public class MpqaColonMainModel implements MainModel {
         attributeList = dataset.getAllAttributesFromDocs();
         // by default, enable attributes
         enableAllAttributes();
+        // build list of selected attrs
+        getFocusAttrs();
     }
 
     @Override
@@ -96,6 +105,13 @@ public class MpqaColonMainModel implements MainModel {
     }
     
     @Override
+    public AttrTableModel buildSimpleAttrSelectionTableModelFocusOnly() {
+        throw new UnsupportedOperationException("Not supported yet.");
+//        AttrTableModel attrTableModel = new AttrTableModel(getFocusAttrs(), attributeEnabledList, controller);
+//        return attrTableModel;
+    }
+    
+    @Override
     public void setSelectedAttributes(List<Boolean> selectedAttributes) {
         // copy values from old list to new list
         // ensure same length
@@ -117,12 +133,33 @@ public class MpqaColonMainModel implements MainModel {
         }
     }
 
+    
     public void enableAllAttributes() {
-        attributeEnabledList = new ArrayList<>();
-        for (String attribute : attributeList) {
-            attributeEnabledList.add(true);
-        }
+        // enable only the focus attrs
+        enableAllAttributes(true);
     }
+    
+    public void enableAllAttributes(boolean focusOnly) {
+        
+        if (!focusOnly) {
+            attributeEnabledList = new ArrayList<>();
+            for (String attribute : attributeList) {
+                attributeEnabledList.add(true);
+            }
+        } else {
+            attributeEnabledList = new ArrayList<>();
+            getFocusAttrsMap();
+            for (String attribute : attributeList) {
+                if (focusAttrsMap.containsKey(attribute)) {
+                    attributeEnabledList.add(true);
+                } else {
+                    attributeEnabledList.add(false);
+                }
+            }
+        }
+        
+    }
+    
 
     @Override
     public List<Document> getAllDocuments() {
@@ -143,4 +180,73 @@ public class MpqaColonMainModel implements MainModel {
     public List<Boolean> getAllSelectedAttributes() {
         return attributeEnabledList;
     }
+    
+    
+    
+    public static List<String> getFocusAttrs() {
+    	
+        if (focusAttrs != null) {
+            return focusAttrs;
+        }
+        
+    	focusAttrs = new ArrayList<>();
+    	
+        focusAttrs.add("name");
+        
+    	focusAttrs.add("Indicator_19");
+    	focusAttrs.add("Indicator_16");
+    	focusAttrs.add("Indicator_2");
+    	focusAttrs.add("Indicator_17");
+    	focusAttrs.add("Indicator_3.1");
+    	focusAttrs.add("Indicator_11");
+    	focusAttrs.add("Indicator_21");
+    	focusAttrs.add("VAR_Withdraw_time");
+    	focusAttrs.add("VAR_Procedure_aborted");
+    	focusAttrs.add("VAR_ASA");
+    	focusAttrs.add("VAR_Prep_adequate");
+    	focusAttrs.add("VAR_Indication_type");
+    	focusAttrs.add("VAR_Nursing_Reports");
+    	focusAttrs.add("VAR_Informed_consent");
+    	focusAttrs.add("VAR_Cecum_(reached_it)");
+    	focusAttrs.add("VAR_Indication_Type_3");
+    	focusAttrs.add("VAR_Indication_Type_2");
+    	focusAttrs.add("VAR_Any_adenoma");
+    	focusAttrs.add("VAR_cecal_landmark");
+    	focusAttrs.add("VAR_Biopsy");
+        
+        focusAttrs.add("text");
+    	
+    	return focusAttrs;
+    	
+    }
+    
+    public static Map<String, Boolean> getFocusAttrsMap() {
+        
+        if (focusAttrsMap != null) {
+            return focusAttrsMap;
+        }
+        
+        focusAttrsMap = new HashMap<>();
+        List<String> focusAttrsList = getFocusAttrs();
+        
+        for (String focusAttr : focusAttrsList) {
+            focusAttrsMap.put(focusAttr, true);
+        }
+        
+        return focusAttrsMap;
+        
+    }
+
+    @Override
+    public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId) {
+        
+        // TODO
+        
+        
+        
+        
+        
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
 }

@@ -113,4 +113,8 @@ public class DocTableModel extends AbstractTableModel {
         return visibleDocs.get(rowIndex).getText();
     }
     
+    public int getGlobalIndexForModelRow(int localIndex) {
+        return docIndices.get(localIndex);
+    }
+    
 }

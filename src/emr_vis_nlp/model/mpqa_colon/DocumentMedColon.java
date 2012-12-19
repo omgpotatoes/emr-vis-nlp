@@ -266,6 +266,9 @@ public class DocumentMedColon extends Document {
 
 
         isActive = true;
+        
+        // add text as attr
+        attributes.put("text", getText());
 
     }
 

@@ -4,6 +4,7 @@ package emr_vis_nlp.model;
 import emr_vis_nlp.model.mpqa_colon.Document;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -21,6 +22,8 @@ public interface MainModel {
     
     public AttrTableModel buildSimpleAttrSelectionTableModel();
     
+    public AttrTableModel buildSimpleAttrSelectionTableModelFocusOnly();
+    
     public void setSelectedAttributes(List<Boolean> selectedAttributes);
     
     public List<Document> getAllDocuments();
@@ -30,5 +33,7 @@ public interface MainModel {
     public List<String> getAllAttributes();
     
     public List<Boolean> getAllSelectedAttributes();
+    
+    public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId);
     
 }
