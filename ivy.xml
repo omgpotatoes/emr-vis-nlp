@@ -1,0 +1,8 @@
+<ivy-module version="2.0">
+    <info organisation="edu.pitt" module="emr-vis-nlp"/>
+	<!-- 3rd-party libraries required by emr-vis-nlp -->
+    <dependencies>
+        <dependency org="org.prefuse" name="prefuse" rev="beta-20071021"/>
+        <dependency org="edu.stanford.nlp" name="stanford-corenlp" rev="1.3.3"/>
+    </dependencies>
+</ivy-module>

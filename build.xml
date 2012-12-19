@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="emr-vis-nlp" default="compile_and_run" basedir=".">
+	<description>Builds and runs the project emr-vis-nlp.</description>
+	
+	<!-- set global properties for this build -->
+	<property name="lib.dir" value="lib" />
+	<property name="build.dir" value="bin" />
+	<property name="src.dir" value="src" />
+	
+	<path id="lib.path.id">
+		<fileset dir="${lib.dir}" />
+	</path>
+	
+	<path id="run.path.id">
+		<path refid="lib.path.id" />
+		<path location="${build.dir}" />
+	</path>
+  
+	<!-- retrieve libraries via ivy -->
+	<target name="resolve" description="--> retrieve dependencies with ivy">
+		<mkdir dir="${lib.dir}" />
+		<ivy:retrieve />
+	</target>
+	
+	<target name="compile" depends="resolve" description="--> compile the source" >
+		<!-- Create timestamp -->
+		<tstamp/>
+		<!-- Compile the java code from ${src.dir} into ${build.dir} -->
+		<mkdir dir="${build.dir}" />
+		<javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="lib.path.id" includeAntRuntime="false" />
+	</target>
+	
+	<target name="run" description="--> executes the default main view" >
+		<!-- execute the main class -->
+		<java classpathref="run.path.id" classname="emr_vis_nlp.main.MainTabbedView" fork="true">
+			<jvmarg value="-Xmx1g" />
+			<!--<arg value="path_to_ehr_doclist"/>-->
+		</java>
+	</target>
+	
+	<target name="compile_and_run" depends="compile,run" description="--> compiles project, then executes the default main class" >
+	</target>
+	
+	<target name="clean" description="--> cleans up the junk we've created here" >
+		<!-- Delete the ${build.dir} directory trees -->
+		<delete dir="${build.dir}"/>
+	</target>
+	
+</project>
