@@ -7,11 +7,9 @@ This project is an effort to incorporate NLP and visualization techniques into a
 requirements
 ------------
 
-JDK 1.7 (or newer)
-
-Apache Ant 1.8.3
-
-Apache Ivy 2.3.0
+* JDK 1.7 (or newer)
+* Apache Ant 1.8.3
+* Apache Ivy 2.3.0
 
 
 running the system
@@ -29,8 +27,8 @@ in build.xml can be edited to point to the doclist file accompanying the dataset
 
 Once your system is appropriately configured, navigate to this directory in a terminal and execute:
 
-ant compile
-ant run
+* ant compile
+* ant run
 
 "compile" will invoke Ivy and Ant to download the required third-party libraries and compile the system, respectively. "run" will launch the default tab-based interface.
 
