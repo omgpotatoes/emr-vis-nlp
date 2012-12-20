@@ -21,7 +21,7 @@ Second, before running the system, you will need to acquire the EHR documents fo
 
 Optionally, the line:
 
-			<!--<arg value="path_to_ehr_doclist"/>-->
+	<!--<arg value="path_to_ehr_doclist"/>-->
 
 in build.xml can be edited to point to the doclist file accompanying the dataset, to load the dataset immediately upon launch.
 
