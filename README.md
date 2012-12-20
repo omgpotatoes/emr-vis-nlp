@@ -8,14 +8,16 @@ requirements
 ------------
 
 JDK 1.7 (or newer)
+
 Apache Ant 1.8.3
+
 Apache Ivy 2.3.0
 
 
 running the system
 ------------------
 
-First, ensure that your system meets the requirements listed above. If you already have Ant installed, Ivy can be installed by simply unpacking the latest Ivy jar from [http://ant.apache.org/ivy/][http://ant.apache.org/ivy/] into your Ant installation's lib/ directory.
+First, ensure that your system meets the requirements listed above. If you already have Ant installed, Ivy can be installed by simply unpacking the latest Ivy jar from http://ant.apache.org/ivy/ into your Ant installation's lib/ directory.
 
 Second, before running the system, you will need to acquire the EHR documents for the interface to process. Because of the sensitive nature of these documents they cannot be kept in public version control. Contact alexander.p.conrad@gmail.com for a version of the dataset which is interpretable by this beta version of the tool.
 
