@@ -23,7 +23,7 @@ Optionally, the line:
 
 	<!--<arg value="path_to_ehr_doclist"/>-->
 
-in build.xml can be edited to point to the doclist file accompanying the dataset, to load the dataset immediately upon launch.
+in build.xml can be uncommented and edited to point to the doclist file accompanying the dataset, to load the dataset immediately upon launch.
 
 Once your system is appropriately configured, navigate to this directory in a terminal and execute:
 
