@@ -37,6 +37,13 @@ import prefuse.visual.sort.TreeDepthItemSorter;
  */
 public class DocumentTreeMapView extends Display {
 
+    public static final String[][] DOCTREEMAP_GROUP_PALETTE = {
+        {"red", "maroon", "brown", "lightcoral", "rosybrown"},
+        {"indigo", "mediumslateblue", "blueviolet", "darkslateblue", "magenta"},
+        {"darkgreen", "limegreen", "darkolivegreen", "palegreen", "olivedrab"},
+        {"salmon", "orangered", "chocolate", "coral", "sienna"},
+    };
+    
     // TODO : revise treemap code in-line with previous ideas: children-on-top, buffer space, click-based interaction, appropriate color schemes, appropriate attribute selection mechanisms, animation
 //    private static final String label = "documentTreeMapView";
     private static final String nodeName = "name";
@@ -44,6 +51,7 @@ public class DocumentTreeMapView extends Display {
     private static final String treeNodes = "tree.nodes";
     private static final String treeEdges = "tree.edges";
     public static final double RECT_BUFFER = 6.;
+//    public static final double RECT_BUFFER = 50.;
     private SearchQueryBinding searchQ;
 
     public DocumentTreeMapView(DocumentTree t) {
@@ -88,6 +96,7 @@ public class DocumentTreeMapView extends Display {
 
         // initialize our display
         setSize(700, 600);
+//        setSize(1100, 900);
 //        setItemSorter(new TreeDepthItemSorter());   // draws parents on top; appearance is correct, but hovering doesn't work!
         setItemSorter(new TreeDepthItemSorter(true));  // draws children on top; hovering works correctly, but higher-level groupings not visible!
         addControlListener(new ControlAdapter() {
@@ -127,11 +136,28 @@ public class DocumentTreeMapView extends Display {
     public SearchQueryBinding getSearchQuery() {
         return searchQ;
     }
+    
+    public void resetSize(int width, int height) {
+        setSize(width, height);
+        
+        // redo layout ?
+        m_vis.run("layout");
+        
+    }
 
-    public static JComponent buildNewTreeMapComponent(java.util.List<Document> allDocs, java.util.List<Boolean> allDocsEnabled, java.util.List<String> orderedAttributes) {
-        DocumentTree t = DocumentTree.buildDocumentTree(allDocs, allDocsEnabled, orderedAttributes);
-
+    public static JComponent buildNewTreeMapOnly(java.util.List<Document> allDocs, java.util.List<Boolean> allDocsEnabled, java.util.List<String> orderedAttributes) {
+        
         // create a new treemap
+        DocumentTree t = DocumentTree.buildDocumentTree(allDocs, allDocsEnabled, orderedAttributes);
+        final DocumentTreeMapView treemap = new DocumentTreeMapView(t);
+        return treemap;
+        
+    }
+    
+    public static JComponent buildNewTreeMapComponent(java.util.List<Document> allDocs, java.util.List<Boolean> allDocsEnabled, java.util.List<String> orderedAttributes) {
+        
+        // create a new treemap
+        DocumentTree t = DocumentTree.buildDocumentTree(allDocs, allDocsEnabled, orderedAttributes);
         final DocumentTreeMapView treemap = new DocumentTreeMapView(t);
 
         // create a search panel for the tree map

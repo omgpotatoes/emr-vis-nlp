@@ -5,6 +5,7 @@ import emr_vis_nlp.model.mpqa_colon.Document;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import javax.swing.table.TableModel;
 
 /**
  *
@@ -21,6 +22,8 @@ public interface MainModel {
     public DocTableModel buildSimpleDocTableModel();
     
     public AttrTableModel buildSimpleAttrSelectionTableModel();
+    
+    public TableModel buildSimpleTreeMapSelectionTableModel();
     
     public AttrTableModel buildSimpleAttrSelectionTableModelFocusOnly();
     

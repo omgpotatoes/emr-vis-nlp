@@ -62,12 +62,38 @@ public class DocumentTree extends Tree {
         nodes.addColumn("parent_sig", String.class);
         nodes.addColumn("is_doc", boolean.class);
         nodes.addColumn("is_root", boolean.class);
+        nodes.addColumn("attr_val_index", int.class);
 
         Table edges = new Table();
         edges.addColumn(SOURCE_KEY, int.class);
         edges.addColumn(TARG_KEY, int.class);
 
         // assume attribute at 0 is most important, 1 2nd importance, etc. 
+        // find all values for each orderedAttributes; assign indices
+        List<Map<String, Integer>> orderedAttrsValToIndexMaps = new ArrayList<>();
+        Map<String, Integer> attrNameToIndexMap = new HashMap<>();
+        for (int a = 0; a < orderedAttributes.size(); a++) {
+            String attribute = orderedAttributes.get(a).replace(',', ' ');
+            attrNameToIndexMap.put(attribute, a);
+            Map<String, Integer> attrValToIndexMap = new HashMap<>();
+            orderedAttrsValToIndexMaps.add(attrValToIndexMap);
+            int indexCounter = 0;
+            
+            for (int d = 0; d < visibleDocs.size(); d++) {
+                Document doc = visibleDocs.get(d);
+                Map<String, String> docAttributes = doc.getAttributes();
+                String value = "";
+                if (docAttributes.containsKey(attribute)) {
+                    value = docAttributes.get(attribute).replace(',', ' ');
+                }
+                String element = attribute+"="+value;
+                if (!attrValToIndexMap.containsKey(element)) {
+                    attrValToIndexMap.put(element, indexCounter);
+                    indexCounter++;
+                }
+                
+            }
+        }
 
         // for each activeDoc, build nodeSignature and store in list
         Map<NodeSignature, List<Document>> nodeSignatureDocMap = new HashMap<>();
@@ -115,6 +141,7 @@ public class DocumentTree extends Tree {
             nodes.set(nodeCounter, "parent_sig", nodeSignature.toString());
             nodes.set(nodeCounter, "is_doc", true);
             nodes.set(nodeCounter, "is_root", false);
+            nodes.set(nodeCounter, "attr_val_index", -1); // only applies to category nodes
             
             nodeCounter++;
         }
@@ -127,6 +154,11 @@ public class DocumentTree extends Tree {
             List<Document> nodeSigDocList = nodeSignatureDocMap.get(nodeSignature);
             List<Integer> nodeSigIndexList = nodeSignatureIndexMap.get(nodeSignature);
             String name = nodeSignature.toString();
+            String nameLastElement = nodeSignature.getNameLast();
+            String nameLastAttr = nodeSignature.getNameLastAttr();
+            String nameLastVal = nodeSignature.getNameLastVal();
+            int nameLastValIndex = orderedAttrsValToIndexMaps.get(attrNameToIndexMap.get(nameLastAttr)).get(nameLastElement);
+            name = nameLastElement;
             NodeSignature parentSignature = nodeSignature.getParentSignature();
             if (!parentNodesChildIndexMap.containsKey(parentSignature)) {
                 parentNodesChildIndexMap.put(parentSignature, new ArrayList<Integer>());
@@ -144,6 +176,7 @@ public class DocumentTree extends Tree {
             nodes.set(nodeCounter, "parent_sig", parentSignature.toString());
             nodes.set(nodeCounter, "is_doc", false);
             nodes.set(nodeCounter, "is_root", false);
+            nodes.set(nodeCounter, "attr_val_index", nameLastValIndex);
             
             // build edges between node and docs
             for (int d=0; d < nodeSigDocList.size(); d++) {
@@ -177,6 +210,11 @@ public class DocumentTree extends Tree {
                 NodeSignature parentNodeSignature = parentNodes.get(p);
                 List<Integer> childIndexList = parentNodesChildIndexMap.get(parentNodeSignature);
                 String name = parentNodeSignature.toString();
+                String nameLastElement = parentNodeSignature.getNameLast();
+                String nameLastAttr = parentNodeSignature.getNameLastAttr();
+                String nameLastVal = parentNodeSignature.getNameLastVal();
+                int nameLastValIndex = orderedAttrsValToIndexMaps.get(attrNameToIndexMap.get(nameLastAttr)).get(nameLastElement);
+                name = nameLastElement;
                 NodeSignature parentOfParentSignature = parentNodeSignature.getParentSignature();
                 
                 // create node for this parentNode
@@ -188,7 +226,8 @@ public class DocumentTree extends Tree {
                 nodes.set(nodeCounter, "parent_sig", parentOfParentSignature.toString());
                 nodes.set(nodeCounter, "is_doc", false);
                 nodes.set(nodeCounter, "is_root", false);
-            
+                nodes.set(nodeCounter, "attr_val_index", nameLastValIndex);
+
                 // build edge between parentNode and each of its children
                 for (int c=0; c<childIndexList.size(); c++) {
                     int childIndex = childIndexList.get(c);
@@ -261,6 +300,9 @@ public class DocumentTree extends Tree {
     static class NodeSignature {
 
         private List<String> nodeAttrValues;
+        private String lastElement;
+        private String lastAttrName;
+        private String lastAttrVal;
 
         public NodeSignature(List<String> _nodeAttrValues) {
             // copy directly in constructor, to prevent alteration of other objects' arrays
@@ -268,6 +310,24 @@ public class DocumentTree extends Tree {
             for (String val : _nodeAttrValues) {
                 nodeAttrValues.add(val);
             }
+            
+            if (nodeAttrValues.size() > 0) {
+                lastElement = nodeAttrValues.get(nodeAttrValues.size()-1);
+            } else {
+                lastElement = "";
+            }
+            
+            lastAttrName = "";
+            lastAttrVal = "";
+            try {
+                Scanner elementSplitter = new Scanner(lastElement);
+                elementSplitter.useDelimiter("=");
+                lastAttrName = elementSplitter.next();
+                lastAttrVal = elementSplitter.next();
+            } catch (NoSuchElementException e) {
+                System.err.println("DocumentTree.NodeSignature: anomalous element string: "+lastElement);
+            }
+            
         }
 
         public NodeSignature getParentSignature() {
@@ -313,6 +373,19 @@ public class DocumentTree extends Tree {
 
             return str;
 
+        }
+        
+        public String getNameLast() {
+            return lastElement;
+        }
+        
+        
+        public String getNameLastAttr() {
+            return lastAttrName;
+        }
+        
+        public String getNameLastVal() {
+            return lastAttrVal;
         }
 
         @Override

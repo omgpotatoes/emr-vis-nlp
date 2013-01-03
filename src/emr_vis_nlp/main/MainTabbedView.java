@@ -5,6 +5,7 @@ import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.model.DocTableModel;
 import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.model.NullMainModel;
+import emr_vis_nlp.view.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
 import java.io.File;
 import javax.swing.JComponent;
@@ -36,6 +37,10 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
      * backing model for the simple attribute selection table
      */
     private TableModel attrSelectionTableModel;
+    /**
+     * backing model for the treemap attribute selection table
+     */
+    private TableModel treeMapSelectionTableModel;
     /**
      * treemap-holding object for document-oriented layout
      */
@@ -82,13 +87,14 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jTableSimpleDocs = new javax.swing.JTable();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTableAttrSelection = new javax.swing.JTable();
-        jPanel2 = new javax.swing.JPanel();
+        jPanelDocMap = new javax.swing.JPanel();
         jSplitPaneDocMap = new javax.swing.JSplitPane();
         jPanel5 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         jTableAttrSelection2 = new javax.swing.JTable();
         jLabelSearch1 = new javax.swing.JLabel();
         jTextFieldSearch1 = new javax.swing.JTextField();
+        jPanelDocMapDummy = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -185,7 +191,18 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         jTabbedPane1.addTab("Document Table", jPanel1);
 
+        jPanelDocMap.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                jPanelDocMapPropertyChange(evt);
+            }
+        });
+
         jSplitPaneDocMap.setDividerLocation(200);
+        jSplitPaneDocMap.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                jSplitPaneDocMapPropertyChange(evt);
+            }
+        });
 
         jTableAttrSelection2.setAutoCreateRowSorter(true);
         jTableAttrSelection2.setModel(new javax.swing.table.DefaultTableModel(
@@ -247,18 +264,31 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         jSplitPaneDocMap.setLeftComponent(jPanel5);
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPaneDocMap, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 795, Short.MAX_VALUE)
+        javax.swing.GroupLayout jPanelDocMapDummyLayout = new javax.swing.GroupLayout(jPanelDocMapDummy);
+        jPanelDocMapDummy.setLayout(jPanelDocMapDummyLayout);
+        jPanelDocMapDummyLayout.setHorizontalGroup(
+            jPanelDocMapDummyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 589, Short.MAX_VALUE)
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        jPanelDocMapDummyLayout.setVerticalGroup(
+            jPanelDocMapDummyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 541, Short.MAX_VALUE)
+        );
+
+        jSplitPaneDocMap.setRightComponent(jPanelDocMapDummy);
+
+        javax.swing.GroupLayout jPanelDocMapLayout = new javax.swing.GroupLayout(jPanelDocMap);
+        jPanelDocMap.setLayout(jPanelDocMapLayout);
+        jPanelDocMapLayout.setHorizontalGroup(
+            jPanelDocMapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jSplitPaneDocMap, javax.swing.GroupLayout.Alignment.TRAILING)
+        );
+        jPanelDocMapLayout.setVerticalGroup(
+            jPanelDocMapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jSplitPaneDocMap)
         );
 
-        jTabbedPane1.addTab("Document Map", jPanel2);
+        jTabbedPane1.addTab("Document Map", jPanelDocMap);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -380,6 +410,25 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         
     }//GEN-LAST:event_jTableSimpleDocsMouseClicked
 
+    private void jSplitPaneDocMapPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jSplitPaneDocMapPropertyChange
+        updateDocTreemapSize();
+    }//GEN-LAST:event_jSplitPaneDocMapPropertyChange
+
+    private void jPanelDocMapPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jPanelDocMapPropertyChange
+        updateDocTreemapSize();
+    }//GEN-LAST:event_jPanelDocMapPropertyChange
+
+    public void updateDocTreemapSize() {
+        
+        // update size of treemap
+        if (docTreeMapViewComponent != null) {
+            int newWidth = docTreeMapViewComponent.getWidth();
+            int newHeight = docTreeMapViewComponent.getHeight();
+            ((DocumentTreeMapView)docTreeMapViewComponent).resetSize(newWidth, newHeight);
+        }
+        
+    }
+    
     public void rebuildDocumentTable() {
 
         // query for new backend for the simple document table, load
@@ -400,11 +449,17 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
     public void resetAttributeSelectionTable() {
 
+        // tableModel for document table-based view
         TableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModel();
 //        TableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModelFocusOnly();
         attrSelectionTableModel = newAttrSelectionTableModel;
         jTableAttrSelection.setModel(attrSelectionTableModel);
-        jTableAttrSelection2.setModel(attrSelectionTableModel);
+        
+        // tableModel for treemap-based view
+        //jTableAttrSelection2.setModel(attrSelectionTableModel);
+        TableModel newTreeMapSelectionTableModel = controller.buildSimpleTreeMapSelectionTableModel();
+        treeMapSelectionTableModel = newTreeMapSelectionTableModel;
+        jTableAttrSelection2.setModel(treeMapSelectionTableModel);
 
     }
 
@@ -416,7 +471,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 //        jPanelDocTreeHolder.add(docTreeMapViewComponent);
 //        jPanelDocTreeHolder.validate();
         jSplitPaneDocMap.setBottomComponent(docTreeMapViewComponent);
-
+        updateDocTreemapSize();
+        
     }
 
     @Override
@@ -521,10 +577,11 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JMenu jMenuFile;
     private javax.swing.JMenuItem jMenuItemLoadDataset;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanelDocMap;
+    private javax.swing.JPanel jPanelDocMapDummy;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;

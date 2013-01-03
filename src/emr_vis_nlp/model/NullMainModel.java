@@ -5,6 +5,7 @@ import emr_vis_nlp.model.mpqa_colon.Document;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import javax.swing.table.TableModel;
 
 /**
  * Empty model for use when no dataset is loaded.
@@ -81,6 +82,11 @@ public class NullMainModel implements MainModel {
 
     @Override
     public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId) {
+        throw new UnsupportedOperationException();
+    }
+    
+    @Override
+    public TableModel buildSimpleTreeMapSelectionTableModel() {
         throw new UnsupportedOperationException();
     }
     

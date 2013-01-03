@@ -36,6 +36,11 @@ public class DefaultMainController implements MainController {
     /** list of active popup windows */
     private List<JFrame> activePopups;
     
+    /** current treemap view component (if any) */
+    private JComponent docTreeMapViewComponent = null;
+    /** current treemap view attr selection model (if any) */
+    private TableModel docTreeMapSelectionModel = null;
+    
     public DefaultMainController() {
         activePopups = new ArrayList<>();
     }
@@ -145,9 +150,19 @@ public class DefaultMainController implements MainController {
         selectedAttrsForTree.add("Indicator_21");
         selectedAttrsForTree.add("Indicator_19");
         
-        JComponent docTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapComponent(model.getAllDocuments(), model.getAllSelectedDocuments(), selectedAttrsForTree);
+//        JComponent docTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapComponent(model.getAllDocuments(), model.getAllSelectedDocuments(), selectedAttrsForTree);
+        JComponent newDocTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapOnly(model.getAllDocuments(), model.getAllSelectedDocuments(), selectedAttrsForTree);
+        docTreeMapViewComponent = newDocTreeMapViewComponent;
         return docTreeMapViewComponent;
         
+    }
+    
+    @Override
+    public TableModel buildSimpleTreeMapSelectionTableModel() {
+        
+        TableModel newDocTreeMapSelectionTableModel = model.buildSimpleTreeMapSelectionTableModel();
+        docTreeMapSelectionModel = newDocTreeMapSelectionTableModel;
+        return docTreeMapSelectionModel
     }
 
     @Override

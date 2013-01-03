@@ -7,7 +7,7 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 /**
- * Table model bot running the manual attribute selector table. 
+ * Table model running the manual attribute selector table. 
  * Responsibilities include displaying all attributes for the current dataset 
  * and communicating with the controller when attribute values change.
  *

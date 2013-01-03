@@ -5,6 +5,7 @@ import emr_vis_nlp.model.mpqa_colon.Dataset;
 import emr_vis_nlp.model.mpqa_colon.Document;
 import java.io.File;
 import java.util.*;
+import javax.swing.table.TableModel;
 
 /**
  *
@@ -235,6 +236,12 @@ public class MpqaColonMainModel implements MainModel {
         
         return focusAttrsMap;
         
+    }
+    
+    @Override
+    public TableModel buildSimpleTreeMapSelectionTableModel() {
+        TableModel treeMapTableModel = new TreeMapSelectorTableModel(attributeList, controller);
+        return treeMapTableModel;
     }
 
     @Override

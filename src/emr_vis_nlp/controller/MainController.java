@@ -28,6 +28,11 @@ public interface MainController {
     public TableModel buildSimpleAttrSelectionTableModel();
     public TableModel buildSimpleAttrSelectionTableModelFocusOnly();
     
+    // for treemap view
+//    public DocumentTreeMapView buildDocTreeMapView();
+    public JComponent buildDocTreeMapViewComponent();
+    public TableModel buildSimpleTreeMapSelectionTableModel();
+    
     // for document details window
     public TableModel buildAttrAndPredictionModelForDoc(int docGlobalID);
     public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrID);
@@ -38,8 +43,6 @@ public interface MainController {
     
     public void documentAttributesUpdated(int docGlobalID);
     
-//    public DocumentTreeMapView buildDocTreeMapView();
-    public JComponent buildDocTreeMapViewComponent();
     
 }
 
