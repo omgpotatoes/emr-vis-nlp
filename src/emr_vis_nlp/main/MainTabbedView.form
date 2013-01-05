@@ -255,6 +255,9 @@
                               </Table>
                             </Property>
                           </Properties>
+                          <AuxValues>
+                            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTableCombos();"/>
+                          </AuxValues>
                         </Component>
                       </SubComponents>
                     </Container>

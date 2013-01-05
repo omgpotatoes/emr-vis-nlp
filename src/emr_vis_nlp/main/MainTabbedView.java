@@ -3,6 +3,7 @@ package emr_vis_nlp.main;
 import emr_vis_nlp.controller.DefaultMainController;
 import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.model.DocTableModel;
+import emr_vis_nlp.model.JTableCombos;
 import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.model.NullMainModel;
 import emr_vis_nlp.view.DocumentTreeMapView;
@@ -91,7 +92,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jSplitPaneDocMap = new javax.swing.JSplitPane();
         jPanel5 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jTableAttrSelection2 = new javax.swing.JTable();
+        jTableAttrSelection2 = new JTableCombos();
         jLabelSearch1 = new javax.swing.JLabel();
         jTextFieldSearch1 = new javax.swing.JTextField();
         jPanelDocMapDummy = new javax.swing.JPanel();

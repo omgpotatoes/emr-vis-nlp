@@ -32,6 +32,7 @@ public interface MainController {
 //    public DocumentTreeMapView buildDocTreeMapView();
     public JComponent buildDocTreeMapViewComponent();
     public TableModel buildSimpleTreeMapSelectionTableModel();
+    public void updateTreeMapAttributes();
     
     // for document details window
     public TableModel buildAttrAndPredictionModelForDoc(int docGlobalID);

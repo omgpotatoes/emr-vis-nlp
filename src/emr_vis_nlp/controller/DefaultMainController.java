@@ -162,7 +162,7 @@ public class DefaultMainController implements MainController {
         
         TableModel newDocTreeMapSelectionTableModel = model.buildSimpleTreeMapSelectionTableModel();
         docTreeMapSelectionModel = newDocTreeMapSelectionTableModel;
-        return docTreeMapSelectionModel
+        return docTreeMapSelectionModel;
     }
 
     @Override
@@ -259,6 +259,13 @@ public class DefaultMainController implements MainController {
         }
         
         return false;
+        
+    }
+    
+    @Override
+    public void updateTreeMapAttributes() {
+        
+        // TODO
         
     }
     
