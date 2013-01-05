@@ -507,6 +507,16 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         rebuildDocumentTable();
 
     }
+    
+    @Override
+    public void orderedAttrSelectionChanged() {
+
+        // update relevant panes
+
+        // update treemap view
+        rebuildDocumentTreeMapView();
+
+    }
 
     /**
      * @param args the command line arguments

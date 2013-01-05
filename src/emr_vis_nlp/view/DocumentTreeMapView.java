@@ -156,6 +156,14 @@ public class DocumentTreeMapView extends Display {
     
     public static JComponent buildNewTreeMapComponent(java.util.List<Document> allDocs, java.util.List<Boolean> allDocsEnabled, java.util.List<String> orderedAttributes) {
         
+        JPanel panel = new JPanel(new BorderLayout());
+        updatePanelWithNewTreemap(panel, allDocs, allDocsEnabled, orderedAttributes);
+        return panel;
+        
+    }
+    
+    public static void updatePanelWithNewTreemap(JComponent component, java.util.List<Document> allDocs, java.util.List<Boolean> allDocsEnabled, java.util.List<String> orderedAttributes) {
+        
         // create a new treemap
         DocumentTree t = DocumentTree.buildDocumentTree(allDocs, allDocsEnabled, orderedAttributes);
         final DocumentTreeMapView treemap = new DocumentTreeMapView(t);
@@ -193,11 +201,12 @@ public class DocumentTreeMapView extends Display {
 
         Box box = UILib.getBox(new Component[]{title, search}, true, 10, 3, 0);
 
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(treemap, BorderLayout.CENTER);
-        panel.add(box, BorderLayout.SOUTH);
-        UILib.setColor(panel, Color.BLACK, Color.GRAY);
-        return panel;
+        component.removeAll();
+        component.setLayout(new BorderLayout());
+        component.add(treemap, BorderLayout.CENTER);
+        //component.add(box, BorderLayout.SOUTH);
+        UILib.setColor(component, Color.BLACK, Color.GRAY);
+        
     }
 
     // ------------------------------------------------------------------------

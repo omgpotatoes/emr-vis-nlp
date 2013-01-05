@@ -11,4 +11,6 @@ public interface MainView {
     
     public void attributeSelectionChanged();
     
+    public void orderedAttrSelectionChanged();
+    
 }

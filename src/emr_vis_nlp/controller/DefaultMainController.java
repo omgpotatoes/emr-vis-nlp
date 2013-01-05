@@ -1,10 +1,7 @@
 
 package emr_vis_nlp.controller;
 
-import emr_vis_nlp.model.DocDetailsTableModel;
-import emr_vis_nlp.model.MainModel;
-import emr_vis_nlp.model.MpqaColonMainModel;
-import emr_vis_nlp.model.PredictionCertaintyTuple;
+import emr_vis_nlp.model.*;
 import emr_vis_nlp.model.mpqa_colon.Document;
 import emr_vis_nlp.view.DocFocusPopup;
 import emr_vis_nlp.view.DocumentTreeMapView;
@@ -16,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
 import javax.swing.table.TableModel;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.BadLocationException;
@@ -146,9 +142,15 @@ public class DefaultMainController implements MainController {
         
         
         List<String> selectedAttrsForTree = new ArrayList<>();
-        selectedAttrsForTree.add("Indicator_1");
-        selectedAttrsForTree.add("Indicator_21");
-        selectedAttrsForTree.add("Indicator_19");
+        if (docTreeMapSelectionModel != null) {
+            TreeMapSelectorTableModel treeMapSelectorTableModel = (TreeMapSelectorTableModel)docTreeMapSelectionModel;
+            selectedAttrsForTree = treeMapSelectorTableModel.getSelectedAttributeList();
+        } else {        
+            selectedAttrsForTree.add("Indicator_1");
+            selectedAttrsForTree.add("Indicator_21");
+            selectedAttrsForTree.add("Indicator_19");
+            
+        }
         
 //        JComponent docTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapComponent(model.getAllDocuments(), model.getAllSelectedDocuments(), selectedAttrsForTree);
         JComponent newDocTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapOnly(model.getAllDocuments(), model.getAllSelectedDocuments(), selectedAttrsForTree);
@@ -265,7 +267,13 @@ public class DefaultMainController implements MainController {
     @Override
     public void updateTreeMapAttributes() {
         
-        // TODO
+        // get selected attrs from the table model
+        TreeMapSelectorTableModel treeMapSelectorTableModel = (TreeMapSelectorTableModel)docTreeMapSelectionModel;
+        List<String> currentSelectedAttrs = treeMapSelectorTableModel.getSelectedAttributeList();
+        
+        // feed selected attrs to the treemap
+        //DocumentTreeMapView.updatePanelWithNewTreemap(docTreeMapViewComponent, model.getAllDocuments(), model.getAllSelectedDocuments(), currentSelectedAttrs);
+        view.orderedAttrSelectionChanged();
         
     }
     

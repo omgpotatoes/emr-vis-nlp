@@ -78,7 +78,10 @@ public class TreeMapSelectorTableModel extends AbstractTableModel {
         //   until reaching (and pushing) the other-row-with-same-value
 
         String updatedRowValue = allAttributesSelectorBoxes.get(updatedRow).getSelectedItem().toString();
-        int updatedRowValInt = Integer.parseInt(updatedRowValue.substring(0, 1));
+        int updatedRowValInt = -1;
+        try {
+            updatedRowValInt = Integer.parseInt(updatedRowValue.substring(0, 1));
+        } catch (NumberFormatException e) {}
 
         if (!updatedRowValue.equals(NOT_SEL_MSG)) {
 
@@ -172,6 +175,10 @@ public class TreeMapSelectorTableModel extends AbstractTableModel {
 
             }
 
+        } else {
+            
+            // the null option was selected; 
+            
         }
 
     }
@@ -241,7 +248,40 @@ public class TreeMapSelectorTableModel extends AbstractTableModel {
             controller.updateTreeMapAttributes();
 
         }
-
-
+        
     }
+    
+    public List<String> getSelectedAttributeList() {
+        
+        List<String> selectedAttributeList = new ArrayList<>();
+        for (int i=0; i<numOptions-1; i++) {
+            selectedAttributeList.add("");
+        }
+        
+        for (int r=0; r<allAttributesSelectorBoxes.size(); r++) {
+            try {
+                int rowSelectorVal = Integer.parseInt(allAttributesSelectorBoxes.get(r).getSelectedItem().toString().substring(0, 1));
+                String rowAttrName = allAttributes.get(r);
+                for (int a=0; a<selectedAttributeList.size(); a++) {
+                    if (rowSelectorVal-1 == a) {
+                        selectedAttributeList.remove(a);
+                        selectedAttributeList.add(a, rowAttrName);
+                    }
+                }
+            } catch (NumberFormatException e) {
+            }
+
+        }
+        
+        // remove all blanks
+        for (int a=0; a<selectedAttributeList.size(); a++) {
+            if (selectedAttributeList.get(a).equals("")) {
+                selectedAttributeList.remove(a);
+            }
+        }
+        
+        return selectedAttributeList;
+        
+    }
+    
 }
