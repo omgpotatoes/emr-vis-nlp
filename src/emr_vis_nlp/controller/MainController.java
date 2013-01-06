@@ -38,6 +38,7 @@ public interface MainController {
     public TableModel buildAttrAndPredictionModelForDoc(int docGlobalID);
     public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrID);
     public JFrame buildDocDetailsWindow(int docGlobalID);
+    public void displayDocDetailsWindow(int docGlobalID);
     public boolean removeDocDetailsWindow(JFrame popup);
     
     public void attributeSelectionUpdated(List<Boolean> attributesEnabled);

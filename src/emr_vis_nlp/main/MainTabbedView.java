@@ -104,6 +104,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
+        jTextFieldSearch.setOpaque(false);
         jTextFieldSearch.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextFieldSearchActionPerformed(evt);
@@ -399,13 +400,16 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             // debug
 //            System.out.println("debug: double++-click (" + numClicks + ") on selected row: " + globalDocIndex +" (raw="+selectedDocRowIndexRaw+", model="+selectedDocRowIndexModel+")");
 
-            // create and display new popup for selected document
-            final JFrame newPopup = controller.buildDocDetailsWindow(globalDocIndex);
-            java.awt.EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                    newPopup.setVisible(true);
-                }
-            });
+//            // create and display new popup for selected document
+//            final JFrame newPopup = controller.buildDocDetailsWindow(globalDocIndex);
+//            java.awt.EventQueue.invokeLater(new Runnable() {
+//                public void run() {
+//                    newPopup.setVisible(true);
+//                }
+//            });
+            
+            // let the controller handle this
+            controller.displayDocDetailsWindow(globalDocIndex);
             
         }
         

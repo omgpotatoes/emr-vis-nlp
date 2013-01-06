@@ -1,5 +1,6 @@
 package emr_vis_nlp.view;
 
+import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.model.mpqa_colon.Document;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -11,9 +12,9 @@ import prefuse.action.ActionList;
 import prefuse.action.RepaintAction;
 import prefuse.action.animate.ColorAnimator;
 import prefuse.action.assignment.ColorAction;
-import prefuse.action.layout.Layout;
-import prefuse.action.layout.graph.SquarifiedTreeMapLayout;
 import prefuse.controls.ControlAdapter;
+import prefuse.controls.PanControl;
+import prefuse.controls.ZoomControl;
 import prefuse.data.query.SearchQueryBinding;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.ShapeRenderer;
@@ -41,16 +42,27 @@ public class DocumentTreeMapView extends Display {
         {"red", "maroon", "brown", "lightcoral", "rosybrown"},
         {"indigo", "mediumslateblue", "blueviolet", "darkslateblue", "magenta"},
         {"darkgreen", "limegreen", "darkolivegreen", "palegreen", "olivedrab"},
-        {"salmon", "orangered", "chocolate", "coral", "sienna"},
+        {"salmon", "orangered", "chocolate", "coral", "sienna"},};
+    public static final Color[][] DOCTREEMAP_GROUP_PALETTE_RGB = {
+        {new Color(255, 0, 0), new Color(176, 48, 96), new Color(165, 42, 42), new Color(240, 128, 128), new Color(188, 143, 143)},
+        {new Color(75, 0, 130), new Color(123, 104, 238), new Color(138, 43, 226), new Color(72, 61, 139), new Color(255, 0, 255)},
+        {new Color(0, 100, 0), new Color(50, 205, 50), new Color(85, 107, 47), new Color(152, 251, 152), new Color(107, 142, 35)},
+        {new Color(250, 128, 114), new Color(255, 69, 0), new Color(210, 105, 30), new Color(255, 127, 80), new Color(160, 82, 45)},};
+    public static final Color[][] DOCTREEMAP_GROUP_PALETTE_RGB_2 = {
+        {new Color(255, 0, 0), new Color(191, 48, 48), new Color(255, 64, 64), new Color(255, 115, 115)},
+        {new Color(18, 178, 37), new Color(47, 119, 56), new Color(91, 229, 108), new Color(145, 229, 155)},
+        {new Color(230, 138, 23), new Color(154, 113, 61), new Color(246, 181, 98), new Color(246, 207, 156)},
+        {new Color(27, 77, 151), new Color(46, 68, 101), new Color(99, 148, 220), new Color(147, 176, 220)},
+        {new Color(107, 23, 153), new Color(82, 44, 103), new Color(176, 95, 220), new Color(193, 144, 220)}
+//        {new Color, new Color, new Color, new Color, },
     };
-    
     // TODO : revise treemap code in-line with previous ideas: children-on-top, buffer space, click-based interaction, appropriate color schemes, appropriate attribute selection mechanisms, animation
 //    private static final String label = "documentTreeMapView";
     private static final String nodeName = "name";
     private static final String tree = "tree";
     private static final String treeNodes = "tree.nodes";
     private static final String treeEdges = "tree.edges";
-    public static final double RECT_BUFFER = 6.;
+    public static final double RECT_BUFFER = 10.;
 //    public static final double RECT_BUFFER = 50.;
     private SearchQueryBinding searchQ;
 
@@ -82,8 +94,8 @@ public class DocumentTreeMapView extends Display {
 
         // create the single filtering and layout action list
         ActionList layout = new ActionList();
-        SquarifiedTreeMapLayout layoutTreeMap = new SquarifiedTreeMapLayout(tree);
-        layoutTreeMap.setFrameWidth(RECT_BUFFER);
+        TopMarginSquarifiedTreeMapLayout layoutTreeMap = new TopMarginSquarifiedTreeMapLayout(tree, RECT_BUFFER);
+//        SquarifiedTreeMapLayout layoutTreeMap = new SquarifiedTreeMapLayout(tree, RECT_BUFFER);
         layout.add(layoutTreeMap);
 //        layout.add(new BufferedSquarifiedTreeMapLayout(tree));
 //        layout.add(new RadialTreeLayout(tree));
@@ -128,6 +140,10 @@ public class DocumentTreeMapView extends Display {
                 m_vis.run("animatePaint");
             }
         });
+        
+        // add controls
+        addControlListener(new PanControl());  // pan with background left-drag
+        addControlListener(new ZoomControl()); // zoom with vertical right-drag
 
         // perform layout
         m_vis.run("layout");
@@ -136,77 +152,108 @@ public class DocumentTreeMapView extends Display {
     public SearchQueryBinding getSearchQuery() {
         return searchQ;
     }
-    
+
     public void resetSize(int width, int height) {
         setSize(width, height);
-        
+
         // redo layout ?
         m_vis.run("layout");
-        
+
     }
 
-    public static JComponent buildNewTreeMapOnly(java.util.List<Document> allDocs, java.util.List<Boolean> allDocsEnabled, java.util.List<String> orderedAttributes) {
-        
+    public static DocumentTreeMapView buildNewTreeMapOnly(final MainController controller, java.util.List<Document> allDocs, java.util.List<Boolean> allDocsEnabled, java.util.List<String> orderedAttributes) {
+
         // create a new treemap
         DocumentTree t = DocumentTree.buildDocumentTree(allDocs, allDocsEnabled, orderedAttributes);
         final DocumentTreeMapView treemap = new DocumentTreeMapView(t);
-        return treemap;
-        
-    }
-    
-    public static JComponent buildNewTreeMapComponent(java.util.List<Document> allDocs, java.util.List<Boolean> allDocsEnabled, java.util.List<String> orderedAttributes) {
-        
-        JPanel panel = new JPanel(new BorderLayout());
-        updatePanelWithNewTreemap(panel, allDocs, allDocsEnabled, orderedAttributes);
-        return panel;
-        
-    }
-    
-    public static void updatePanelWithNewTreemap(JComponent component, java.util.List<Document> allDocs, java.util.List<Boolean> allDocsEnabled, java.util.List<String> orderedAttributes) {
-        
-        // create a new treemap
-        DocumentTree t = DocumentTree.buildDocumentTree(allDocs, allDocsEnabled, orderedAttributes);
-        final DocumentTreeMapView treemap = new DocumentTreeMapView(t);
-
-        // create a search panel for the tree map
-        JSearchPanel search = treemap.getSearchQuery().createSearchPanel();
-        search.setShowResultCount(true);
-        search.setBorder(BorderFactory.createEmptyBorder(5, 5, 4, 0));
-        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
-
-        final JFastLabel title = new JFastLabel("                 ");
-        title.setPreferredSize(new Dimension(350, 20));
-        title.setVerticalAlignment(SwingConstants.BOTTOM);
-        title.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
-        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
-
         treemap.addControlListener(new ControlAdapter() {
-
+            
             @Override
-            public void itemEntered(VisualItem item, MouseEvent e) {
-//                if (((NodeItem) item).getChildCount() == 0) {
-                // only write title if a leaf
-                title.setText(item.getString(nodeName));
-//                }
+            public void itemClicked(VisualItem item, MouseEvent e) {
+                // if a leaf, tell controller to load this document's popup
+                
+                // get doc id
+                int docGlobalID = -1;
+                if (item.canGetInt("global_doc_index")) {
+                    docGlobalID = item.getInt("global_doc_index");
+                }
+                
+                // only load popup for document nodes
+                if (docGlobalID != -1) {
+                    controller.displayDocDetailsWindow(docGlobalID);
+                }
+                
             }
-
-            @Override
-            public void itemExited(VisualItem item, MouseEvent e) {
-//                if (((NodeItem) item).getChildCount() == 0) {
-                // only write title if a leaf
-                title.setText(null);
-//                }
-            }
+            
         });
+        
+        return treemap;
 
-        Box box = UILib.getBox(new Component[]{title, search}, true, 10, 3, 0);
+    }
+
+    public static JComponent buildNewTreeMapComponent(MainController controller, java.util.List<Document> allDocs, java.util.List<Boolean> allDocsEnabled, java.util.List<String> orderedAttributes) {
+
+        JPanel panel = new JPanel(new BorderLayout());
+        updatePanelWithNewTreemap(controller, panel, allDocs, allDocsEnabled, orderedAttributes);
+        return panel;
+
+    }
+
+    public static void updatePanelWithNewTreemap(MainController controller, JComponent component, java.util.List<Document> allDocs, java.util.List<Boolean> allDocsEnabled, java.util.List<String> orderedAttributes) {
+
+        // create a new treemap
+        final DocumentTreeMapView treemap = buildNewTreeMapOnly(controller, allDocs, allDocsEnabled, orderedAttributes);
+        
+//        DocumentTree t = DocumentTree.buildDocumentTree(allDocs, allDocsEnabled, orderedAttributes);
+//        final DocumentTreeMapView treemap = new DocumentTreeMapView(t);
+//
+////        // create a search panel for the tree map
+////        JSearchPanel search = treemap.getSearchQuery().createSearchPanel();
+////        search.setShowResultCount(true);
+////        search.setBorder(BorderFactory.createEmptyBorder(5, 5, 4, 0));
+////        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+////
+////        final JFastLabel title = new JFastLabel("                 ");
+////        title.setPreferredSize(new Dimension(350, 20));
+////        title.setVerticalAlignment(SwingConstants.BOTTOM);
+////        title.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
+////        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
+//
+//        treemap.addControlListener(new ControlAdapter() {
+//
+////            @Override
+////            public void itemEntered(VisualItem item, MouseEvent e) {
+//////                if (((NodeItem) item).getChildCount() == 0) {
+////                // only write title if a leaf?
+////                title.setText(item.getString(nodeName));
+//////                }
+////            }
+////
+////            @Override
+////            public void itemExited(VisualItem item, MouseEvent e) {
+//////                if (((NodeItem) item).getChildCount() == 0) {
+////                // only write title if a leaf?
+////                title.setText(null);
+//////                }
+////            }
+//            
+//            @Override
+//            public void itemClicked(VisualItem item, MouseEvent e) {
+//                // if a leaf, tell controller to load this document's popup
+//                
+//                
+//            }
+//            
+//        });
+
+//        Box box = UILib.getBox(new Component[]{title, search}, true, 10, 3, 0);
 
         component.removeAll();
         component.setLayout(new BorderLayout());
         component.add(treemap, BorderLayout.CENTER);
         //component.add(box, BorderLayout.SOUTH);
         UILib.setColor(component, Color.BLACK, Color.GRAY);
-        
+
     }
 
     // ------------------------------------------------------------------------
@@ -256,13 +303,38 @@ public class DocumentTreeMapView extends Display {
             super(group, VisualItem.FILLCOLOR);
         }
 
+        @Override
         public int getColor(VisualItem item) {
-            if (m_vis.isInGroup(item, Visualization.SEARCH_ITEMS)) {
-                return ColorLib.rgb(191, 99, 130);
-            }
 
-            double v = (item instanceof NodeItem ? ((NodeItem) item).getDepth() : 0);
-            return cmap.getColor(v);
+            int attrValIndex = 0;
+            if (item.canGetInt("attr_val_index")) {
+                attrValIndex = item.getInt("attr_val_index");
+            }
+            if (attrValIndex == -1) {
+                // just return lightgray? for docs
+                Color lightgray = Color.LIGHT_GRAY;
+                return lightgray.getRGB();
+            } else {
+
+                // get color based on depth, mod of category id of item
+                int depth = (item instanceof NodeItem ? ((NodeItem) item).getDepth() : 0);
+                int colorPaletteIndex = (depth + 1) % DOCTREEMAP_GROUP_PALETTE_RGB_2.length;
+//            System.out.println("debug: depth="+depth);
+                // depth = simple int giving depth in tree (start at 0 for root)
+//                String[] colorPaletteNames = DOCTREEMAP_GROUP_PALETTE[colorPaletteIndex];
+                Color[] colorPalette = DOCTREEMAP_GROUP_PALETTE_RGB_2[colorPaletteIndex];
+//                String colorName = colorPaletteNames[attrValIndex % colorPaletteNames.length];
+                Color color = colorPalette[attrValIndex % colorPalette.length];
+                int colorInt = color.getRGB();
+                return colorInt;
+
+            }
+//            if (m_vis.isInGroup(item, Visualization.SEARCH_ITEMS)) {
+//                return ColorLib.rgb(191, 99, 130);
+//            }
+//
+//            double v = (item instanceof NodeItem ? ((NodeItem) item).getDepth() : 0);
+//            return cmap.getColor(v);
         }
     } // end of inner class TreeMapColorAction
 
@@ -325,15 +397,21 @@ public class DocumentTreeMapView extends Display {
             String s = item.getString(nodeName);
 
             // TODO set font size based on depth in tree
-            int maxFontSize = 16;
-            int fontSize = maxFontSize - ((NodeItem) item).getDepth();
+            //int maxFontSize = 16;
+            int maxFontSize = 22;
+            int minFontSize = 12;
+            int numLevels = 5;  // TODO eliminate this hardcoding
+            int fontStep = (maxFontSize - minFontSize) / numLevels;
+            int fontSize = maxFontSize - (((NodeItem)item).getDepth() * fontStep);
             item.setFont(FontLib.getFont("Tahoma", Font.PLAIN, fontSize));
             Font f = item.getFont();
-            f.getSize();
+//            f.getSize();
             FontMetrics fm = g.getFontMetrics(f);
             int w = fm.stringWidth(s);
             int h = fm.getAscent();
-            g.setColor(Color.LIGHT_GRAY);
+            //g.setColor(Color.LIGHT_GRAY);
+            g.setColor(Color.BLACK);
+            g.setFont(f);
 
             // TODO move string to top (if node is non-leaf
 //            if ( ((NodeItem)item).getDepth() == 1 ) {
@@ -368,7 +446,7 @@ public class DocumentTreeMapView extends Display {
                 drawShape(g, item, shape);
             }
         }
-        
+
         protected void drawShapeWithBuffer(Graphics2D g, VisualItem item, Shape shape) {
             // draw the non-drawn buffer
             GraphicsLib.paint(g, item, shape, new BasicStroke(0), RENDER_TYPE_NONE);
@@ -382,4 +460,5 @@ public class DocumentTreeMapView extends Display {
             GraphicsLib.paint(g, item, nonBufferShape, getStroke(item), getRenderType(item));
         }
     }
+
 }

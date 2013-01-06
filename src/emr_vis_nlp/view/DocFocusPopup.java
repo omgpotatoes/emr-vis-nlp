@@ -190,7 +190,7 @@ public class DocFocusPopup extends javax.swing.JFrame {
             }
         });
 
-        jSplitPane1.setDividerLocation(200);
+        jSplitPane1.setDividerLocation(375);
 
         jScrollPaneDocText.setViewportView(jTextPaneDocText);
 

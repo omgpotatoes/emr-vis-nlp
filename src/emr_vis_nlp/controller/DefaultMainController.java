@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.table.TableModel;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.BadLocationException;
@@ -25,12 +26,16 @@ import javax.swing.text.StyleConstants;
  */
 public class DefaultMainController implements MainController {
     
+    private static MainController mainController = null;
+    
     /** main model controlled by this */
     private MainModel model;
     /** main view controlled by this */
     private MainView view;
     /** list of active popup windows */
     private List<JFrame> activePopups;
+    /** list of active popup window doc IDs, for convenience */
+    private List<Integer> activePopupIDs;
     
     /** current treemap view component (if any) */
     private JComponent docTreeMapViewComponent = null;
@@ -39,6 +44,8 @@ public class DefaultMainController implements MainController {
     
     public DefaultMainController() {
         activePopups = new ArrayList<>();
+        activePopupIDs = new ArrayList<>();
+        mainController = this;
     }
     
     @Override
@@ -153,7 +160,7 @@ public class DefaultMainController implements MainController {
         }
         
 //        JComponent docTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapComponent(model.getAllDocuments(), model.getAllSelectedDocuments(), selectedAttrsForTree);
-        JComponent newDocTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapOnly(model.getAllDocuments(), model.getAllSelectedDocuments(), selectedAttrsForTree);
+        JComponent newDocTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapOnly(this, model.getAllDocuments(), model.getAllSelectedDocuments(), selectedAttrsForTree);
         docTreeMapViewComponent = newDocTreeMapViewComponent;
         return docTreeMapViewComponent;
         
@@ -248,7 +255,35 @@ public class DefaultMainController implements MainController {
         Document doc = model.getAllDocuments().get(docGlobalID);
         JFrame popup = new DocFocusPopup(this, doc, docGlobalID);
         activePopups.add(popup);
+        activePopupIDs.add(docGlobalID);
         return popup;
+        
+    }
+    
+    @Override
+    public void displayDocDetailsWindow(int docGlobalID) {
+        
+        // if window is already open for doc, bring to front
+        int docGlobalIdIndex = -1;
+        for (int p=0; p<activePopupIDs.size(); p++) {
+            if (activePopupIDs.get(p) == docGlobalID) {
+                docGlobalIdIndex = p;
+                break;
+            }
+        }
+        
+        if (docGlobalIdIndex != -1) {
+            JFrame popup = activePopups.get(docGlobalIdIndex);
+            popup.toFront();
+        } else {
+            // else, popup new one
+            final JFrame newPopup = buildDocDetailsWindow(docGlobalID);
+            java.awt.EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                    newPopup.setVisible(true);
+                }
+            });
+        }
         
     }
     
@@ -256,7 +291,9 @@ public class DefaultMainController implements MainController {
     public boolean removeDocDetailsWindow(JFrame popup) {
         
         if (activePopups.contains(popup)) {
+            int popupIndex = activePopups.indexOf(popup);
             activePopups.remove(popup);
+            activePopupIDs.remove(popupIndex);
             return true;
         }
         
