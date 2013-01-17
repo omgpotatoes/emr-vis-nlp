@@ -6,7 +6,7 @@ import emr_vis_nlp.model.DocTableModel;
 import emr_vis_nlp.model.JTableCombos;
 import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.model.NullMainModel;
-import emr_vis_nlp.view.DocumentTreeMapView;
+import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
 import java.io.File;
 import javax.swing.JComponent;
@@ -81,7 +81,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         jFileChooser1 = new javax.swing.JFileChooser();
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        jPanel1 = new javax.swing.JPanel();
+        jPanelDocTable = new javax.swing.JPanel();
         jTextFieldSearch = new javax.swing.JTextField();
         jLabelSearch = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -96,6 +96,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jLabelSearch1 = new javax.swing.JLabel();
         jTextFieldSearch1 = new javax.swing.JTextField();
         jPanelDocMapDummy = new javax.swing.JPanel();
+        jPanelDocGrid = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -160,14 +161,14 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         });
         jScrollPane2.setViewportView(jTableAttrSelection);
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout jPanelDocTableLayout = new javax.swing.GroupLayout(jPanelDocTable);
+        jPanelDocTable.setLayout(jPanelDocTableLayout);
+        jPanelDocTableLayout.setHorizontalGroup(
+            jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelDocTableLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanelDocTableLayout.createSequentialGroup()
                         .addComponent(jLabelSearch)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jTextFieldSearch))
@@ -176,14 +177,14 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 598, Short.MAX_VALUE)
                 .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+        jPanelDocTableLayout.setVerticalGroup(
+            jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelDocTableLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane1)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addGroup(jPanelDocTableLayout.createSequentialGroup()
+                        .addGroup(jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabelSearch)
                             .addComponent(jTextFieldSearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -191,7 +192,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Document Table", jPanel1);
+        jTabbedPane1.addTab("Document Table", jPanelDocTable);
 
         jPanelDocMap.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
@@ -291,6 +292,19 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         );
 
         jTabbedPane1.addTab("Document Map", jPanelDocMap);
+
+        javax.swing.GroupLayout jPanelDocGridLayout = new javax.swing.GroupLayout(jPanelDocGrid);
+        jPanelDocGrid.setLayout(jPanelDocGridLayout);
+        jPanelDocGridLayout.setHorizontalGroup(
+            jPanelDocGridLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 795, Short.MAX_VALUE)
+        );
+        jPanelDocGridLayout.setVerticalGroup(
+            jPanelDocGridLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 543, Short.MAX_VALUE)
+        );
+
+        jTabbedPane1.addTab("Document Grid", jPanelDocGrid);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -591,12 +605,13 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenu jMenuFile;
     private javax.swing.JMenuItem jMenuItemLoadDataset;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanelDocGrid;
     private javax.swing.JPanel jPanelDocMap;
     private javax.swing.JPanel jPanelDocMapDummy;
+    private javax.swing.JPanel jPanelDocTable;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;

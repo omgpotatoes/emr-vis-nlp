@@ -1,4 +1,4 @@
-package emr_vis_nlp.view;
+package emr_vis_nlp.view.doc_map;
 
 import java.awt.geom.Rectangle2D;
 import java.util.*;

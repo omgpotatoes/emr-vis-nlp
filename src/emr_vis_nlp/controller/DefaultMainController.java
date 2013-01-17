@@ -3,7 +3,7 @@ package emr_vis_nlp.controller;
 import emr_vis_nlp.model.*;
 import emr_vis_nlp.model.mpqa_colon.Document;
 import emr_vis_nlp.view.DocFocusPopup;
-import emr_vis_nlp.view.DocumentTreeMapView;
+import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
 import java.awt.Color;
 import java.io.File;

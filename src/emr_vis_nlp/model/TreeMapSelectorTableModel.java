@@ -1,7 +1,7 @@
 package emr_vis_nlp.model;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.view.DocumentTreeMapView;
+import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JComboBox;

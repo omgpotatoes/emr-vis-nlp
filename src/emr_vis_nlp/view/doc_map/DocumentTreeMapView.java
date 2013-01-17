@@ -1,4 +1,4 @@
-package emr_vis_nlp.view;
+package emr_vis_nlp.view.doc_map;
 
 import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.model.mpqa_colon.Document;
