@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package emr_vis_nlp.view;
 
 import emr_vis_nlp.controller.MainController;

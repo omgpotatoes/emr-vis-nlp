@@ -164,6 +164,14 @@ public class TopMarginSquarifiedTreeMapLayout extends TreeLayout {
      * Compute the tree map layout.
      */
     private void layout(NodeItem p, Rectangle2D r) {
+        
+        // TODO beginning of custom layout code
+        //  at each level, use all of x or y of bounding box 
+        //  (odd == full vert, even == full horizontal [b/c of root])
+        //  (sans buffer space)
+        //  (except for leaves [documents], these can be squarified regularly, 
+        //   and should have extra buffers between elements at this level)
+        
         // create sorted list of children
         Iterator childIter = p.children();
         while ( childIter.hasNext() )
@@ -171,7 +179,19 @@ public class TopMarginSquarifiedTreeMapLayout extends TreeLayout {
         Collections.sort(m_kids, s_cmp);
         
         // do squarified layout of siblings
+        //  w == shortest of height or width
         double w = Math.min(r.getWidth(),r.getHeight());
+        
+//        // retrofit code for even horiz, odd vert
+//        int depth = p.getDepth();
+//        if (depth % 2 == 0) {
+//            w = r.getWidth();
+//        } else {
+//            w = r.getHeight();
+//        }
+        
+        // squarify alters its child list, hence why we need to copy into m_kids
+        // squarify does layoutRow, which actually assigns x, y coords for node block locations / sizes!
         squarify(m_kids, m_row, w, r); 
         m_kids.clear(); // clear m_kids
         
@@ -180,7 +200,13 @@ public class TopMarginSquarifiedTreeMapLayout extends TreeLayout {
         while ( childIter.hasNext() ) {
             NodeItem c = (NodeItem)childIter.next();
             if ( c.getChildCount() > 0 && c.getDouble(AREA) > 0 ) {
+                // updates r wrt. area to be used by c
+                // updates child nodes in c wit areas
                 updateArea(c,r);
+                // recursive method (this)
+                // "squarifies" all children of c
+                // performs updateArea
+                // recursively calls itself
                 layout(c, r);
             }
         }
@@ -215,6 +241,7 @@ public class TopMarginSquarifiedTreeMapLayout extends TreeLayout {
         }
         
         // set bounding rectangle and return
+        //  note: r changes recursively here (by side effect!)
 //        r.setRect(b.getX()+m_frame,       b.getY()+m_frame, 
 //                  b.getWidth()-2*m_frame, b.getHeight()-2*m_frame);
         r.setRect(b.getX() + m_frame, b.getY() + (m_frame*topMarginMult),
@@ -226,6 +253,13 @@ public class TopMarginSquarifiedTreeMapLayout extends TreeLayout {
         double worst = Double.MAX_VALUE, nworst;
         int len;
         
+        //  at each level, use all of x or y of bounding box 
+        //  (odd == full vert, even == full horizontal [b/c of root])
+        //  (sans buffer space)
+        //  (except for leaves [documents], these can be squarified regularly, 
+        //   and should have extra buffers between elements at this level)
+        
+        // c == list of children?
         while ( (len=c.size()) > 0 ) {
             // add item to the row list, ignore if negative area
             VisualItem item = (VisualItem) c.get(len-1);
@@ -236,6 +270,12 @@ public class TopMarginSquarifiedTreeMapLayout extends TreeLayout {
             }
             row.add(item);
             
+            boolean horiz = false;
+            int depth = ((NodeItem)item).getDepth();
+            if (depth % 2 == 0) {
+                horiz = true;
+            }
+            
             nworst = worst(row, w);
             if ( nworst <= worst ) {
                 c.remove(len-1);
@@ -244,6 +284,15 @@ public class TopMarginSquarifiedTreeMapLayout extends TreeLayout {
                 row.remove(row.size()-1); // remove the latest addition
                 r = layoutRow(row, w, r); // layout the current row
                 w = Math.min(r.getWidth(),r.getHeight()); // recompute w
+                                                          //  w == min of row's width or height?
+                
+//                // retrofit for even horiz, odd vert
+//                if (horiz) {
+//                    w = r.getWidth();
+//                } else {
+//                    w = r.getHeight();
+//                }
+                
                 row.clear(); // clear the row
                 worst = Double.MAX_VALUE;
             }
@@ -258,13 +307,17 @@ public class TopMarginSquarifiedTreeMapLayout extends TreeLayout {
         double rmax = Double.MIN_VALUE, rmin = Double.MAX_VALUE, s = 0.0;
         Iterator iter = rlist.iterator();
         while ( iter.hasNext() ) {
+            // r == area of next child in iter?
             double r = ((VisualItem)iter.next()).getDouble(AREA);
             rmin = Math.min(rmin, r);
             rmax = Math.max(rmax, r);
             s += r;
         }
+        //  rmin == smallest area of all items in iter
+        //  rmax == largest area of all items in iter
         s = s*s; w = w*w;
-        return Math.max(w*rmax/s, s/(w*rmin));
+        //  s == sum of areas squared (area of children combined)?, w == area of bounding box squared (area of bounding box)
+        return Math.max(w*rmax/s, s/(w*rmin));  //  max of area of (area of bounding box * area of largest element) / (total area of children) or (total area of children) / (area of bounding box * area of smallest child)
     }
     
     private Rectangle2D layoutRow(List row, double w, Rectangle2D r) {        
@@ -281,6 +334,16 @@ public class TopMarginSquarifiedTreeMapLayout extends TreeLayout {
         while ( rowIter.hasNext() ) {
             NodeItem n = (NodeItem)rowIter.next();
             NodeItem p = (NodeItem)n.getParent();
+            
+//            // if even depth == horiz
+//            // if odd depth == vert
+//            int depth = n.getDepth();
+//            if (depth % 2 == 0) {
+//                horiz = true;
+//            } else {
+//                horiz = false;
+//            }
+            
             if ( horiz ) {
                 setX(n, p, x+d);
                 setY(n, p, y);

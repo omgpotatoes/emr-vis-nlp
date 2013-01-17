@@ -12,9 +12,7 @@ import prefuse.action.ActionList;
 import prefuse.action.RepaintAction;
 import prefuse.action.animate.ColorAnimator;
 import prefuse.action.assignment.ColorAction;
-import prefuse.controls.ControlAdapter;
-import prefuse.controls.PanControl;
-import prefuse.controls.ZoomControl;
+import prefuse.controls.*;
 import prefuse.data.query.SearchQueryBinding;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.ShapeRenderer;
@@ -142,9 +140,10 @@ public class DocumentTreeMapView extends Display {
         });
         
         // add controls
-        addControlListener(new PanControl());  // pan with background left-drag
-        addControlListener(new ZoomControl()); // zoom with vertical right-drag
-
+        addControlListener(new PanControl(Control.RIGHT_MOUSE_BUTTON));  // pan with background left-drag
+        addControlListener(new ZoomControl(Control.MIDDLE_MOUSE_BUTTON));  // zoom with vertical right-drag
+        addControlListener(new WheelZoomControl());  // zoom with wheel
+        
         // perform layout
         m_vis.run("layout");
     }
