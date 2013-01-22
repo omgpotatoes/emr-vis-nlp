@@ -4,6 +4,7 @@ import emr_vis_nlp.controller.MainController;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.Scanner;
 import javax.swing.BorderFactory;
 import prefuse.Constants;
 import prefuse.Display;
@@ -262,33 +263,35 @@ public class DocumentGrid extends Display {
     /*
      * Handles sizing of document glyphs, controls size change of glyph on
      * selection
+     * 
+     * note: this is now handled in renderer and doc glyph control
      */
-    public static class DocGlyphSizeAction extends SizeAction {
-        
-        public static final double HOVER_SIZE_MULT = 4.5;
-        public static final double BASE_SIZE = 10;
-        
-        public DocGlyphSizeAction(String group) {
-            // TODO set size relative to # of docs in grid?
-            super(group, BASE_SIZE);
-//            super(group);
-        }
-        
-        public DocGlyphSizeAction() {
-            super();
-        }
-        
-        // size should blow up on hover / click
-        @Override
-        public double getSize(VisualItem item) {
-//            NodeItem nitem = (NodeItem) item;
-            if (item.isHover()) {
-                return super.getSize(item) * HOVER_SIZE_MULT;
-            }
-            return super.getSize(item);
-        }
-        
-    }
+//    public static class DocGlyphSizeAction extends SizeAction {
+//        
+//        public static final double HOVER_SIZE_MULT = 4.5;
+//        public static final double BASE_SIZE = 10;
+//        
+//        public DocGlyphSizeAction(String group) {
+//            // TODO set size relative to # of docs in grid?
+//            super(group, BASE_SIZE);
+////            super(group);
+//        }
+//        
+//        public DocGlyphSizeAction() {
+//            super();
+//        }
+//        
+//        // size should blow up on hover / click
+//        @Override
+//        public double getSize(VisualItem item) {
+////            NodeItem nitem = (NodeItem) item;
+//            if (item.isHover()) {
+//                return super.getSize(item) * HOVER_SIZE_MULT;
+//            }
+//            return super.getSize(item);
+//        }
+//        
+//    }
 
     /*
      * Handles rendering of document glyphs and drawing of document text (for
@@ -306,48 +309,74 @@ public class DocumentGrid extends Display {
         
         @Override
         public void render(Graphics2D g, VisualItem item) {
+            
+            // idea: rather than rendering fixed-size, can we first compute size of text, then set size of item equal to size of text?
+            
+            
+            
+            
             super.render(g, item);
 
             Shape shape = getShape(item);
             if (shape != null) {
-                
-            double xPos = shape.getBounds().getX();
-            double yPos = shape.getBounds().getY();
+
+                double xPos = shape.getBounds().getX();
+                double yPos = shape.getBounds().getY();
 //            double xPos = item.getX();
 //            double yPos = item.getY();
-            String s = item.getString(NODE_NAME);
-            if (item.isHover()) {
-                s = item.getString(NODE_TEXT);
-            }
+                String s = item.getString(NODE_NAME);
+                if (item.isHover()) {
+                    s = item.getString(NODE_TEXT);
+                }
 
-            // TODO set font size based on number of active nodes? based on size of rect?
+                // TODO set font size based on number of active nodes? based on size of rect?
 
-            double width = shape.getBounds().getWidth();
-            double height = shape.getBounds().getHeight();
+                double width = shape.getBounds().getWidth();
+                double height = shape.getBounds().getHeight();
 //            int fontSize = Math.min((int)width, (int) height);
-            int fontSize = 10;
+                int fontSize = 10;
 //            item.setFont(FontLib.getFont("Tahoma", Font.PLAIN, maxFontSize));
-            item.setFont(FontLib.getFont("Tahoma", Font.PLAIN, fontSize));
+                item.setFont(FontLib.getFont("Tahoma", Font.PLAIN, fontSize));
 
-            Font f = item.getFont();
-            FontMetrics fm = g.getFontMetrics(f);
-            int w = fm.stringWidth(s);
-            int h = fm.getAscent();
-            //g.setColor(Color.LIGHT_GRAY);
-            g.setColor(Color.BLACK);
-            g.setFont(f);
+                // note: this does not draw newlines! we will need to handle this ourselves
+                Font f = item.getFont();
+//            FontMetrics fm = g.getFontMetrics(f);
+//            int w = fm.stringWidth(s);
+//            int h = fm.getAscent();
+//            //g.setColor(Color.LIGHT_GRAY);
+//            g.setColor(Color.BLACK);
+//            g.setFont(f);
+//            g.drawString(s, (float) (xPos),
+//                    (float) (yPos + h));
+//            }
+                drawStringMultiline(g, f, s, xPos, yPos);
 
-            
-            g.drawString(s, (float) (xPos),
-                    (float) (yPos + h));
             }
+        
         }
         
     }
     
+    public static void drawStringMultiline(Graphics2D g, Font f, String s, double xPos, double yPos) {
+        FontMetrics fm = g.getFontMetrics(f);
+        int w = fm.stringWidth(s);
+        int h = fm.getAscent();
+        //g.setColor(Color.LIGHT_GRAY);
+        g.setColor(Color.BLACK);
+        g.setFont(f);
+        
+        Scanner lineSplitter = new Scanner(s);
+        int lineCounter = 1;
+        while (lineSplitter.hasNextLine()) {
+            String line = lineSplitter.nextLine();
+            g.drawString(line, (float) (xPos), (float) (yPos + h*lineCounter));
+            lineCounter++;
+        }
+    }
+    
     public class DocGlyphControl extends ControlAdapter {
 
-        public static final double SELECTED_MULT = 10.;
+        public static final double SELECTED_MULT = 30.;
 
         public DocGlyphControl() {
             super();

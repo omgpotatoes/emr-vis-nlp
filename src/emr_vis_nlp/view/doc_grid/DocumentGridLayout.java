@@ -151,7 +151,8 @@ public class DocumentGridLayout extends Layout {
                 double positionX = cellStartX+withinCellOffsetX;
                 double positionY = cellStartY+withinCellOffsetY;
 //                item.setBounds(positionX, positionY, itemWidth, itemHeight);
-              item.setBounds(0, 0, x_max, y_max);  
+//              item.setBounds(0, 0, x_max, y_max);  
+                item.setBounds(Double.MIN_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);  
                 
 //                item.setX(positionX);
 //                item.setY(positionY);
