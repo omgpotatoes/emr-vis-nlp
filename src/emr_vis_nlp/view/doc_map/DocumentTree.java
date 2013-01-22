@@ -1,6 +1,6 @@
 package emr_vis_nlp.view.doc_map;
 
-import emr_vis_nlp.model.mpqa_colon.Document;
+import emr_vis_nlp.model.Document;
 import java.util.*;
 import prefuse.data.Table;
 import prefuse.data.Tree;

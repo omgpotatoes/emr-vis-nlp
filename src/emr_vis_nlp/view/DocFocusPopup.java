@@ -2,7 +2,7 @@ package emr_vis_nlp.view;
 
 import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.model.DocDetailsTableModel;
-import emr_vis_nlp.model.mpqa_colon.Document;
+import emr_vis_nlp.model.Document;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -232,7 +232,7 @@ public class DocFocusPopup extends javax.swing.JFrame {
         // tell controller to stop monitoring this window
         boolean removalSuccess = controller.removeDocDetailsWindow(this);
         // debug
-        System.out.println("debug: doc " + docGlobalID + " popup removed from controller: " + removalSuccess);
+//        System.out.println("debug: doc " + docGlobalID + " popup removed from controller: " + removalSuccess);
 
         // close window
 //        this.dispose();

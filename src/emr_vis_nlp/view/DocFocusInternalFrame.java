@@ -2,7 +2,7 @@ package emr_vis_nlp.view;
 
 import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.model.DocDetailsTableModel;
-import emr_vis_nlp.model.mpqa_colon.Document;
+import emr_vis_nlp.model.Document;
 import java.beans.PropertyVetoException;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;

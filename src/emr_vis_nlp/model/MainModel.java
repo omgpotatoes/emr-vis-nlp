@@ -1,7 +1,6 @@
 
 package emr_vis_nlp.model;
 
-import emr_vis_nlp.model.mpqa_colon.Document;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -38,5 +37,8 @@ public interface MainModel {
     public List<Boolean> getAllSelectedAttributes();
     
     public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId);
+    
+    public TableModel buildSimpleDocGridSelectionTableModel();
+    
     
 }

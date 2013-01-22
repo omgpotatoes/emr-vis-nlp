@@ -8,10 +8,10 @@ import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.model.NullMainModel;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
+import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import java.io.File;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -43,10 +43,19 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
      */
     private TableModel treeMapSelectionTableModel;
     /**
+     * backing model for the document grid attribute selection table
+     */
+    private TableModel docGridSelectionTableModel;
+    /**
      * treemap-holding object for document-oriented layout
      */
 //    private DocumentTreeMapView docTreeMapView;
     private JComponent docTreeMapViewComponent;
+    
+    /*
+     * object for document-grid layout
+     */
+    private DocumentGrid documentGrid;
 
     /**
      * Creates new form MainTabbedView
@@ -97,8 +106,15 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jTextFieldSearch1 = new javax.swing.JTextField();
         jPanelDocMapDummy = new javax.swing.JPanel();
         jPanelDocGrid = new javax.swing.JPanel();
+        jSplitPaneDocGrid = new javax.swing.JSplitPane();
+        jPanelDocGridDummy = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
+        jLabelSearch2 = new javax.swing.JLabel();
+        jTextFieldSearch2 = new javax.swing.JTextField();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        jTableAttrSelection3 = new JTableCombos();
         jPanel3 = new javax.swing.JPanel();
-        jPanel4 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenuFile = new javax.swing.JMenu();
         jMenuItemLoadDataset = new javax.swing.JMenuItem();
@@ -293,44 +309,126 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         jTabbedPane1.addTab("Document Map", jPanelDocMap);
 
+        jPanelDocGrid.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                jPanelDocGridPropertyChange(evt);
+            }
+        });
+
+        jSplitPaneDocGrid.setDividerLocation(200);
+        jSplitPaneDocGrid.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                jSplitPaneDocGridPropertyChange(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanelDocGridDummyLayout = new javax.swing.GroupLayout(jPanelDocGridDummy);
+        jPanelDocGridDummy.setLayout(jPanelDocGridDummyLayout);
+        jPanelDocGridDummyLayout.setHorizontalGroup(
+            jPanelDocGridDummyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 589, Short.MAX_VALUE)
+        );
+        jPanelDocGridDummyLayout.setVerticalGroup(
+            jPanelDocGridDummyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 541, Short.MAX_VALUE)
+        );
+
+        jSplitPaneDocGrid.setRightComponent(jPanelDocGridDummy);
+
+        jLabelSearch2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabelSearch2.setText("Search:");
+
+        jTextFieldSearch2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jTextFieldSearch2ActionPerformed(evt);
+            }
+        });
+
+        jTableAttrSelection3.setAutoCreateRowSorter(true);
+        jTableAttrSelection3.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Attribute Name", "Enabled?"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Boolean.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, true
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane4.setViewportView(jTableAttrSelection3);
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabelSearch2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTextFieldSearch2, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabelSearch2)
+                    .addComponent(jTextFieldSearch2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE))
+        );
+
+        jSplitPaneDocGrid.setLeftComponent(jPanel1);
+
         javax.swing.GroupLayout jPanelDocGridLayout = new javax.swing.GroupLayout(jPanelDocGrid);
         jPanelDocGrid.setLayout(jPanelDocGridLayout);
         jPanelDocGridLayout.setHorizontalGroup(
             jPanelDocGridLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 795, Short.MAX_VALUE)
+            .addComponent(jSplitPaneDocGrid, javax.swing.GroupLayout.Alignment.TRAILING)
         );
         jPanelDocGridLayout.setVerticalGroup(
             jPanelDocGridLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 543, Short.MAX_VALUE)
+            .addComponent(jSplitPaneDocGrid, javax.swing.GroupLayout.Alignment.TRAILING)
         );
 
         jTabbedPane1.addTab("Document Grid", jPanelDocGrid);
+
+        jLabel1.setFont(new java.awt.Font("Tahoma", 0, 36)); // NOI18N
+        jLabel1.setText("Coming Soon! (maybe)");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 795, Short.MAX_VALUE)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGap(32, 32, 32)
+                .addComponent(jLabel1)
+                .addContainerGap(395, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 543, Short.MAX_VALUE)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGap(37, 37, 37)
+                .addComponent(jLabel1)
+                .addContainerGap(462, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Attribute Graph", jPanel3);
-
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 795, Short.MAX_VALUE)
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 543, Short.MAX_VALUE)
-        );
-
-        jTabbedPane1.addTab("Attribute Graph 2", jPanel4);
 
         jMenuFile.setText("File");
 
@@ -437,15 +535,34 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         updateDocTreemapSize();
     }//GEN-LAST:event_jPanelDocMapPropertyChange
 
+    private void jPanelDocGridPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jPanelDocGridPropertyChange
+        updateDocumentGridSize();
+    }//GEN-LAST:event_jPanelDocGridPropertyChange
+
+    private void jSplitPaneDocGridPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jSplitPaneDocGridPropertyChange
+        updateDocumentGridSize();
+    }//GEN-LAST:event_jSplitPaneDocGridPropertyChange
+
+    private void jTextFieldSearch2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldSearch2ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jTextFieldSearch2ActionPerformed
+
     public void updateDocTreemapSize() {
-        
         // update size of treemap
         if (docTreeMapViewComponent != null) {
             int newWidth = docTreeMapViewComponent.getWidth();
             int newHeight = docTreeMapViewComponent.getHeight();
             ((DocumentTreeMapView)docTreeMapViewComponent).resetSize(newWidth, newHeight);
         }
-        
+    }
+    
+    public void updateDocumentGridSize() {
+        // update size of document grid
+        if (documentGrid != null) {
+            int newWidth = documentGrid.getWidth();
+            int newHeight = documentGrid.getHeight();
+            documentGrid.resetSize(newWidth, newHeight);
+        }
     }
     
     public void rebuildDocumentTable() {
@@ -479,11 +596,16 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         TableModel newTreeMapSelectionTableModel = controller.buildSimpleTreeMapSelectionTableModel();
         treeMapSelectionTableModel = newTreeMapSelectionTableModel;
         jTableAttrSelection2.setModel(treeMapSelectionTableModel);
+        
+        // tableModel for grid-based view
+        //jTableAttrSelection2.setModel(attrSelectionTableModel);
+        TableModel newDocGridSelectionTableModel = controller.buildSimpleDocGridSelectionTableModel();
+        docGridSelectionTableModel = newDocGridSelectionTableModel;
+        jTableAttrSelection3.setModel(docGridSelectionTableModel);
 
     }
 
     public void rebuildDocumentTreeMapView() {
-
 //        docTreeMapView = controller.buildDocTreeMapView();
         docTreeMapViewComponent = controller.buildDocTreeMapViewComponent();
 //        jPanelDocTreeHolder.removeAll();
@@ -491,9 +613,14 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 //        jPanelDocTreeHolder.validate();
         jSplitPaneDocMap.setBottomComponent(docTreeMapViewComponent);
         updateDocTreemapSize();
-        
     }
 
+    public void rebuildDocumentGridView() {
+        documentGrid = controller.buildDocumentGrid();
+        jSplitPaneDocGrid.setBottomComponent(documentGrid);
+        updateDocumentGridSize();
+    }
+    
     @Override
     public void resetAllViews() {
 
@@ -509,7 +636,10 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         // query, reload document tree view
         rebuildDocumentTreeMapView();
 
-        // TODO layout additional panels...
+        // reload document grid view
+        rebuildDocumentGridView();
+        
+        // TODO layout additional panels as-needed...
 
 
 
@@ -534,6 +664,12 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         // update treemap view
         rebuildDocumentTreeMapView();
 
+    }
+    
+    @Override
+    public void axisAttrSelectionChanged() {
+        // update relevant panes
+        rebuildDocumentGridView();
     }
 
     /**
@@ -600,27 +736,34 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JFileChooser jFileChooser1;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabelSearch;
     private javax.swing.JLabel jLabelSearch1;
+    private javax.swing.JLabel jLabelSearch2;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenu jMenuFile;
     private javax.swing.JMenuItem jMenuItemLoadDataset;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanelDocGrid;
+    private javax.swing.JPanel jPanelDocGridDummy;
     private javax.swing.JPanel jPanelDocMap;
     private javax.swing.JPanel jPanelDocMapDummy;
     private javax.swing.JPanel jPanelDocTable;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JSplitPane jSplitPaneDocGrid;
     private javax.swing.JSplitPane jSplitPaneDocMap;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTableAttrSelection;
     private javax.swing.JTable jTableAttrSelection2;
+    private javax.swing.JTable jTableAttrSelection3;
     private javax.swing.JTable jTableSimpleDocs;
     private javax.swing.JTextField jTextFieldSearch;
     private javax.swing.JTextField jTextFieldSearch1;
+    private javax.swing.JTextField jTextFieldSearch2;
     // End of variables declaration//GEN-END:variables
 }

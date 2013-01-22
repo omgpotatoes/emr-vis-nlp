@@ -1,7 +1,6 @@
 package emr_vis_nlp.model;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.model.mpqa_colon.Document;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -88,6 +87,11 @@ public class NullMainModel implements MainModel {
     @Override
     public TableModel buildSimpleTreeMapSelectionTableModel() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TableModel buildSimpleDocGridSelectionTableModel() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
     
 }

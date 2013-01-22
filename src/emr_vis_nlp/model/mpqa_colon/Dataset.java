@@ -1,5 +1,6 @@
 package emr_vis_nlp.model.mpqa_colon;
 
+import emr_vis_nlp.model.Document;
 import emr_vis_nlp.utils.SimUtils;
 import java.io.File;
 import java.io.IOException;

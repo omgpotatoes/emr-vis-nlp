@@ -1,7 +1,6 @@
 
 package emr_vis_nlp.model;
 
-import emr_vis_nlp.model.mpqa_colon.Document;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

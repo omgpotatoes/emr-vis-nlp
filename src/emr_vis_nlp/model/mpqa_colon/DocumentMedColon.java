@@ -1,5 +1,6 @@
 package emr_vis_nlp.model.mpqa_colon;
 
+import emr_vis_nlp.model.Document;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -134,12 +135,12 @@ public class DocumentMedColon extends Document {
 
                         if (varType.equals("var")) {
 //                            vars.put(var, val);
-                            attributes.put(var, val);
+                            attributes.put(var, translateValCode(val));
                         } else if (varType.equals("indicator")) {
                             try {
                                 int valInt = Integer.parseInt(val);
 //                                indicators.put(var, valInt);
-                                attributes.put(var, val);
+                                attributes.put(var, translateValCode(val));
                             } catch (ClassCastException e) {
                                 assert false;
                                 e.printStackTrace();
@@ -150,7 +151,7 @@ public class DocumentMedColon extends Document {
                             assert false;
                             System.out.println("DocumentMedColon: unrecognized varType: " + varType);
 //                            vars.put(var, val);
-                                attributes.put(var, val);
+                                attributes.put(var, translateValCode(val));
 
                         }
 
@@ -221,12 +222,12 @@ public class DocumentMedColon extends Document {
 
                         if (varType.equals("var")) {
 //                            vars.put(var, val);
-                                attributes.put(var, val);
+                                attributes.put(var, translateValCode(val));
                         } else if (varType.equals("indicator")) {
                             try {
                                 int valInt = Integer.parseInt(val);
 //                                indicators.put(var, valInt);
-                                attributes.put(var, val);
+                                attributes.put(var, translateValCode(val));
                             } catch (ClassCastException e) {
                                 assert false;
                                 e.printStackTrace();
@@ -237,7 +238,7 @@ public class DocumentMedColon extends Document {
                             assert false;
                             System.out.println("DocumentMedColon: unrecognized varType: " + varType);
 //                            vars.put(var, val);
-                                attributes.put(var, val);
+                                attributes.put(var, translateValCode(val));
 
                         }
 
@@ -300,6 +301,17 @@ public class DocumentMedColon extends Document {
 
         return documentList;
 
+    }
+    
+    public static String translateValCode(String code) {
+        if (code.equals("-1")) {
+            return "not_eligible";
+        } else if (code.equals("0")) {
+            return "eligible";
+        } else if (code.equals("1")){
+            return "pass";
+        }
+        return code;
     }
 
     // TODO refactor parsing, similarity code

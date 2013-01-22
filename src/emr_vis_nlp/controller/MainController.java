@@ -3,6 +3,7 @@ package emr_vis_nlp.controller;
 
 import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.view.MainView;
+import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import java.io.File;
 import java.util.List;
 import javax.swing.JComponent;
@@ -44,6 +45,11 @@ public interface MainController {
     public void attributeSelectionUpdated(List<Boolean> attributesEnabled);
     
     public void documentAttributesUpdated(int docGlobalID);
+    
+    // for document grid view
+    public DocumentGrid buildDocumentGrid();
+    public TableModel buildSimpleDocGridSelectionTableModel();
+    public void updateDocGridAttributes();
     
     
 }

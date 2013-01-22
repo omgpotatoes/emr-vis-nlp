@@ -13,4 +13,6 @@ public interface MainView {
     
     public void orderedAttrSelectionChanged();
     
+    public void axisAttrSelectionChanged();
+    
 }

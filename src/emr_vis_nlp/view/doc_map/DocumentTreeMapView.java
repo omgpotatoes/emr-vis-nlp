@@ -1,7 +1,7 @@
 package emr_vis_nlp.view.doc_map;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.model.mpqa_colon.Document;
+import emr_vis_nlp.model.Document;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
@@ -367,7 +367,7 @@ public class DocumentTreeMapView extends Display {
         }
 
         protected Shape getRawShape(VisualItem item) {
-            // TODO shrink rectangle; leave a border, plus space at top for title
+            // TODO leave space between document-representing rects?
             Rectangle2D rect = item.getBounds();
 //            double x = rect.getX() + RECT_BUFFER;
 //            double y = rect.getY() + RECT_BUFFER;
@@ -395,7 +395,7 @@ public class DocumentTreeMapView extends Display {
 //                String s = item.getString(m_label);
             String s = item.getString(nodeName);
 
-            // TODO set font size based on depth in tree
+            // set font size based on depth in tree
             //int maxFontSize = 16;
             int maxFontSize = 22;
             int minFontSize = 12;
@@ -412,7 +412,6 @@ public class DocumentTreeMapView extends Display {
             g.setColor(Color.BLACK);
             g.setFont(f);
 
-            // TODO move string to top (if node is non-leaf
 //            if ( ((NodeItem)item).getDepth() == 1 ) {
 //                g.drawString(s, (float)(b.getCenterX()-w/2.0),
 //                                (float)(b.getCenterY()+h/2));

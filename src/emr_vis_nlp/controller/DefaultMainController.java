@@ -1,23 +1,22 @@
 package emr_vis_nlp.controller;
 
 import emr_vis_nlp.model.*;
-import emr_vis_nlp.model.mpqa_colon.Document;
+import emr_vis_nlp.model.Document;
 import emr_vis_nlp.view.DocFocusPopup;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
-import java.awt.Color;
+import emr_vis_nlp.view.doc_grid.DocumentGrid;
+import emr_vis_nlp.view.doc_grid.DocumentGridTable;
 import java.io.File;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.table.TableModel;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import prefuse.data.Table;
 
 /**
  *
@@ -50,6 +49,14 @@ public class DefaultMainController implements MainController {
      * current treemap view attr selection model (if any)
      */
     private TableModel docTreeMapSelectionModel = null;
+    /**
+     * current doc grid view attr selection model (if any)
+     */
+    private TableModel docGridSelectionModel = null;
+    /**
+     * current document grid component (if any)
+     */
+    private DocumentGrid documentGrid = null;
 
     public DefaultMainController() {
         activePopups = new ArrayList<>();
@@ -143,20 +150,7 @@ public class DefaultMainController implements MainController {
     @Override
     public JComponent buildDocTreeMapViewComponent() {
 
-        // get selected attributes
-        // FIXME provide proper ordering controls!
-//        List<String> selectedAttrsForTree = new ArrayList<>();
-//        List<String> allAttributes = model.getAllAttributes();
-//        List<Boolean> allSelectedAttributes = model.getAllSelectedAttributes();
-//        for (int a=0; a<allAttributes.size(); a++) {
-//            String attr = allAttributes.get(a);
-//            boolean isSelected = allSelectedAttributes.get(a);
-//            if (isSelected) {
-//                selectedAttrsForTree.add(attr);
-//            }
-//        }
-
-
+        // get selected attributes from interface
         List<String> selectedAttrsForTree = new ArrayList<>();
         if (docTreeMapSelectionModel != null) {
             TreeMapSelectorTableModel treeMapSelectorTableModel = (TreeMapSelectorTableModel) docTreeMapSelectionModel;
@@ -513,4 +507,43 @@ public class DefaultMainController implements MainController {
         view.orderedAttrSelectionChanged();
 
     }
+    
+    @Override
+    public DocumentGrid buildDocumentGrid() {
+        
+        String xAxisAttrName = "Indicator_9";
+        String yAxisAttrName = "Indicator_21";
+        if (docGridSelectionModel != null) {
+            xAxisAttrName = ((DocGridTableSelectorModel)docGridSelectionModel).getXAxisAttribute();
+            yAxisAttrName = ((DocGridTableSelectorModel)docGridSelectionModel).getYAxisAttribute();
+        }
+        
+        // build table for grid
+        DocumentGridTable documentGridTable = new DocumentGridTable(model.getAllAttributes(), model.getAllDocuments(), model.getAllSelectedDocuments());
+        // build, return grid (while maintaining reference)
+        documentGrid = new DocumentGrid(this, documentGridTable, xAxisAttrName, yAxisAttrName);
+        return documentGrid;
+        
+    }
+    
+    @Override
+    public void updateDocGridAttributes() {
+        
+        // get selected attrs for x, y axes from tablemodel
+        DocGridTableSelectorModel gridSelectorTableModel = (DocGridTableSelectorModel) docGridSelectionModel;
+        String xAxisAttr = gridSelectorTableModel.getXAxisAttribute();
+        String yAxisAttr = gridSelectorTableModel.getYAxisAttribute();
+        
+        view.axisAttrSelectionChanged();
+        
+    }
+    
+    @Override
+    public TableModel buildSimpleDocGridSelectionTableModel() {
+
+        TableModel newDocGridSelectionTableModel = model.buildSimpleDocGridSelectionTableModel();
+        docGridSelectionModel = newDocGridSelectionTableModel;
+        return docGridSelectionModel;
+    }
+    
 }

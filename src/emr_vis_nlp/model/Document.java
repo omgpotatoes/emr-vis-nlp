@@ -1,9 +1,10 @@
-package emr_vis_nlp.model.mpqa_colon;
+package emr_vis_nlp.model;
 
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import emr_vis_nlp.model.mpqa_colon.TextInstance;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
