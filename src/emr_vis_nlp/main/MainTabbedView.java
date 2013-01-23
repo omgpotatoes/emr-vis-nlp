@@ -8,10 +8,12 @@ import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.model.NullMainModel;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
+import emr_vis_nlp.view.VarDatasetRatioRenderer;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import java.io.File;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JPanel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -369,6 +371,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
                 return canEdit [columnIndex];
             }
         });
+        jTableAttrSelection3.setDefaultRenderer(JPanel.class, new VarDatasetRatioRenderer());
         jScrollPane4.setViewportView(jTableAttrSelection3);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);

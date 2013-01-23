@@ -2,10 +2,13 @@
 package emr_vis_nlp.model;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
+import emr_vis_nlp.view.VarBarChartForCell;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JComboBox;
+import javax.swing.JPanel;
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -15,6 +18,9 @@ import javax.swing.table.AbstractTableModel;
 public class DocGridTableSelectorModel extends AbstractTableModel {
     
     public static final String NOT_SEL_MSG = "(not selected)";
+    
+    private static Map<String, Boolean> abnormalNamesMap = null;
+    
     /**
      * controller to which this model is responsible
      */
@@ -23,6 +29,14 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
      * list of all attribute names
      */
     private List<String> allAttributes;
+    /**
+     * indicates whether row is selectable as axis
+     */
+    private List<Boolean> canSelect;
+    /**
+     * list of varBarCharts to be displayed within the table
+     */
+    private List<JPanel> distribDisplays;
     /**
      * list of jcomboboxes for selecting active attributes
      */
@@ -62,7 +76,28 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
             }
             
         }
-
+        
+        // build varBarCharts
+        getAbnormalNameMap();
+        distribDisplays = new ArrayList<>();
+        canSelect = new ArrayList<>();
+        for (int a = 0; a < allAttributes.size(); a++) {
+//            if (a == 0) {
+//                selectedFor2dPosition.add(true);
+//                selectedForCluster.add(false);
+//            } else {
+            String name = allAttributes.get(a);
+            if (abnormalNamesMap.containsKey(name)) {
+                canSelect.add(false);
+            } else {
+                canSelect.add(true);
+            }
+            // build varBarChart
+            VarBarChartForCell barChart = controller.getVarBarChartForCell(name);
+            distribDisplays.add(barChart);
+//            }
+        }
+        
     }
 
     private void validateTableSelections(int updatedRow) {
@@ -96,7 +131,7 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return 2;
+        return 3;
     }
 
     @Override
@@ -105,6 +140,8 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
             return "Attribute Name";
         } else if (columnIndex == 1) {
             return "Axis";
+        } else if (columnIndex == 2) {
+            return "Skew";
         }
         return "";
     }
@@ -115,6 +152,8 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
             return allAttributes.get(rowIndex);
         } else if (columnIndex == 1) {
             return allAttributesSelectorBoxes.get(rowIndex);
+        } else if (columnIndex == 2) {
+            return distribDisplays.get(rowIndex);
         }
         return null;
     }
@@ -124,7 +163,13 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         if (columnIndex == 0) {
             return false;
         } else if (columnIndex == 1) {
-            return true;
+            // ensure that we're in a valid row
+            if (canSelect.get(rowIndex).booleanValue()) {
+                return true;
+            }
+            return false;
+        } else if (columnIndex == 2) {
+            return false;
         }
         return false;
     }
@@ -135,6 +180,8 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
             return String.class;
         } else if (columnIndex == 1) {
             return JComboBox.class;
+        } else if (columnIndex == 2) {
+            return JPanel.class;
         }
         return String.class;
     }
@@ -143,15 +190,14 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
     public void setValueAt(Object value, int rowIndex, int columnIndex) {
 
         if (columnIndex == 1) {
-
-            // check to ensure that there are no duplicate selections
-            validateTableSelections(rowIndex);
-
-            // inform controller of change
-            controller.updateDocGridAttributes();
-
+            if (canSelect.get(rowIndex).booleanValue()) {
+                // check to ensure that there are no duplicate selections
+                validateTableSelections(rowIndex);
+                // inform controller of change
+                controller.updateDocGridAttributes();
+            }
         }
-        
+
     }
     
     public String getXAxisAttribute() {
@@ -183,6 +229,69 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         return "";
         
     }
+    
+    /**
+     * Builds map of abnormal var names (for which we shouldn't expect to have 3 nice categories)
+     * 
+     * @return 
+     */
+    public static Map<String, Boolean> getAbnormalNameMap() {
+        if (abnormalNamesMap != null) {
+            return abnormalNamesMap;
+        }
+
+        Map<String, Boolean> abnormalVarNames = new HashMap<>();
+
+        abnormalVarNames.put("text", true);
+        abnormalVarNames.put("VAR_Indication_type", true);
+        abnormalVarNames.put("VAR_Indication_Type_2", true);
+        abnormalVarNames.put("VAR_Indication_Type_3", true);
+        abnormalVarNames.put("VAR_Pathology_Report_#", true);
+        abnormalVarNames.put("VAR_Polyp_size_largest", true);
+        abnormalVarNames.put("VAR_Polyp_size_path", true);
+        abnormalVarNames.put("VAR_Follow-up_time", true);
+        abnormalVarNames.put("VAR_Nursing_Reports", true);
+        abnormalVarNames.put("VAR_FH", true);
+        abnormalVarNames.put("VAR_ASA", true);
+        
+        // new abnormals, based on debugging from varbarchart
+        abnormalVarNames.put("VAR_Ileo-cecal_valve", true);
+        abnormalVarNames.put("VAR_Prep_adequate", true);
+        abnormalVarNames.put("VAR_Any_complication", true);
+        abnormalVarNames.put("VAR_Informed_consent", true);
+        abnormalVarNames.put("VAR_Appendiceal_orifice", true);
+        abnormalVarNames.put("VAR_Prev_colonoscopy", true);
+        abnormalVarNames.put("VAR_No_polyp", true);
+        abnormalVarNames.put("VAR_No_Pathology_Report", true);
+
+        // lowercase versions
+        abnormalVarNames.put("VAR_Indication_type".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Indication_Type_2".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Indication_Type_3".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Pathology_Report_#".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Polyp_size_largest".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Polyp_size_path".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Follow-up_time".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Nursing_Reports".toLowerCase(), true);
+        abnormalVarNames.put("VAR_FH".toLowerCase(), true);
+        abnormalVarNames.put("VAR_ASA".toLowerCase(), true);
+        // lowercase versions of new abnormals, based on debugging from varbarchart
+        abnormalVarNames.put("VAR_Ileo-cecal_valve".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Prep_adequate".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Any_complication".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Informed_consent".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Appendiceal_orifice".toLowerCase(), true);
+        abnormalVarNames.put("VAR_Prev_colonoscopy".toLowerCase(), true);
+        abnormalVarNames.put("VAR_No_polyp".toLowerCase(), true);
+        abnormalVarNames.put("VAR_No_Pathology_Report".toLowerCase(), true);
+        
+        abnormalNamesMap = abnormalVarNames;
+        return abnormalVarNames;
+
+    }
+    
+    
+    
     
 //    public List<String> getSelectedAttributeList() {
 //        

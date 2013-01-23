@@ -422,6 +422,7 @@
                           </Properties>
                           <AuxValues>
                             <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTableCombos();"/>
+                            <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="jTableAttrSelection3.setDefaultRenderer(JPanel.class, new VarDatasetRatioRenderer());"/>
                           </AuxValues>
                         </Component>
                       </SubComponents>

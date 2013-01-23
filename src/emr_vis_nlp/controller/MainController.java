@@ -3,6 +3,7 @@ package emr_vis_nlp.controller;
 
 import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.view.MainView;
+import emr_vis_nlp.view.VarBarChartForCell;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import java.io.File;
 import java.util.List;
@@ -50,6 +51,7 @@ public interface MainController {
     public DocumentGrid buildDocumentGrid();
     public TableModel buildSimpleDocGridSelectionTableModel();
     public void updateDocGridAttributes();
+    public VarBarChartForCell getVarBarChartForCell(String attrName);
     
     
 }

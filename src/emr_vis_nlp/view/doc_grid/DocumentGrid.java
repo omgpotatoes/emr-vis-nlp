@@ -3,6 +3,7 @@ package emr_vis_nlp.view.doc_grid;
 import emr_vis_nlp.controller.MainController;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.geom.RectangularShape;
 import java.util.List;
 import java.util.Scanner;
 import javax.swing.BorderFactory;
@@ -12,7 +13,6 @@ import prefuse.Visualization;
 import prefuse.action.ActionList;
 import prefuse.action.RepaintAction;
 import prefuse.action.assignment.ColorAction;
-import prefuse.action.assignment.SizeAction;
 import prefuse.action.layout.AxisLabelLayout;
 import prefuse.controls.*;
 import prefuse.data.query.ObjectRangeModel;
@@ -119,6 +119,7 @@ public class DocumentGrid extends Display {
             yAxisInitObjs[i] = yAxisInitCategories.get(i);
         }
         yAxisInitObjs[yAxisInitObjs.length-1] = "";
+        Rectangle bounds = getBounds();
         ObjectRangeModel xAxisRangeModel = new ObjectRangeModel(xAxisInitObjs);
         ObjectRangeModel yAxisRangeModel = new ObjectRangeModel(yAxisInitObjs);
         AxisLabelLayout axisLabelLayoutX = new AxisLabelLayout(X_LABEL, Constants.X_AXIS, xAxisRangeModel);
@@ -167,7 +168,7 @@ public class DocumentGrid extends Display {
         // set up various doc-glyph interaction controls
         addControlListener(new DocGlyphControl());
         // zoom with wheel
-        addControlListener(new WheelZoomControl());
+//        addControlListener(new WheelZoomControl());
         // zoom with background right-drag
 //        addControlListener(new ZoomControl(Control.RIGHT_MOUSE_BUTTON));
         // pan with background left-drag
@@ -309,13 +310,8 @@ public class DocumentGrid extends Display {
         
         @Override
         public void render(Graphics2D g, VisualItem item) {
-            
+
             // idea: rather than rendering fixed-size, can we first compute size of text, then set size of item equal to size of text?
-            
-            
-            
-            
-            super.render(g, item);
 
             Shape shape = getShape(item);
             if (shape != null) {
@@ -331,8 +327,6 @@ public class DocumentGrid extends Display {
 
                 // TODO set font size based on number of active nodes? based on size of rect?
 
-                double width = shape.getBounds().getWidth();
-                double height = shape.getBounds().getHeight();
 //            int fontSize = Math.min((int)width, (int) height);
                 int fontSize = 10;
 //            item.setFont(FontLib.getFont("Tahoma", Font.PLAIN, maxFontSize));
@@ -349,11 +343,63 @@ public class DocumentGrid extends Display {
 //            g.drawString(s, (float) (xPos),
 //                    (float) (yPos + h));
 //            }
+                
+                // compute width, height for the given text
+                int[] textDims = getTextDims(g, f, s);
+                int textWidth = textDims[0];
+                int textHeight = textDims[1];
+                if ( shape instanceof RectangularShape ) {
+                    RectangularShape r = (RectangularShape) shape;
+                    double x = r.getX();
+                    double y = r.getY();
+                    
+                    // use our own painting code, for fine-grained control of size
+                    // TODO move this into separate method, add code for more robust glyph vis.? see prefuse.util.GraphicsLib.paint()
+                    Color strokeColor = ColorLib.getColor(item.getStrokeColor());
+                    Color fillColor = ColorLib.getColor(item.getFillColor());
+                    
+                    g.setPaint(fillColor);
+                    g.fillRect((int)x, (int)y, textWidth, textHeight);
+                    g.setPaint(strokeColor);
+                    g.drawRect((int)x, (int)y, textWidth, textHeight);
+                    
+                }
+                
+//            super.render(g, item);
+                
                 drawStringMultiline(g, f, s, xPos, yPos);
 
             }
-        
+
         }
+
+    }
+    
+    public static int[] getTextDims(Graphics2D g, Font f, String s) {
+
+        // [0] == max width of all lines
+        // [1] == total height
+        int[] textDims = new int[2];
+
+        FontMetrics fm = g.getFontMetrics(f);
+        int lineH = fm.getAscent();
+
+        Scanner lineSplitter = new Scanner(s);
+        int maxW = -1;
+        int lineCounter = 0;
+        while (lineSplitter.hasNextLine()) {
+            String line = lineSplitter.nextLine();
+            int w = fm.stringWidth(line);
+            if (w > maxW) {
+                maxW = w;
+            }
+            lineCounter++;
+        }
+        int h = lineH * lineCounter;
+
+        textDims[0] = maxW;
+        textDims[1] = h;
+        return textDims;
         
     }
     

@@ -5,6 +5,7 @@ import emr_vis_nlp.model.Document;
 import emr_vis_nlp.view.DocFocusPopup;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
+import emr_vis_nlp.view.VarBarChartForCell;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import emr_vis_nlp.view.doc_grid.DocumentGridTable;
 import java.io.File;
@@ -16,7 +17,6 @@ import javax.swing.text.AbstractDocument;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-import prefuse.data.Table;
 
 /**
  *
@@ -544,6 +544,12 @@ public class DefaultMainController implements MainController {
         TableModel newDocGridSelectionTableModel = model.buildSimpleDocGridSelectionTableModel();
         docGridSelectionModel = newDocGridSelectionTableModel;
         return docGridSelectionModel;
+    }
+    
+    @Override
+    public VarBarChartForCell getVarBarChartForCell(String attrName) {
+        VarBarChartForCell varBarChart = new VarBarChartForCell(attrName, model.getAllDocuments());
+        return varBarChart;
     }
     
 }
