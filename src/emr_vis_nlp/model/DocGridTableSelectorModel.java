@@ -17,7 +17,8 @@ import javax.swing.table.AbstractTableModel;
  */
 public class DocGridTableSelectorModel extends AbstractTableModel {
     
-    public static final String NOT_SEL_MSG = "(not selected)";
+//    public static final String NOT_SEL_MSG = "(not selected)";
+    public static final String NOT_SEL_MSG = "";
     
     private static Map<String, Boolean> abnormalNamesMap = null;
     
@@ -55,7 +56,7 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         // build list of possible combo box items
         // TODO more interesting / informative selection options? better selection method beyond jcombobox?
         optionList = new String[numOptions];
-        optionList[0] = "(not selected)";
+        optionList[0] = NOT_SEL_MSG;
         optionList[1] = "x_axis";
         optionList[2] = "y_axis";
 //        for (int i = 1; i < numOptions; i++) {
@@ -290,41 +291,6 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
 
     }
     
-    
-    
-    
-//    public List<String> getSelectedAttributeList() {
-//        
-//        List<String> selectedAttributeList = new ArrayList<>();
-//        for (int i=0; i<numOptions-1; i++) {
-//            selectedAttributeList.add("");
-//        }
-//        
-//        for (int r=0; r<allAttributesSelectorBoxes.size(); r++) {
-//            try {
-//                int rowSelectorVal = Integer.parseInt(allAttributesSelectorBoxes.get(r).getSelectedItem().toString().substring(0, 1));
-//                String rowAttrName = allAttributes.get(r);
-//                for (int a=0; a<selectedAttributeList.size(); a++) {
-//                    if (rowSelectorVal-1 == a) {
-//                        selectedAttributeList.remove(a);
-//                        selectedAttributeList.add(a, rowAttrName);
-//                    }
-//                }
-//            } catch (NumberFormatException e) {
-//            }
-//
-//        }
-//        
-//        // remove all blanks
-//        for (int a=0; a<selectedAttributeList.size(); a++) {
-//            if (selectedAttributeList.get(a).equals("")) {
-//                selectedAttributeList.remove(a);
-//            }
-//        }
-//        
-//        return selectedAttributeList;
-//        
-//    }
     
     
 }

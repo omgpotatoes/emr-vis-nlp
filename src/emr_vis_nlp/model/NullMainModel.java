@@ -19,40 +19,38 @@ public class NullMainModel implements MainModel {
     private MainController controller;
 
     public NullMainModel(MainController controller) {
-
         this.controller = controller;
-
     }
 
-    @Override
-    public void loadDataFromDoclist(String doclistPath) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void loadDataFromDoclist(File doclist) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void applySimpleStringFilter(String str) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public DocTableModel buildSimpleDocTableModel() {
-        throw new UnsupportedOperationException();
-    }
-    
-    @Override
-    public AttrTableModel buildSimpleAttrSelectionTableModel() {
-        throw new UnsupportedOperationException();
-    }
-    
-    @Override
-    public AttrTableModel buildSimpleAttrSelectionTableModelFocusOnly() {
-        throw new UnsupportedOperationException();
-    }
+//    @Override
+//    public void loadDataFromDoclist(String doclistPath) {
+//        throw new UnsupportedOperationException();
+//    }
+//
+//    @Override
+//    public void loadDataFromDoclist(File doclist) {
+//        throw new UnsupportedOperationException();
+//    }
+//
+//    @Override
+//    public void applySimpleStringFilter(String str) {
+//        throw new UnsupportedOperationException();
+//    }
+//
+//    @Override
+//    public DocTableModel buildSimpleDocTableModel() {
+//        throw new UnsupportedOperationException();
+//    }
+//    
+//    @Override
+//    public AttrTableModel buildSimpleAttrSelectionTableModel() {
+//        throw new UnsupportedOperationException();
+//    }
+//    
+//    @Override
+//    public AttrTableModel buildSimpleAttrSelectionTableModelFocusOnly() {
+//        throw new UnsupportedOperationException();
+//    }
     
     @Override
     public void setSelectedAttributes(List<Boolean> selectedAttributes) {
@@ -84,13 +82,18 @@ public class NullMainModel implements MainModel {
         throw new UnsupportedOperationException();
     }
     
-    @Override
-    public TableModel buildSimpleTreeMapSelectionTableModel() {
-        throw new UnsupportedOperationException();
-    }
+//    @Override
+//    public TableModel buildSimpleTreeMapSelectionTableModel() {
+//        throw new UnsupportedOperationException();
+//    }
+//
+//    @Override
+//    public TableModel buildSimpleDocGridSelectionTableModel() {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
 
     @Override
-    public TableModel buildSimpleDocGridSelectionTableModel() {
+    public Map<String, Integer> getAttributeValueCountMap(String attrName) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     

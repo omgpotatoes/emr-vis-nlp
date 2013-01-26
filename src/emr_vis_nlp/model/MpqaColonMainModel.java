@@ -7,6 +7,7 @@ import java.util.*;
 import javax.swing.table.TableModel;
 
 /**
+ * MainModel designed to represent the MPQA-style dataset (as referenced by XML doclist).
  *
  * @author alexander.p.conrad@gmail.com
  */
@@ -57,12 +58,12 @@ public class MpqaColonMainModel implements MainModel {
 
     }
 
-    @Override
+//    @Override
     public void loadDataFromDoclist(String doclistPath) {
         loadDataFromDoclist(new File(doclistPath));
     }
 
-    @Override
+//    @Override
     public void loadDataFromDoclist(File doclist) {
         dataset = Dataset.loadDatasetFromDoclist(doclist);
         documentList = dataset.getDocuments();
@@ -92,24 +93,24 @@ public class MpqaColonMainModel implements MainModel {
         }
     }
 
-    @Override
-    public DocTableModel buildSimpleDocTableModel() {
-        DocTableModel docTableModel = new DocTableModel(documentList, documentEnabledList, attributeList, attributeEnabledList);
-        return docTableModel;
-    }
-    
-    @Override
-    public AttrTableModel buildSimpleAttrSelectionTableModel() {
-        AttrTableModel attrTableModel = new AttrTableModel(attributeList, attributeEnabledList, controller);
-        return attrTableModel;
-    }
-    
-    @Override
-    public AttrTableModel buildSimpleAttrSelectionTableModelFocusOnly() {
-        throw new UnsupportedOperationException("Not supported yet.");
-//        AttrTableModel attrTableModel = new AttrTableModel(getFocusAttrs(), attributeEnabledList, controller);
+//    @Override
+//    public DocTableModel buildSimpleDocTableModel() {
+//        DocTableModel docTableModel = new DocTableModel(documentList, documentEnabledList, attributeList, attributeEnabledList);
+//        return docTableModel;
+//    }
+//    
+//    @Override
+//    public AttrTableModel buildSimpleAttrSelectionTableModel() {
+//        AttrTableModel attrTableModel = new AttrTableModel(attributeList, attributeEnabledList, controller);
 //        return attrTableModel;
-    }
+//    }
+//    
+//    @Override
+//    public AttrTableModel buildSimpleAttrSelectionTableModelFocusOnly() {
+//        throw new UnsupportedOperationException("Not supported yet.");
+////        AttrTableModel attrTableModel = new AttrTableModel(getFocusAttrs(), attributeEnabledList, controller);
+////        return attrTableModel;
+//    }
     
     @Override
     public void setSelectedAttributes(List<Boolean> selectedAttributes) {
@@ -220,6 +221,71 @@ public class MpqaColonMainModel implements MainModel {
     	
     }
     
+    @Override
+    public Map<String, Integer> getAttributeValueCountMap(String attrName) {
+        // first, see if attribute is in dataset
+        boolean attrInDataset = false;
+        for (String attr : attributeList) {
+            if (attr.equalsIgnoreCase(attrName)) {
+                attrInDataset = true; break;
+            }
+        }
+        if (!attrInDataset) {
+            System.err.print("MpqaColonMainModel.getAttributeValues: attr "+attrName+" not in dataset");
+            return new HashMap<>();
+        }
+        
+        // iterate over all docs, finding all possible vals
+        Map<String, Integer> valCountMap = new HashMap<>();
+//        List<String> vals = new ArrayList<>();
+        for (Document doc : documentList) {
+            // get val from doc
+            String val = "";
+            Map<String, String> attrMap = doc.getAttributes();
+            if (attrMap.containsKey(attrName)) {
+                val = attrMap.get(attrName);
+            }
+            // insert / increment val
+            if (!valCountMap.containsKey(val)) {
+                valCountMap.put(val, 1);
+//                vals.add(val);
+            } else {
+                valCountMap.put(val, valCountMap.get(val)+1);
+            }
+        }
+        return valCountMap;
+        
+    }
+    
+//    @Override
+//    public TableModel buildSimpleTreeMapSelectionTableModel() {
+//        TreeMapSelectorTableModel treeMapTableModel = new TreeMapSelectorTableModel(attributeList, controller);
+//        return treeMapTableModel;
+//    }
+//    
+//    @Override
+//    public TableModel buildSimpleDocGridSelectionTableModel() {
+//        TableModel docGridTableModel = new DocGridTableSelectorModel(attributeList, controller);
+//        return docGridTableModel;
+//    }
+
+    @Override
+    public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId) {
+        
+        // TODO
+        
+        
+        
+        
+        
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
+    
+    
+    
+    
+    
     public static Map<String, Boolean> getFocusAttrsMap() {
         
         if (focusAttrsMap != null) {
@@ -235,30 +301,6 @@ public class MpqaColonMainModel implements MainModel {
         
         return focusAttrsMap;
         
-    }
-    
-    @Override
-    public TableModel buildSimpleTreeMapSelectionTableModel() {
-        TableModel treeMapTableModel = new TreeMapSelectorTableModel(attributeList, controller);
-        return treeMapTableModel;
-    }
-    
-    @Override
-    public TableModel buildSimpleDocGridSelectionTableModel() {
-        TableModel docGridTableModel = new DocGridTableSelectorModel(attributeList, controller);
-        return docGridTableModel;
-    }
-
-    @Override
-    public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId) {
-        
-        // TODO
-        
-        
-        
-        
-        
-        throw new UnsupportedOperationException("Not supported yet.");
     }
     
 }

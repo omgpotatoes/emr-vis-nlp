@@ -19,7 +19,10 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
 /**
- *
+ * Fulfills the Controller role of the MVC design pattern. 
+ * (Q: do we even need an interface for this? would we ever want to use a different controller? Would we ever want to have different implementations for these methods?)
+ * // TODO refactor MainController as abstract, this class as extension of DefaultMainController
+ * 
  * @author alexander.p.conrad@gmail.com
  */
 public class DefaultMainController implements MainController {
@@ -80,7 +83,7 @@ public class DefaultMainController implements MainController {
         // load new model from doclist
         // TODO add support for dataset types beyond MpqaColon
         model = new MpqaColonMainModel(this);
-        model.loadDataFromDoclist(file);
+        ((MpqaColonMainModel)model).loadDataFromDoclist(file);
 
         // update view
         // TODO
@@ -95,10 +98,10 @@ public class DefaultMainController implements MainController {
      */
     @Override
     public void applySimpleStringFilter(String str) {
-        model.applySimpleStringFilter(str);
+        throw new UnsupportedOperationException();  // TODO
+//        model.applySimpleStringFilter(str);  // no longer part of model?
         // update components as appropriate
-        // TODO
-        view.resetAllViews();
+//        view.resetAllViews();
 
     }
 
@@ -110,7 +113,8 @@ public class DefaultMainController implements MainController {
      */
     @Override
     public TableModel buildSimpleDocTableModel() {
-        TableModel docTableModel = model.buildSimpleDocTableModel();
+        DocTableModel docTableModel = new DocTableModel(model.getAllDocuments(), model.getAllSelectedDocuments(), model.getAllAttributes(), model.getAllSelectedAttributes());
+//        TableModel docTableModel = model.buildSimpleDocTableModel();
         return docTableModel;
     }
 
@@ -121,8 +125,9 @@ public class DefaultMainController implements MainController {
      */
     @Override
     public TableModel buildSimpleAttrSelectionTableModel() {
-        TableModel attrSelectionTableModel = model.buildSimpleAttrSelectionTableModel();
-        return attrSelectionTableModel;
+        AttrTableModel attrTableModel = new AttrTableModel(model.getAllAttributes(), model.getAllSelectedAttributes(), this);
+//        TableModel attrSelectionTableModel = model.buildSimpleAttrSelectionTableModel();
+        return attrTableModel;
     }
 
     @Override
@@ -171,8 +176,8 @@ public class DefaultMainController implements MainController {
 
     @Override
     public TableModel buildSimpleTreeMapSelectionTableModel() {
-
-        TableModel newDocTreeMapSelectionTableModel = model.buildSimpleTreeMapSelectionTableModel();
+        TreeMapSelectorTableModel newDocTreeMapSelectionTableModel = new TreeMapSelectorTableModel(model.getAllAttributes(), this);
+//        TableModel newDocTreeMapSelectionTableModel = model.buildSimpleTreeMapSelectionTableModel();
         docTreeMapSelectionModel = newDocTreeMapSelectionTableModel;
         return docTreeMapSelectionModel;
     }
@@ -540,9 +545,9 @@ public class DefaultMainController implements MainController {
     
     @Override
     public TableModel buildSimpleDocGridSelectionTableModel() {
-
-        TableModel newDocGridSelectionTableModel = model.buildSimpleDocGridSelectionTableModel();
-        docGridSelectionModel = newDocGridSelectionTableModel;
+        DocGridTableSelectorModel newDocGridTableModel = new DocGridTableSelectorModel(model.getAllAttributes(), this);
+//        TableModel newDocGridSelectionTableModel = model.buildSimpleDocGridSelectionTableModel();
+        docGridSelectionModel = newDocGridTableModel;
         return docGridSelectionModel;
     }
     
