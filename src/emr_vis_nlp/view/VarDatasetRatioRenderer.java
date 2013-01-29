@@ -46,9 +46,9 @@ public class VarDatasetRatioRenderer extends JLabel implements TableCellRenderer
             return ((Component) value);
         } else {
 //            if (value instanceof String) {
-            if (column == 0) {
+//            if (column == 0) {
                 setToolTipText((String)value);
-            }
+//            }
             return new DefaultTableCellRenderer().getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         }
         

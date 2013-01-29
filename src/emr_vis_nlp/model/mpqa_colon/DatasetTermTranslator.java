@@ -1,6 +1,8 @@
 package emr_vis_nlp.model.mpqa_colon;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -11,8 +13,10 @@ import java.util.Map;
  */
 public class DatasetTermTranslator {
     
+    // mapping 
     private static Map<String, String> valNameMap;
     private static Map<String, String> attrNameMap;
+    private static List<String> defaultValList;
     
     public static void buildValNameMap() {
         valNameMap = new HashMap<>();
@@ -20,6 +24,13 @@ public class DatasetTermTranslator {
         valNameMap.put("", "N/A");
         valNameMap.put("0", "Fail");
         valNameMap.put("1", "Pass");
+    }
+    
+    public static void buildDefaultValList() {
+        defaultValList = new ArrayList<>();
+        defaultValList.add("N/A");
+        defaultValList.add("Fail");
+        defaultValList.add("Pass");
     }
     
     public static void buildAttrNameMap() {
@@ -52,6 +63,11 @@ public class DatasetTermTranslator {
         if (valNameMap == null) buildValNameMap();
         if (valNameMap.containsKey(val)) return valNameMap.get(val);
         return val;
+    }
+    
+    public static List<String> getDefaultValList() {
+        if (defaultValList == null) buildDefaultValList();
+        return defaultValList;
     }
     
     public static String getAttrTranslation(String attrName) {

@@ -1,9 +1,11 @@
 package emr_vis_nlp.view.doc_grid;
 
 import emr_vis_nlp.controller.MainController;
+import emr_vis_nlp.model.mpqa_colon.DatasetTermTranslator;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RectangularShape;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 import javax.swing.BorderFactory;
@@ -14,13 +16,19 @@ import prefuse.action.ActionList;
 import prefuse.action.RepaintAction;
 import prefuse.action.assignment.ColorAction;
 import prefuse.action.layout.AxisLabelLayout;
-import prefuse.controls.*;
+import prefuse.action.layout.graph.ForceDirectedLayout;
+import prefuse.controls.Control;
+import prefuse.controls.ControlAdapter;
+import prefuse.controls.PanControl;
+import prefuse.data.Schema;
 import prefuse.data.query.ObjectRangeModel;
+import prefuse.data.tuple.TupleSet;
 import prefuse.render.AxisRenderer;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.ShapeRenderer;
 import prefuse.util.ColorLib;
 import prefuse.util.FontLib;
+import prefuse.util.force.*;
 import prefuse.visual.VisualItem;
 import prefuse.visual.expression.InGroupPredicate;
 
@@ -45,6 +53,7 @@ public class DocumentGrid extends Display {
     
     public static final String X_LABEL = "xlab";
     public static final String Y_LABEL = "ylab";
+    public static final String ALL_LABEL = "all_label";
     
     public static final String DATA_GROUP = "data";
     
@@ -53,9 +62,13 @@ public class DocumentGrid extends Display {
 //    private AxisLayout axisLayoutY;
 //    private AxisLabelLayout axisLabelLayoutY;
     private DocumentGridLayout documentGridLayout;
+    private DocumentGridAxisLayout docGridAxisLayout;
     
     // controller governing this DocumentGrid
     private MainController controller;
+    
+//    private AxisLabelLayout axisLabelLayoutX;
+//    private AxisLabelLayout axisLabelLayoutY;
     
     public DocumentGrid(MainController controller, DocumentGridTable t, String xAxisInitName, String yAxisInitName) {
         super(new Visualization());
@@ -71,16 +84,49 @@ public class DocumentGrid extends Display {
         DefaultRendererFactory rf = new DefaultRendererFactory();
         rf.setDefaultRenderer(nodeRenderer);
 //        rf.setDefaultRenderer(new ShapeRenderer());
-        rf.add(new InGroupPredicate(Y_LABEL), new AxisRenderer(Constants.FAR_LEFT, Constants.CENTER));
-        rf.add(new InGroupPredicate(X_LABEL), new AxisRenderer(Constants.CENTER, Constants.FAR_BOTTOM));
+//        rf.add(new InGroupPredicate(Y_LABEL), new AxisRenderer(Constants.FAR_LEFT, Constants.CENTER));
+//        rf.add(new InGroupPredicate(X_LABEL), new AxisRenderer(Constants.CENTER, Constants.FAR_BOTTOM));
+        rf.add(new InGroupPredicate(ALL_LABEL), new DocumentGridAxisRenderer(Constants.CENTER, Constants.CENTER));
         m_vis.setRendererFactory(rf);
 
         // setup init actionlist
         ActionList init = new ActionList();
+        // set-up initial layout
         // layout action
-        // size action
-//        SizeAction sizeActionInit = new DocGlyphSizeAction(DATA_GROUP);
-//        init.add(sizeActionInit);
+        List<String> xAxisInitCategories = t.getValueListForAttribute(xAxisInitName);
+        List<String> yAxisInitCategories = t.getValueListForAttribute(yAxisInitName);
+        documentGridLayout = new DocumentGridLayout(DATA_GROUP, xAxisInitName, yAxisInitName, xAxisInitCategories, yAxisInitCategories);
+        init.add(documentGridLayout);
+        // set up axes
+////        Object[] xAxisInitObjs = new Object[xAxisInitCategories.size()+1];
+//        Object[] xAxisInitObjs = new Object[xAxisInitCategories.size()];
+//        for (int i=0; i<xAxisInitCategories.size(); i++) {
+//            xAxisInitObjs[i] = xAxisInitCategories.get(i);
+////            xAxisInitObjs[i+1] = xAxisInitCategories.get(i);
+//        }
+////        xAxisInitObjs[xAxisInitObjs.length-1] = "";
+////        xAxisInitObjs[0] = "";
+////        Object[] yAxisInitObjs = new Object[yAxisInitCategories.size()+1];
+//        Object[] yAxisInitObjs = new Object[yAxisInitCategories.size()];
+//        for (int i=0; i<yAxisInitCategories.size(); i++) {
+//            yAxisInitObjs[i] = yAxisInitCategories.get(i);
+////            yAxisInitObjs[i+1] = yAxisInitCategories.get(i);
+//        }
+////        yAxisInitObjs[yAxisInitObjs.length-1] = "";
+////        yAxisInitObjs[0] = "";
+////        Rectangle bounds = getBounds();
+////        List<String> defaultVals = DatasetTermTranslator.getDefaultValList();
+////        // ensure that we add a blank to the beginning!
+////        ObjectRangeModel xAxisRangeModel = new ObjectRangeModel(xAxisInitObjs);
+////        ObjectRangeModel yAxisRangeModel = new ObjectRangeModel(yAxisInitObjs);
+//        ObjectRangeModel xAxisRangeModel = new ObjectRangeModel(xAxisInitObjs);
+//        ObjectRangeModel yAxisRangeModel = new ObjectRangeModel(yAxisInitObjs);
+//        axisLabelLayoutX = new AxisLabelLayout(X_LABEL, Constants.X_AXIS, xAxisRangeModel);
+//        axisLabelLayoutY = new AxisLabelLayout(Y_LABEL, Constants.Y_AXIS, yAxisRangeModel);
+//        init.add(axisLabelLayoutX);
+//        init.add(axisLabelLayoutY);
+        docGridAxisLayout = new DocumentGridAxisLayout(ALL_LABEL, documentGridLayout);
+        init.add(docGridAxisLayout);
         // add init actionlist to vis
         m_vis.putAction("init", init);
 
@@ -89,6 +135,10 @@ public class DocumentGrid extends Display {
         repaint.add(new RepaintAction());
         m_vis.putAction("repaint", repaint);
         
+        // ActionList for initially stabilizing the forces
+        ActionList preforce = new ActionList(1000);
+        preforce.add(new DataMountainForceLayout(true));
+        m_vis.putAction("preforce", preforce);
         
         // setup update actionlist
         ActionList update = new ActionList();
@@ -102,30 +152,6 @@ public class DocumentGrid extends Display {
         update.add(borderColorActionUpdate);
         // repaint action
         update.add(new RepaintAction());
-        // layout action
-//        String xAxisInitName = "Indicator_9";
-        List<String> xAxisInitCategories = t.getValueListForAttribute(xAxisInitName);
-//        String yAxisInitName = "Indicator_21";
-        List<String> yAxisInitCategories = t.getValueListForAttribute(yAxisInitName);
-        documentGridLayout = new DocumentGridLayout(DATA_GROUP, xAxisInitName, yAxisInitName, xAxisInitCategories, yAxisInitCategories);
-        update.add(documentGridLayout);
-        Object[] xAxisInitObjs = new Object[xAxisInitCategories.size()+1];
-        for (int i=0; i<xAxisInitCategories.size(); i++) {
-            xAxisInitObjs[i] = xAxisInitCategories.get(i);
-        }
-        xAxisInitObjs[xAxisInitObjs.length-1] = "";
-        Object[] yAxisInitObjs = new Object[yAxisInitCategories.size()+1];
-        for (int i=0; i<yAxisInitCategories.size(); i++) {
-            yAxisInitObjs[i] = yAxisInitCategories.get(i);
-        }
-        yAxisInitObjs[yAxisInitObjs.length-1] = "";
-        Rectangle bounds = getBounds();
-        ObjectRangeModel xAxisRangeModel = new ObjectRangeModel(xAxisInitObjs);
-        ObjectRangeModel yAxisRangeModel = new ObjectRangeModel(yAxisInitObjs);
-        AxisLabelLayout axisLabelLayoutX = new AxisLabelLayout(X_LABEL, Constants.X_AXIS, xAxisRangeModel);
-        AxisLabelLayout axisLabelLayoutY = new AxisLabelLayout(Y_LABEL, Constants.Y_AXIS, yAxisRangeModel);
-        update.add(axisLabelLayoutX);
-        update.add(axisLabelLayoutY);
         
 //        axisLayoutX = new AxisLayout(DATA_GROUP, xAxisInitField, Constants.X_AXIS);
 ////        axisLayoutX.setRangeModel(new ObjectRangeModel(new Integer[]{0,1,2,3}));
@@ -184,6 +210,9 @@ public class DocumentGrid extends Display {
     
     public void resetSize(int newWidth, int newHeight) {
         setSize(newWidth, newHeight);
+        // update axes' sizes?
+//        axisLabelLayoutX.setLayoutBounds(getBounds());
+//        axisLabelLayoutY.setLayoutBounds(getBounds());
         
         // redo layout, force initialization
         m_vis.run("init");
@@ -545,77 +574,77 @@ public class DocumentGrid extends Display {
     
     
     
-//    /*
-//     * datamountain force controllers, temporarily (?) adopted for this graph layout
-//     */
-//    private static final String ANCHORITEM = "_anchorItem";
-//    private static final Schema ANCHORITEM_SCHEMA = new Schema();
-//    static {
-//        ANCHORITEM_SCHEMA.addColumn(ANCHORITEM, ForceItem.class);
-//    }
-//    public class DataMountainForceLayout extends ForceDirectedLayout {
-//        
-//        public DataMountainForceLayout(boolean enforceBounds) {
-//            super("data",enforceBounds,false);
-//            
-//            ForceSimulator fsim = new ForceSimulator();
-//            fsim.addForce(new NBodyForce(-0.4f, 25f, NBodyForce.DEFAULT_THETA));
-//            fsim.addForce(new SpringForce(1e-5f,0f));
-//            fsim.addForce(new DragForce());
-//            setForceSimulator(fsim);
-//            
-//            m_nodeGroup = "data";
-//            m_edgeGroup = null;
-//        }
-//        
-//        protected float getMassValue(VisualItem n) {
-//            return n.isHover() ? 5f : 1f;
-//        }
-//
-//        public void reset() {
-//            Iterator iter = m_vis.visibleItems(m_nodeGroup);
-//            while ( iter.hasNext() ) {
-//                VisualItem item = (VisualItem)iter.next();
-//                ForceItem aitem = (ForceItem)item.get(ANCHORITEM);
-//                if ( aitem != null ) {
-//                    aitem.location[0] = (float)item.getEndX();
-//                    aitem.location[1] = (float)item.getEndY();
-//                }
-//            }
-//            super.reset();
-//        }
-//        protected void initSimulator(ForceSimulator fsim) {
-//            // make sure we have force items to work with
-//            TupleSet t = (TupleSet)m_vis.getGroup(m_group);
-//            t.addColumns(ANCHORITEM_SCHEMA);
-//            t.addColumns(FORCEITEM_SCHEMA);
-//            
-//            Iterator iter = m_vis.visibleItems(m_nodeGroup);
-//            while ( iter.hasNext() ) {
-//                VisualItem item = (VisualItem)iter.next();
-//                // get force item
-//                ForceItem fitem = (ForceItem)item.get(FORCEITEM);
-//                if ( fitem == null ) {
-//                    fitem = new ForceItem();
-//                    item.set(FORCEITEM, fitem);
-//                }
-//                fitem.location[0] = (float)item.getEndX();
-//                fitem.location[1] = (float)item.getEndY();
-//                fitem.mass = getMassValue(item);
-//                
-//                // get spring anchor
-//                ForceItem aitem = (ForceItem)item.get(ANCHORITEM);
-//                if ( aitem == null ) {
-//                    aitem = new ForceItem();
-//                    item.set(ANCHORITEM, aitem);
-//                    aitem.location[0] = fitem.location[0];
-//                    aitem.location[1] = fitem.location[1];
-//                }
-//                
-//                fsim.addItem(fitem);
-//                fsim.addSpring(fitem, aitem, 0);
-//            }     
-//        }       
-//    } // end of inner class DataMountainForceLayout
-//    
+    /*
+     * datamountain force controllers, temporarily (?) adopted for this graph layout
+     */
+    private static final String ANCHORITEM = "_anchorItem";
+    private static final Schema ANCHORITEM_SCHEMA = new Schema();
+    static {
+        ANCHORITEM_SCHEMA.addColumn(ANCHORITEM, ForceItem.class);
+    }
+    public class DataMountainForceLayout extends ForceDirectedLayout {
+        
+        public DataMountainForceLayout(boolean enforceBounds) {
+            super("data",enforceBounds,false);
+            
+            ForceSimulator fsim = new ForceSimulator();
+            fsim.addForce(new NBodyForce(-0.4f, 25f, NBodyForce.DEFAULT_THETA));
+            fsim.addForce(new SpringForce(1e-5f,0f));
+            fsim.addForce(new DragForce());
+            setForceSimulator(fsim);
+            
+            m_nodeGroup = "data";
+            m_edgeGroup = null;
+        }
+        
+        protected float getMassValue(VisualItem n) {
+            return n.isHover() ? 5f : 1f;
+        }
+
+        public void reset() {
+            Iterator iter = m_vis.visibleItems(m_nodeGroup);
+            while ( iter.hasNext() ) {
+                VisualItem item = (VisualItem)iter.next();
+                ForceItem aitem = (ForceItem)item.get(ANCHORITEM);
+                if ( aitem != null ) {
+                    aitem.location[0] = (float)item.getEndX();
+                    aitem.location[1] = (float)item.getEndY();
+                }
+            }
+            super.reset();
+        }
+        protected void initSimulator(ForceSimulator fsim) {
+            // make sure we have force items to work with
+            TupleSet t = (TupleSet)m_vis.getGroup(m_group);
+            t.addColumns(ANCHORITEM_SCHEMA);
+            t.addColumns(FORCEITEM_SCHEMA);
+            
+            Iterator iter = m_vis.visibleItems(m_nodeGroup);
+            while ( iter.hasNext() ) {
+                VisualItem item = (VisualItem)iter.next();
+                // get force item
+                ForceItem fitem = (ForceItem)item.get(FORCEITEM);
+                if ( fitem == null ) {
+                    fitem = new ForceItem();
+                    item.set(FORCEITEM, fitem);
+                }
+                fitem.location[0] = (float)item.getEndX();
+                fitem.location[1] = (float)item.getEndY();
+                fitem.mass = getMassValue(item);
+                
+                // get spring anchor
+                ForceItem aitem = (ForceItem)item.get(ANCHORITEM);
+                if ( aitem == null ) {
+                    aitem = new ForceItem();
+                    item.set(ANCHORITEM, aitem);
+                    aitem.location[0] = fitem.location[0];
+                    aitem.location[1] = fitem.location[1];
+                }
+                
+                fsim.addItem(fitem);
+                fsim.addSpring(fitem, aitem, 0);
+            }     
+        }       
+    } // end of inner class DataMountainForceLayout
+    
 }

@@ -77,21 +77,21 @@ public class MpqaColonMainModel implements MainModel {
         getFocusAttrs();
     }
 
-    @Override
-    public void applySimpleStringFilter(String str) {
-        // iterate through documents; if doc contains string, enable; otherwise disable
-        for (int d = 0; d < documentList.size(); d++) {
-            Document doc = documentList.get(d);
-            String docText = doc.getText();
-            // TODO more robust string searching
-            boolean enable = false;
-            if (docText.contains(str)) {
-                enable = true;
-            }
-            boolean oldEnabledStatus = documentEnabledList.remove(d);
-            documentEnabledList.add(d, enable);
-        }
-    }
+//    @Override
+//    public void applySimpleStringFilter(String str) {
+//        // iterate through documents; if doc contains string, enable; otherwise disable
+//        for (int d = 0; d < documentList.size(); d++) {
+//            Document doc = documentList.get(d);
+//            String docText = doc.getText();
+//            // TODO more robust string searching
+//            boolean enable = false;
+//            if (docText.contains(str)) {
+//                enable = true;
+//            }
+//            boolean oldEnabledStatus = documentEnabledList.remove(d);
+//            documentEnabledList.add(d, enable);
+//        }
+//    }
 
 //    @Override
 //    public DocTableModel buildSimpleDocTableModel() {

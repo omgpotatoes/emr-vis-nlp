@@ -2,13 +2,8 @@
 package emr_vis_nlp.view.doc_grid;
 
 import java.awt.geom.Rectangle2D;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import prefuse.Constants;
+import java.util.*;
 import prefuse.action.layout.Layout;
-import prefuse.render.AbstractShapeRenderer;
 import prefuse.visual.VisualItem;
 
 /**
@@ -18,12 +13,15 @@ import prefuse.visual.VisualItem;
  * organized into the appropriate grid squares, arranged as 
  * grids-within-a-grid.
  * 
- * Code partially adapted from prefuse.action.layout.AxisLayout
+ * Code partially adapted from prefuse.action.layout.AxisLayout, AxisLabelLayout
  *
  * @author alexander.p.conrad@gmail.com
  */
 public class DocumentGridLayout extends Layout {
 
+    
+    public static final String X_LABEL = DocumentGrid.X_LABEL;
+    public static final String Y_LABEL = DocumentGrid.Y_LABEL;
     
     // screen coordinate range
     private double x_min;
@@ -39,8 +37,13 @@ public class DocumentGridLayout extends Layout {
     private String yAttr;
     private List<String> xCats;
     private List<String> yCats;
+    private List<Integer> xCatPositions;
+    private List<Integer> yCatPositions;
+    private List<Integer> xCatRegionSizes;
+    private List<Integer> yCatRegionSizes;
     private Map<String, Integer> xCatPositionMap;
     private Map<String, Integer> yCatPositionMap;
+    private int[][] gridCellItemCount;
     
     // buffer between items
     private static double buffer = 5.;
@@ -48,23 +51,55 @@ public class DocumentGridLayout extends Layout {
     
     public DocumentGridLayout(String group, String xAttr, String yAttr, List<String> xCats, List<String> yCats) {
         super(group);
-        this.xAttr = xAttr;
-        this.yAttr = yAttr;
-        this.xCats = xCats;
-        this.yCats = yCats;
         
         // build category maps, mapping value to position (for quick lookup)
-        xCatPositionMap = new HashMap<>();
-        for (int i=0; i<xCats.size(); i++) {
-            xCatPositionMap.put(xCats.get(i), i);
-        }
-        yCatPositionMap = new HashMap<>();
-        for (int i=0; i<yCats.size(); i++) {
-            yCatPositionMap.put(yCats.get(i), i);
-        }
+        // add a blank category for first
+        // reverse ordering!
+        setXAxis(xAttr, xCats);
+        setYAxis(yAttr, yCats);
         
         // update bounding box info
 //        setMinMax();  // update at layout-time, if we update at construction we will get null pointers
+        
+        // pre-compute grid info
+        
+        
+        // compute total # of items in each cell?
+        
+        
+        // set region sizes based on 
+        
+        
+        
+        
+        
+        // for now (testing), just use static info
+//        
+//        Iterator iter = m_vis.items(m_group);  // optionally, can add predicatefilter as second argument, if needed
+//        int numItems = m_vis.size(m_group);
+//        
+//        // keep track of number of items positioned (so far) in each grid cell
+//        gridCellItemCount = new int[xCats.size()][yCats.size()];
+//        
+//        // get height, width vals for items based on # per row, # possible rows, size of bounds
+//        setMinMax();
+//        double cellWidth = x_range / xCats.size() - valueBuffer*2;
+//        double cellHeight = y_range / yCats.size() - valueBuffer*2;
+//        xCatRegionSizes = new ArrayList<>();
+//        xCatPositions = new ArrayList<>();
+//        for (int i=0; i<xCats.size(); i++) {
+//            xCatRegionSizes.add((int)cellWidth);
+//            xCatPositions.add((int)(x_min + ((valueBuffer*2 + cellWidth)*i) + valueBuffer));
+//        }
+//        yCatRegionSizes = new ArrayList<>();
+//        yCatPositions = new ArrayList<>();
+//        for (int i=0; i<yCats.size(); i++) {
+//            yCatRegionSizes.add((int)cellHeight);
+//            yCatPositions.add((int)(y_min + ((valueBuffer*2 + cellHeight)*i) + valueBuffer));
+//        }
+        
+        
+        
     }
     
     
@@ -96,12 +131,40 @@ public class DocumentGridLayout extends Layout {
         int numItems = m_vis.size(m_group);
         
         // keep track of number of items positioned (so far) in each grid cell
-        int[][] gridCellItemCount = new int[xCats.size()][yCats.size()];
+        gridCellItemCount = new int[xCats.size()][yCats.size()];
         
         // get height, width vals for items based on # per row, # possible rows, size of bounds
         setMinMax();
-        double cellWidth = x_range / xCats.size() - valueBuffer*2;
-        double cellHeight = y_range / yCats.size() - valueBuffer*2;
+//        double cellWidth = x_range / xCats.size() - valueBuffer*2;
+//        double cellHeight = y_range / yCats.size() - valueBuffer*2;
+        double cellWidth = x_range / xCats.size();
+        double cellHeight = y_range / yCats.size();
+        xCatRegionSizes = new ArrayList<>();
+        xCatPositions = new ArrayList<>();
+        for (int i=0; i<xCats.size(); i++) {
+            // TODO custom region sizes
+            xCatRegionSizes.add((int)cellWidth);
+//            double regionSizeSum = 0.;
+            double regionSizeSum = x_min;  // initial buffer
+            for (int j=0; j<i; j++) {
+                regionSizeSum += xCatRegionSizes.get(j);
+            }
+//            xCatPositions.add((int)(x_min + ((valueBuffer*2 + cellWidth)*i) + valueBuffer));
+            xCatPositions.add((int)regionSizeSum);
+        }
+        yCatRegionSizes = new ArrayList<>();
+        yCatPositions = new ArrayList<>();
+        for (int i=0; i<yCats.size(); i++) {
+            // TODO custom region sizes
+            yCatRegionSizes.add((int)cellHeight);
+//            double regionSizeSum = 0.;
+            double regionSizeSum = y_min;  // initial buffer
+            for (int j=0; j<i; j++) {
+                regionSizeSum += yCatRegionSizes.get(j);
+            }
+//            yCatPositions.add((int)(y_min + ((valueBuffer*2 + cellHeight)*i) + valueBuffer));
+            yCatPositions.add((int)regionSizeSum);
+        }
         
         // given number of items, compute # per row in cell
         // assume worst-case of all docs going to single cell
@@ -133,13 +196,15 @@ public class DocumentGridLayout extends Layout {
                 int cellCol = numInCell % itemsPerCellRow;
                 
                 // compute actual position on the screen
-                double cellStartX = x_min + ((valueBuffer*2 + cellWidth)*xAttrPos) + valueBuffer;
-                double cellStartY = y_min + ((valueBuffer*2 + cellHeight)*yAttrPos) + valueBuffer;
+//                double cellStartX = x_min + ((valueBuffer*2 + cellWidth)*xAttrPos) + valueBuffer;
+//                double cellStartY = y_min + ((valueBuffer*2 + cellHeight)*yAttrPos) + valueBuffer;
 //                double cellStartX = x_min + (cellWidth*xAttrPos);
 //                double cellStartY = y_min + (cellHeight*yAttrPos);
+                double cellStartX = xCatPositions.get(xAttrPos)+buffer;
+                double cellStartY = yCatPositions.get(yAttrPos)+buffer;
                 
-                double withinCellOffsetX = cellCol * (buffer*2 + itemWidth) + buffer;
-                double withinCellOffsetY = cellRow * (buffer*2 + itemHeight) + buffer;
+                double withinCellOffsetX = cellCol * (buffer + itemWidth) + buffer;
+                double withinCellOffsetY = cellRow * (buffer + itemHeight) + buffer;
 //                double itemSize = item.getSize();
 ////                item.setSize(2);
 //                itemSize = item.getSize();
@@ -162,6 +227,7 @@ public class DocumentGridLayout extends Layout {
                 
             } else {
                 // cell undefined for x or y; shouldn't happen
+                System.err.println("DocumentGrdLayout: cell undefined: xAttrVal="+xAttrVal+", xAttrPos="+xAttrPos+", yAttrVal="+yAttrVal+", yAttrPos="+yAttrPos);
                 assert false: "cell undefined: xAttrVal="+xAttrVal+", xAttrPos="+xAttrPos+", yAttrVal="+yAttrVal+", yAttrPos="+yAttrPos;
             }
             
@@ -171,20 +237,11 @@ public class DocumentGridLayout extends Layout {
     }
 
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    public String getxAttr() {
+    public String getXAttr() {
         return xAttr;
     }
 
-    public List<String> getxCats() {
+    public List<String> getXCats() {
         return xCats;
     }
 
@@ -195,14 +252,15 @@ public class DocumentGridLayout extends Layout {
         xCatPositionMap = new HashMap<>();
         for (int i=0; i<xCats.size(); i++) {
             xCatPositionMap.put(xCats.get(i), i);
+//            xCatPositionMap.put(xCats.get(i), xCats.size()-1-i);
         }
     }
 
-    public String getyAttr() {
+    public String getYAttr() {
         return yAttr;
     }
 
-    public List<String> getyCats() {
+    public List<String> getYCats() {
         return yCats;
     }
 
@@ -213,7 +271,26 @@ public class DocumentGridLayout extends Layout {
         yCatPositionMap = new HashMap<>();
         for (int i=0; i<yCats.size(); i++) {
             yCatPositionMap.put(yCats.get(i), i);
+//            yCatPositionMap.put(yCats.get(i), yCats.size()-1-i);
         }
     }
+
+    public List<Integer> getXCatPositions() {
+        return xCatPositions;
+    }
+
+    public List<Integer> getXCatRegionSizes() {
+        return xCatRegionSizes;
+    }
+
+    public List<Integer> getYCatPositions() {
+        return yCatPositions;
+    }
+
+    public List<Integer> getYCatRegionSizes() {
+        return yCatRegionSizes;
+    }
+    
+    
     
 }
