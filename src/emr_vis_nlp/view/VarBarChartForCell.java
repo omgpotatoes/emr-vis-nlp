@@ -138,7 +138,7 @@ public class VarBarChartForCell extends JPanel {
 //            // old alpha code for incorporating cluster selection no longer needed; see previous version's code if needed
             
             // update tooltip text
-            setToolTipText(attrName+": "+((int)(100*valPercs[0]))+"% ineligible, "+((int)(100*valPercs[1]))+"% eligible, "+((int)(100*valPercs[2]))+"% pass");
+            setToolTipText(attrName+":  "+((int)(100*valPercs[0]))+"% N/A, "+((int)(100*valPercs[1]))+"% Fail, "+((int)(100*valPercs[2]))+"% Pass");
             
         }
         

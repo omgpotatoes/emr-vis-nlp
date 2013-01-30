@@ -3,6 +3,7 @@ package emr_vis_nlp.view.doc_grid;
 import emr_vis_nlp.model.Document;
 import java.util.*;
 import prefuse.data.Table;
+import prefuse.visual.VisualItem;
 
 /**
  * Backing Prefuse table for the DocumentGrid view.
@@ -39,6 +40,9 @@ public class DocumentGridTable extends Table {
         addColumn(NODE_NAME, String.class);
         addColumn(NODE_TEXT, String.class);
         addColumn(NODE_ISACTIVE, boolean.class);
+        // ensure that X2, Y2 are enabled
+        addColumn(VisualItem.X2, double.class);
+        addColumn(VisualItem.Y2, double.class);
         for (String attrName : allAttributes) {
             if (!hasColumn(attrName)) {
                 addColumn(attrName, String.class);

@@ -3,6 +3,7 @@ package emr_vis_nlp.view.doc_grid;
 
 import java.awt.geom.Rectangle2D;
 import java.util.*;
+import prefuse.Constants;
 import prefuse.action.layout.Layout;
 import prefuse.visual.VisualItem;
 
@@ -47,6 +48,7 @@ public class DocumentGridLayout extends Layout {
     
     // buffer between items
     private static double buffer = 5.;
+//    private static double buffer = 2.;
     private static double valueBuffer = 10.;
     
     public DocumentGridLayout(String group, String xAttr, String yAttr, List<String> xCats, List<String> yCats) {
@@ -130,8 +132,38 @@ public class DocumentGridLayout extends Layout {
         Iterator iter = m_vis.items(m_group);  // optionally, can add predicatefilter as second argument, if needed
         int numItems = m_vis.size(m_group);
         
+        // populate initial grid, so we can calculate % sizes of each row, col
+        int[][] gridCellItemCountInit = new int[xCats.size()][yCats.size()];
+        int[] rowItemCountInit = new int[yCats.size()];
+        int[] colItemCountInit = new int[xCats.size()];
+        int totalItemCount = 0;
+        while ( iter.hasNext() ) {
+            VisualItem item = (VisualItem)iter.next();
+            // get category values for the target attributes for item
+            // note: fields should always be populated; we shouldn't have to check whether they're available 1st (but safest to do it anyway)
+            String xAttrVal = "";
+            if (item.canGetString(xAttr)) xAttrVal = item.getString(xAttr);
+            String yAttrVal = "";
+            if (item.canGetString(yAttr)) yAttrVal = item.getString(yAttr);
+            // get position of each category value on the {x,y} axis
+            int xAttrPos = -1;
+            if (xCatPositionMap.containsKey(xAttrVal)) xAttrPos = xCatPositionMap.get(xAttrVal);
+            int yAttrPos = -1;
+            if (yCatPositionMap.containsKey(yAttrVal)) yAttrPos = yCatPositionMap.get(yAttrVal);
+            if (xAttrPos != -1 && yAttrPos != -1) {
+                 gridCellItemCountInit[xAttrPos][yAttrPos]++;
+                 rowItemCountInit[yAttrPos]++;
+                 colItemCountInit[xAttrPos]++;
+                 totalItemCount++;
+            }
+        }
+        
+        
         // keep track of number of items positioned (so far) in each grid cell
         gridCellItemCount = new int[xCats.size()][yCats.size()];
+        
+        // reset iterator
+        iter = m_vis.items(m_group);
         
         // get height, width vals for items based on # per row, # possible rows, size of bounds
         setMinMax();
@@ -139,11 +171,22 @@ public class DocumentGridLayout extends Layout {
 //        double cellHeight = y_range / yCats.size() - valueBuffer*2;
         double cellWidth = x_range / xCats.size();
         double cellHeight = y_range / yCats.size();
+        // size of item: (assume most-efficient square layout) ((x_range - buffer * numCats) / (sqrt[#items] + buffer))
+        //  for now, artificially shrink item size (till we can fix issue concerning region overrun)
+//        double itemWidth = (x_range - buffer * xCats.size()) / (Math.sqrt(numItems) + xCats.size()) - buffer;
+//        double itemHeight = (y_range - buffer * yCats.size()) / (Math.sqrt(numItems) + yCats.size()) - buffer;
+        double itemSizeMult = 1.6;
+        double itemWidth = (x_range - buffer * xCats.size()) / ((Math.sqrt(numItems) + xCats.size())*itemSizeMult) - buffer;
+        double itemHeight = (y_range - buffer * yCats.size()) / ((Math.sqrt(numItems) + yCats.size())*itemSizeMult) - buffer;
         xCatRegionSizes = new ArrayList<>();
         xCatPositions = new ArrayList<>();
         for (int i=0; i<xCats.size(); i++) {
-            // TODO custom region sizes
-            xCatRegionSizes.add((int)cellWidth);
+//            xCatRegionSizes.add((int)cellWidth);
+            int regionSize = (int)(x_range * ((double)colItemCountInit[i]/(double)totalItemCount));
+            if (regionSize < 2*buffer + itemWidth) {
+                regionSize = (int)(2*buffer + itemWidth);
+            }
+            xCatRegionSizes.add(regionSize);
 //            double regionSizeSum = 0.;
             double regionSizeSum = x_min;  // initial buffer
             for (int j=0; j<i; j++) {
@@ -155,8 +198,12 @@ public class DocumentGridLayout extends Layout {
         yCatRegionSizes = new ArrayList<>();
         yCatPositions = new ArrayList<>();
         for (int i=0; i<yCats.size(); i++) {
-            // TODO custom region sizes
-            yCatRegionSizes.add((int)cellHeight);
+//            yCatRegionSizes.add((int)cellHeight);
+            int regionSize = (int)(y_range * ((double)rowItemCountInit[i]/(double)totalItemCount));
+            if (regionSize < 2*buffer + itemHeight) {
+                regionSize = (int)(2*buffer + itemHeight);
+            }
+            yCatRegionSizes.add((int)(regionSize));
 //            double regionSizeSum = 0.;
             double regionSizeSum = y_min;  // initial buffer
             for (int j=0; j<i; j++) {
@@ -169,11 +216,35 @@ public class DocumentGridLayout extends Layout {
         // given number of items, compute # per row in cell
         // assume worst-case of all docs going to single cell
         // TODO go beyond square, adapt to # of categories, # of items per categories, bounds sizes, etc.
-        int itemsPerCellRow = (int)Math.sqrt(numItems);
-        int rowsPerCell = itemsPerCellRow+1;
+//        int numCats = xCats.size();
+//        int itemsPerCellRow = (int)Math.sqrt(numItems);
+//        int rowsPerCell = itemsPerCellRow+1;
+        List<Integer> itemsPerCellRowPerCol = new ArrayList<>();
+        // for each col, compute as (max # items in single full-view row) * (fraction of fullview occupied by this col)
+        //  idea: even if all items in smallest col, make sure they can fit!
+        for (int c=0; c<xCats.size(); c++) {
+            // find row with max # items
+            int maxItemCount = -1;
+            int maxItemIndex = -1;
+            for (int r=0; r<rowItemCountInit.length; r++) {
+                int itemsInRow = rowItemCountInit[r];
+                if (itemsInRow > maxItemCount) {
+                    maxItemCount = itemsInRow;
+                    maxItemIndex = r;
+                }
+            }
+            // items per cell row (in a given col)
+            //  = (width of cell) / (width of item [+ buffer])
+//            int itemsPerColCellRow = (int)Math.sqrt(maxItemCount);
+            // temporarily amplify item sizes (TODO: more principled item size calculation)
+//            int itemsPerColCellRow = (int)(xCatRegionSizes.get(c) / itemWidth);
+            int itemsPerColCellRow = (int)(xCatRegionSizes.get(c) / (itemWidth * itemSizeMult));
+            if (itemsPerColCellRow == 0) itemsPerColCellRow = 1;
+            itemsPerCellRowPerCol.add(itemsPerColCellRow);
+        }
         
-        double itemWidth = (cellWidth / Math.sqrt(numItems)) - 2*buffer;
-        double itemHeight = (cellHeight / (Math.sqrt(numItems)+1)) - 2*buffer;
+//        double itemWidth = (cellWidth / Math.sqrt(numItems)) - 2*buffer;
+//        double itemHeight = (cellHeight / (Math.sqrt(numItems)+1)) - 2*buffer;
         
         while ( iter.hasNext() ) {
             VisualItem item = (VisualItem)iter.next();
@@ -192,16 +263,19 @@ public class DocumentGridLayout extends Layout {
             if (xAttrPos != -1 && yAttrPos != -1) {
                 
                 int numInCell = gridCellItemCount[xAttrPos][yAttrPos]++;
-                int cellRow = numInCell / itemsPerCellRow;
-                int cellCol = numInCell % itemsPerCellRow;
+                int itemsPerColCellRow = itemsPerCellRowPerCol.get(xAttrPos);
+//                int cellRow = numInCell / itemsPerCellRow;
+//                int cellCol = numInCell % itemsPerCellRow;
+                int cellRow = numInCell / itemsPerColCellRow;
+                int cellCol = numInCell % itemsPerColCellRow;
                 
                 // compute actual position on the screen
 //                double cellStartX = x_min + ((valueBuffer*2 + cellWidth)*xAttrPos) + valueBuffer;
 //                double cellStartY = y_min + ((valueBuffer*2 + cellHeight)*yAttrPos) + valueBuffer;
 //                double cellStartX = x_min + (cellWidth*xAttrPos);
 //                double cellStartY = y_min + (cellHeight*yAttrPos);
-                double cellStartX = xCatPositions.get(xAttrPos)+buffer;
-                double cellStartY = yCatPositions.get(yAttrPos)+buffer;
+                double cellStartX = xCatPositions.get(xAttrPos);
+                double cellStartY = yCatPositions.get(yAttrPos);
                 
                 double withinCellOffsetX = cellCol * (buffer + itemWidth) + buffer;
                 double withinCellOffsetY = cellRow * (buffer + itemHeight) + buffer;
@@ -215,15 +289,21 @@ public class DocumentGridLayout extends Layout {
                 // position actual item; also adjust size
                 double positionX = cellStartX+withinCellOffsetX;
                 double positionY = cellStartY+withinCellOffsetY;
-//                item.setBounds(positionX, positionY, itemWidth, itemHeight);
 //              item.setBounds(0, 0, x_max, y_max);  
-                item.setBounds(Double.MIN_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);  
+//                item.setBounds(Double.MIN_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);  
+                item.setBounds(positionX, positionY, positionX+itemWidth, positionY+itemHeight);
                 
 //                item.setX(positionX);
 //                item.setY(positionY);
 //                item.setSize(itemWidth * itemHeight);
-                setX(item, null, positionX);
-                setY(item, null, positionY);
+                //setX(item, null, positionX);
+                //setY(item, null, positionY);
+                item.set(VisualItem.X2, (double)(positionX+itemWidth));
+                item.set(VisualItem.Y2, (double)(positionY+itemHeight));
+                item.set(VisualItem.X, (double)(positionX));
+                item.set(VisualItem.Y, (double)(positionY));
+                item.setShape(Constants.SHAPE_RECTANGLE);
+                
                 
             } else {
                 // cell undefined for x or y; shouldn't happen

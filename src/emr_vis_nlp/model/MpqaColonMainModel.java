@@ -149,14 +149,24 @@ public class MpqaColonMainModel implements MainModel {
             }
         } else {
             attributeEnabledList = new ArrayList<>();
-            getFocusAttrsMap();
+//            getFocusAttrsMap();
+//            for (String attribute : attributeList) {
+//                if (focusAttrsMap.containsKey(attribute)) {
+//                    attributeEnabledList.add(true);
+//                } else {
+//                    attributeEnabledList.add(false);
+//                }
+//            }
+            
+            // by default, enable "text", "name", and any attribute starting with a ##
             for (String attribute : attributeList) {
-                if (focusAttrsMap.containsKey(attribute)) {
+                if (attribute.equalsIgnoreCase("name") || attribute.equalsIgnoreCase("text") || (attribute.trim().length() > 0 && attribute.trim().charAt(0) >= '0' && attribute.trim().charAt(0) <= '9')) {
                     attributeEnabledList.add(true);
                 } else {
                     attributeEnabledList.add(false);
                 }
             }
+            
         }
         
     }

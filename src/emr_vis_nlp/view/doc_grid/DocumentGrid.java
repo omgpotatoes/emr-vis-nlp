@@ -1,7 +1,6 @@
 package emr_vis_nlp.view.doc_grid;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.model.mpqa_colon.DatasetTermTranslator;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RectangularShape;
@@ -15,15 +14,14 @@ import prefuse.Visualization;
 import prefuse.action.ActionList;
 import prefuse.action.RepaintAction;
 import prefuse.action.assignment.ColorAction;
-import prefuse.action.layout.AxisLabelLayout;
+import prefuse.action.assignment.SizeAction;
 import prefuse.action.layout.graph.ForceDirectedLayout;
 import prefuse.controls.Control;
 import prefuse.controls.ControlAdapter;
+import prefuse.controls.DragControl;
 import prefuse.controls.PanControl;
 import prefuse.data.Schema;
-import prefuse.data.query.ObjectRangeModel;
 import prefuse.data.tuple.TupleSet;
-import prefuse.render.AxisRenderer;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.ShapeRenderer;
 import prefuse.util.ColorLib;
@@ -150,6 +148,9 @@ public class DocumentGrid extends Display {
         update.add(colorActionUpdate);
         ColorAction borderColorActionUpdate = new DocGlyphBorderColorAction(DATA_GROUP);
         update.add(borderColorActionUpdate);
+        // TODO add axes color actions?
+        
+        
         // repaint action
         update.add(new RepaintAction());
         
@@ -187,6 +188,7 @@ public class DocumentGrid extends Display {
 //        m_vis.putAction("forces", forces);
         
         setSize(700, 600);
+        setBackground(Color.LIGHT_GRAY);
         // set borders, etc.
         setBorder(BorderFactory.createEmptyBorder(30,20,5,20));
         
@@ -199,6 +201,9 @@ public class DocumentGrid extends Display {
 //        addControlListener(new ZoomControl(Control.RIGHT_MOUSE_BUTTON));
         // pan with background left-drag
         addControlListener(new PanControl(Control.RIGHT_MOUSE_BUTTON));
+        // drag items to new cells
+//        addControlListener(new DragControl());
+        addControlListener(new DocGridDragControl(DATA_GROUP));
         
         // run actionlists
         m_vis.run("init");
@@ -231,10 +236,11 @@ public class DocumentGrid extends Display {
         public int getColor(VisualItem item) {
 //            NodeItem nitem = (NodeItem) item;
             if (item.isHover()) {
-                return ColorLib.rgb(99, 130, 191);
+//                return ColorLib.rgb(99, 130, 191);
+                return Color.LIGHT_GRAY.getRGB();
             }
-            return ColorLib.gray(50);
-            
+//            return ColorLib.gray(50);
+            return Color.DARK_GRAY.getRGB();
         }
     }
 
@@ -255,9 +261,11 @@ public class DocumentGrid extends Display {
         public int getColor(VisualItem item) {
 
                 // for now, just return lightgray
-                Color lightgray = Color.LIGHT_GRAY;
-                return lightgray.getRGB();
-            
+//                Color lightgray = Color.LIGHT_GRAY;
+//                return lightgray.getRGB();
+            Color white = Color.WHITE;
+            return white.getRGB();
+
 //            int attrValIndex = 0;
 //            if (item.canGetInt("attr_val_index")) {
 //                attrValIndex = item.getInt("attr_val_index");
@@ -296,32 +304,31 @@ public class DocumentGrid extends Display {
      * 
      * note: this is now handled in renderer and doc glyph control
      */
-//    public static class DocGlyphSizeAction extends SizeAction {
-//        
+    public static class DocGlyphSizeAction extends SizeAction {
+        
 //        public static final double HOVER_SIZE_MULT = 4.5;
 //        public static final double BASE_SIZE = 10;
-//        
-//        public DocGlyphSizeAction(String group) {
-//            // TODO set size relative to # of docs in grid?
+        
+        public DocGlyphSizeAction(String group) {
 //            super(group, BASE_SIZE);
-////            super(group);
-//        }
-//        
-//        public DocGlyphSizeAction() {
-//            super();
-//        }
-//        
-//        // size should blow up on hover / click
-//        @Override
-//        public double getSize(VisualItem item) {
-////            NodeItem nitem = (NodeItem) item;
-//            if (item.isHover()) {
+            super(group);
+        }
+        
+        public DocGlyphSizeAction() {
+            super();
+        }
+        
+        // size should blow up on hover / click
+        @Override
+        public double getSize(VisualItem item) {
+//            NodeItem nitem = (NodeItem) item;
+            if (item.isHover()) {
 //                return super.getSize(item) * HOVER_SIZE_MULT;
-//            }
-//            return super.getSize(item);
-//        }
-//        
-//    }
+            }
+            return super.getSize(item);
+        }
+        
+    }
 
     /*
      * Handles rendering of document glyphs and drawing of document text (for
@@ -341,18 +348,31 @@ public class DocumentGrid extends Display {
         public void render(Graphics2D g, VisualItem item) {
 
             // idea: rather than rendering fixed-size, can we first compute size of text, then set size of item equal to size of text?
-
+            
+            
             Shape shape = getShape(item);
             if (shape != null) {
 
-                double xPos = shape.getBounds().getX();
-                double yPos = shape.getBounds().getY();
+//                double xPos = shape.getBounds().getX();
+//                double yPos = shape.getBounds().getY();
 //            double xPos = item.getX();
 //            double yPos = item.getY();
                 String s = item.getString(NODE_NAME);
+                boolean isHover = false;
                 if (item.isHover()) {
                     s = item.getString(NODE_TEXT);
+                    isHover = true;
                 }
+                
+//                double x1 = item.getBounds().getX();
+//                double y1 = item.getBounds().getY();
+//                double w = item.getBounds().getWidth();
+//                double h = item.getBounds().getHeight();
+                double x1 = (double)item.get(VisualItem.X);
+                double y1 = (double) item.get(VisualItem.Y);
+                double w = (double) item.get(VisualItem.X2) - x1;
+                double h = (double) item.get(VisualItem.Y2) - y1;
+                shape.getBounds().setBounds((int)x1, (int)y1, (int)w, (int)h);
 
                 // TODO set font size based on number of active nodes? based on size of rect?
 
@@ -387,16 +407,28 @@ public class DocumentGrid extends Display {
                     Color strokeColor = ColorLib.getColor(item.getStrokeColor());
                     Color fillColor = ColorLib.getColor(item.getFillColor());
                     
-                    g.setPaint(fillColor);
-                    g.fillRect((int)x, (int)y, textWidth, textHeight);
-                    g.setPaint(strokeColor);
-                    g.drawRect((int)x, (int)y, textWidth, textHeight);
+                    if (isHover) {
+                        item.setBounds(x1, y1, x1+textWidth, y1+textHeight);
+                        g.setPaint(fillColor);
+//                        g.fillRect((int)x, (int)y, textWidth, textHeight);
+                        g.fillRect((int)x1, (int)y1, textWidth, textHeight);
+                        g.setPaint(strokeColor);
+//                        g.drawRect((int)x, (int)y, textWidth, textHeight);
+                        g.drawRect((int)x1, (int)y1, textWidth, textHeight);
+                    } else {
+                        item.setBounds(x1, y1, x1+w, y1+h);
+                        g.setPaint(fillColor);
+                        g.fillRect((int)x1, (int)y1, (int)(w), (int)(h));
+                        g.setPaint(strokeColor);
+                        g.drawRect((int)x1, (int)y1, (int)(w), (int)(h));
+                    }
                     
                 }
                 
-//            super.render(g, item);
+            super.render(g, item);
                 
-                drawStringMultiline(g, f, s, xPos, yPos);
+//                drawStringMultiline(g, f, s, xPos, yPos);
+                drawStringMultiline(g, f, s, x1, y1);
 
             }
 
@@ -451,7 +483,7 @@ public class DocumentGrid extends Display {
     
     public class DocGlyphControl extends ControlAdapter {
 
-        public static final double SELECTED_MULT = 30.;
+//        public static final double SELECTED_MULT = 30.;
 
         public DocGlyphControl() {
             super();
@@ -473,7 +505,9 @@ public class DocumentGrid extends Display {
 //            
 //            item.getBounds().setRect(x, y, blowupWidth, blowupHeight);
 
-                item.setSize(item.getSize() * SELECTED_MULT);
+            // TODO replace box blowup with editible pane
+            // note: sizing now handled in renderer
+//                item.setSize(item.getSize() * SELECTED_MULT);
 
                 // redraw
 //            m_vis.run("update");
@@ -500,7 +534,9 @@ public class DocumentGrid extends Display {
 //            
 //            item.getBounds().setRect(x, y, width, height);
 
-                item.setSize(item.getSize() / SELECTED_MULT);
+            // TODO replace box blowup with editible pane
+            // note: sizing now handled in renderer
+//                item.setSize(item.getSize() / SELECTED_MULT);
 
                 // redraw
 //            m_vis.run("update");
@@ -514,14 +550,16 @@ public class DocumentGrid extends Display {
         public void itemPressed(VisualItem item, MouseEvent e) {
             Display d = (Display)e.getSource();
             
-            // TODO complete control code
-            
-            
             
         }
         
         @Override
         public void itemReleased(VisualItem item, MouseEvent e) {
+            
+            // check to see whether item's attribute values match those of the current cell
+            //  if not, reassign!
+            
+            
         }
 
         @Override
