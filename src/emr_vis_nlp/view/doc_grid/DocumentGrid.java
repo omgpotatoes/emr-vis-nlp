@@ -14,12 +14,14 @@ import prefuse.Visualization;
 import prefuse.action.ActionList;
 import prefuse.action.RepaintAction;
 import prefuse.action.assignment.ColorAction;
+import prefuse.action.assignment.ShapeAction;
 import prefuse.action.assignment.SizeAction;
 import prefuse.action.layout.graph.ForceDirectedLayout;
+import prefuse.activity.Activity;
 import prefuse.controls.Control;
 import prefuse.controls.ControlAdapter;
-import prefuse.controls.DragControl;
 import prefuse.controls.PanControl;
+import prefuse.controls.WheelZoomControl;
 import prefuse.data.Schema;
 import prefuse.data.tuple.TupleSet;
 import prefuse.render.DefaultRendererFactory;
@@ -55,80 +57,61 @@ public class DocumentGrid extends Display {
     
     public static final String DATA_GROUP = "data";
     
-//    private AxisLayout axisLayoutX;
-//    private AxisLabelLayout axisLabelLayoutX;
-//    private AxisLayout axisLayoutY;
-//    private AxisLabelLayout axisLabelLayoutY;
+    // handles layout of the document glyphs
     private DocumentGridLayout documentGridLayout;
+    // handles layout of the attribute value axes
     private DocumentGridAxisLayout docGridAxisLayout;
+    // handles generation of glyphs
+    private DocumentShapeAction docShapeAction;
+    // handles shape sizing
+    private DocumentSizeAction docSizeAction;
+    // backing table containing data
+    private DocumentGridTable t;
+    
     
     // controller governing this DocumentGrid
     private MainController controller;
     
-//    private AxisLabelLayout axisLabelLayoutX;
-//    private AxisLabelLayout axisLabelLayoutY;
-    
     public DocumentGrid(MainController controller, DocumentGridTable t, String xAxisInitName, String yAxisInitName) {
         super(new Visualization());
+        this.t = t;
         this.controller = controller;
         // add data to visualization (tables, ...)
         m_vis.addTable(DATA_GROUP, t);
 
-        // set up renderer for nodes, set rendererFactory
-        DocGlyphRenderer nodeRenderer = new DocGlyphRenderer();
-        // perform additional optional renderer setup here
-        // add renderer to visualization
-//        m_vis.setRendererFactory(new DefaultRendererFactory(nodeRenderer));
-        DefaultRendererFactory rf = new DefaultRendererFactory();
-        rf.setDefaultRenderer(nodeRenderer);
-//        rf.setDefaultRenderer(new ShapeRenderer());
-//        rf.add(new InGroupPredicate(Y_LABEL), new AxisRenderer(Constants.FAR_LEFT, Constants.CENTER));
-//        rf.add(new InGroupPredicate(X_LABEL), new AxisRenderer(Constants.CENTER, Constants.FAR_BOTTOM));
-        rf.add(new InGroupPredicate(ALL_LABEL), new DocumentGridAxisRenderer(Constants.CENTER, Constants.CENTER));
-        m_vis.setRendererFactory(rf);
 
-        // setup init actionlist
+        // init actionlist: performs initial document layout
         ActionList init = new ActionList();
-        // set-up initial layout
-        // layout action
+        // add document layout action
         List<String> xAxisInitCategories = t.getValueListForAttribute(xAxisInitName);
         List<String> yAxisInitCategories = t.getValueListForAttribute(yAxisInitName);
         documentGridLayout = new DocumentGridLayout(DATA_GROUP, xAxisInitName, yAxisInitName, xAxisInitCategories, yAxisInitCategories);
         init.add(documentGridLayout);
-        // set up axes
-////        Object[] xAxisInitObjs = new Object[xAxisInitCategories.size()+1];
-//        Object[] xAxisInitObjs = new Object[xAxisInitCategories.size()];
-//        for (int i=0; i<xAxisInitCategories.size(); i++) {
-//            xAxisInitObjs[i] = xAxisInitCategories.get(i);
-////            xAxisInitObjs[i+1] = xAxisInitCategories.get(i);
-//        }
-////        xAxisInitObjs[xAxisInitObjs.length-1] = "";
-////        xAxisInitObjs[0] = "";
-////        Object[] yAxisInitObjs = new Object[yAxisInitCategories.size()+1];
-//        Object[] yAxisInitObjs = new Object[yAxisInitCategories.size()];
-//        for (int i=0; i<yAxisInitCategories.size(); i++) {
-//            yAxisInitObjs[i] = yAxisInitCategories.get(i);
-////            yAxisInitObjs[i+1] = yAxisInitCategories.get(i);
-//        }
-////        yAxisInitObjs[yAxisInitObjs.length-1] = "";
-////        yAxisInitObjs[0] = "";
-////        Rectangle bounds = getBounds();
-////        List<String> defaultVals = DatasetTermTranslator.getDefaultValList();
-////        // ensure that we add a blank to the beginning!
-////        ObjectRangeModel xAxisRangeModel = new ObjectRangeModel(xAxisInitObjs);
-////        ObjectRangeModel yAxisRangeModel = new ObjectRangeModel(yAxisInitObjs);
-//        ObjectRangeModel xAxisRangeModel = new ObjectRangeModel(xAxisInitObjs);
-//        ObjectRangeModel yAxisRangeModel = new ObjectRangeModel(yAxisInitObjs);
-//        axisLabelLayoutX = new AxisLabelLayout(X_LABEL, Constants.X_AXIS, xAxisRangeModel);
-//        axisLabelLayoutY = new AxisLabelLayout(Y_LABEL, Constants.Y_AXIS, yAxisRangeModel);
-//        init.add(axisLabelLayoutX);
-//        init.add(axisLabelLayoutY);
+        // add axes layout action
         docGridAxisLayout = new DocumentGridAxisLayout(ALL_LABEL, documentGridLayout);
         init.add(docGridAxisLayout);
+        // set glyph shapes
+        // TODO more complex / variad shapes! encode data as glyph?
+//        docShapeAction = new DocShapeAction(DATA_GROUP, Constants.SHAPE_RECTANGLE);
+        docShapeAction = new DocumentShapeAction(DATA_GROUP, Constants.SHAPE_DIAMOND);
+        init.add(docShapeAction);
+        // encode size
+        docSizeAction = new DocumentSizeAction(DATA_GROUP);
+        init.add(docSizeAction);
         // add init actionlist to vis
         m_vis.putAction("init", init);
+        
+        // set up renderer for nodes, set rendererFactory
+        DocGlyphRenderer nodeRenderer = new DocGlyphRenderer();
+        // perform additional optional renderer setup here
+        // add primary renderer to visualization
+        DefaultRendererFactory rf = new DefaultRendererFactory();
+        rf.setDefaultRenderer(nodeRenderer);
+        // add auxiliary renderer for axes
+        rf.add(new InGroupPredicate(ALL_LABEL), new DocumentGridAxisRenderer(documentGridLayout));
+        m_vis.setRendererFactory(rf);
 
-        // ActionList for repainting (for controls)
+        // ActionList for simple repaint (for simple controls)
         ActionList repaint = new ActionList();
         repaint.add(new RepaintAction());
         m_vis.putAction("repaint", repaint);
@@ -138,33 +121,24 @@ public class DocumentGrid extends Display {
         preforce.add(new DataMountainForceLayout(true));
         m_vis.putAction("preforce", preforce);
         
-        // setup update actionlist
-        ActionList update = new ActionList();
-        // size action
+        // update actionlist: performs coloration, sizing
+        // TODO: merge update and init?
+//        ActionList update = new ActionList();
+        ActionList update = new ActionList(Activity.INFINITY);
+        // TODO size action
 //        SizeAction sizeActionUpdate = new DocGlyphSizeAction(DATA_GROUP);
 //        update.add(sizeActionUpdate);
+        update.add(docSizeAction);
         // color action(s)
         ColorAction colorActionUpdate = new DocGlyphColorAction(DATA_GROUP);
         update.add(colorActionUpdate);
         ColorAction borderColorActionUpdate = new DocGlyphBorderColorAction(DATA_GROUP);
         update.add(borderColorActionUpdate);
         // TODO add axes color actions?
-        
-        
+//        ColorAction labelColorActionUpdate = new LabelColorAction(ALL_LABEL);
+//        update.add(labelColorActionUpdate);
         // repaint action
         update.add(new RepaintAction());
-        
-//        axisLayoutX = new AxisLayout(DATA_GROUP, xAxisInitField, Constants.X_AXIS);
-////        axisLayoutX.setRangeModel(new ObjectRangeModel(new Integer[]{0,1,2,3}));
-////        axisLayoutX.setDataType(Constants.ORDINAL);
-//        axisLayoutY = new AxisLayout(DATA_GROUP, yAxisInitField, Constants.Y_AXIS);
-////        axisLayoutY.setRangeModel(new ObjectRangeModel(new Integer[]{0,1,2,3}));
-////        axisLayoutY.setDataType(Constants.ORDINAL);
-//        axisLabelLayoutY = new AxisLabelLayout(Y_LABEL, axisLayoutY);
-//        update.add(axisLayoutX);
-//        update.add(axisLayoutY);
-//        update.add(axisLabelLayoutX);
-//        update.add(axisLabelLayoutY);
         // add update actionlist to vis
         m_vis.putAction("update", update);
 
@@ -173,7 +147,7 @@ public class DocumentGrid extends Display {
 //        ActionList preforce = new ActionList(1000);
 //        preforce.add(new DataMountainForceLayout(true));
 //        m_vis.putAction("preforce", preforce);
-
+//
         // force action? (borrowed from datamountain)
 //        final ForceDirectedLayout fl = new DataMountainForceLayout(false);
 //        ActivityListener fReset = new ActivityAdapter() {
@@ -187,23 +161,21 @@ public class DocumentGrid extends Display {
 //        forces.addActivityListener(fReset);
 //        m_vis.putAction("forces", forces);
         
+        // set basic properties of the display
         setSize(700, 600);
         setBackground(Color.LIGHT_GRAY);
-        // set borders, etc.
         setBorder(BorderFactory.createEmptyBorder(30,20,5,20));
         
         // set up control listeners
-        // set up various doc-glyph interaction controls
-        addControlListener(new DocGlyphControl());
         // zoom with wheel
-//        addControlListener(new WheelZoomControl());
+        addControlListener(new WheelZoomControl());
         // zoom with background right-drag
 //        addControlListener(new ZoomControl(Control.RIGHT_MOUSE_BUTTON));
         // pan with background left-drag
         addControlListener(new PanControl(Control.RIGHT_MOUSE_BUTTON));
-        // drag items to new cells
+        // drag control for moving items to new cells
 //        addControlListener(new DragControl());
-        addControlListener(new DocGridDragControl(DATA_GROUP));
+        addControlListener(new DocGridDragControl(DATA_GROUP, documentGridLayout, controller));
         
         // run actionlists
         m_vis.run("init");
@@ -213,11 +185,14 @@ public class DocumentGrid extends Display {
         
     }
     
+    /**
+     * To be called when the pixel area of this Display changes.
+     * 
+     * @param newWidth
+     * @param newHeight 
+     */
     public void resetSize(int newWidth, int newHeight) {
         setSize(newWidth, newHeight);
-        // update axes' sizes?
-//        axisLabelLayoutX.setLayoutBounds(getBounds());
-//        axisLabelLayoutY.setLayoutBounds(getBounds());
         
         // redo layout, force initialization
         m_vis.run("init");
@@ -225,7 +200,22 @@ public class DocumentGrid extends Display {
 //        m_vis.run("preforce");
         m_vis.run("update");  // remove if forces ("runAfter") are reenabled
     }
+    
+    public void updateXAxis(String xAxisAttrName) {
+        List<String> xAxisCategories = t.getValueListForAttribute(xAxisAttrName);
+//        docGridAxisLayout.updateXAxis
+        documentGridLayout.updateXAxis(xAxisAttrName, xAxisCategories);
+    }
+    
+    public void updateYAxis(String yAxisAttrName) {
+        List<String> yAxisCategories = t.getValueListForAttribute(yAxisAttrName);
+//        docGridAxisLayout.updateXAxis
+        documentGridLayout.updateYAxis(yAxisAttrName, yAxisCategories);
+    }
 
+    /**
+     * ColorAction for assigning border colors to document glyphs.
+     */
     public static class DocGlyphBorderColorAction extends ColorAction {
 
         public DocGlyphBorderColorAction(String group) {
@@ -234,6 +224,7 @@ public class DocumentGrid extends Display {
 
         @Override
         public int getColor(VisualItem item) {
+            // TODO set color based panel controls, certainty, selected attrs / values
 //            NodeItem nitem = (NodeItem) item;
             if (item.isHover()) {
 //                return ColorLib.rgb(99, 130, 191);
@@ -259,42 +250,34 @@ public class DocumentGrid extends Display {
 
         @Override
         public int getColor(VisualItem item) {
-
-                // for now, just return lightgray
-//                Color lightgray = Color.LIGHT_GRAY;
-//                return lightgray.getRGB();
+            
+            // TODO make color based upon doc properties
             Color white = Color.WHITE;
             return white.getRGB();
+            
+        }
+    }
+    
+    /**
+     * Color action for setting appearance of axes labels.
+     */
+    public static class LabelColorAction extends ColorAction {
 
-//            int attrValIndex = 0;
-//            if (item.canGetInt("attr_val_index")) {
-//                attrValIndex = item.getInt("attr_val_index");
-//            }
-//            if (attrValIndex == -1) {
-//                // just return lightgray? for docs
-//                Color lightgray = Color.LIGHT_GRAY;
-//                return lightgray.getRGB();
-//            } else {
-//
-//                // get color based on depth, mod of category id of item
-//                int depth = (item instanceof NodeItem ? ((NodeItem) item).getDepth() : 0);
-//                int colorPaletteIndex = (depth + 1) % DOCTREEMAP_GROUP_PALETTE_RGB_2.length;
-////            System.out.println("debug: depth="+depth);
-//                // depth = simple int giving depth in tree (start at 0 for root)
-////                String[] colorPaletteNames = DOCTREEMAP_GROUP_PALETTE[colorPaletteIndex];
-//                Color[] colorPalette = DOCTREEMAP_GROUP_PALETTE_RGB_2[colorPaletteIndex];
-////                String colorName = colorPaletteNames[attrValIndex % colorPaletteNames.length];
-//                Color color = colorPalette[attrValIndex % colorPalette.length];
-//                int colorInt = color.getRGB();
-//                return colorInt;
-//
-//            }
-////            if (m_vis.isInGroup(item, Visualization.SEARCH_ITEMS)) {
-////                return ColorLib.rgb(191, 99, 130);
-////            }
-////
-////            double v = (item instanceof NodeItem ? ((NodeItem) item).getDepth() : 0);
-////            return cmap.getColor(v);
+//        private ColorMap cmap = new ColorMap(
+//                ColorLib.getInterpolatedPalette(10,
+//                ColorLib.rgb(85, 85, 85), ColorLib.rgb(0, 0, 0)), 0, 9);
+
+        public LabelColorAction(String group) {
+            super(group, VisualItem.FILLCOLOR);
+        }
+
+        @Override
+        public int getColor(VisualItem item) {
+            
+            // TODO make color based upon doc properties
+            Color white = Color.WHITE;
+            return white.getRGB();
+            
         }
     }
 
@@ -302,19 +285,19 @@ public class DocumentGrid extends Display {
      * Handles sizing of document glyphs, controls size change of glyph on
      * selection
      * 
-     * note: this is now handled in renderer and doc glyph control
+     * note: this is now handled in renderer and doc glyph control?
      */
-    public static class DocGlyphSizeAction extends SizeAction {
+    public static class DocumentSizeAction extends SizeAction {
         
-//        public static final double HOVER_SIZE_MULT = 4.5;
-//        public static final double BASE_SIZE = 10;
+        public static final double HOVER_SIZE_MULT = 1.5;
+        public static final double BASE_SIZE = 10;
         
-        public DocGlyphSizeAction(String group) {
-//            super(group, BASE_SIZE);
-            super(group);
+        public DocumentSizeAction(String group) {
+            super(group, BASE_SIZE);
+//            super(group);
         }
         
-        public DocGlyphSizeAction() {
+        public DocumentSizeAction() {
             super();
         }
         
@@ -323,9 +306,29 @@ public class DocumentGrid extends Display {
         public double getSize(VisualItem item) {
 //            NodeItem nitem = (NodeItem) item;
             if (item.isHover()) {
-//                return super.getSize(item) * HOVER_SIZE_MULT;
+                return super.getSize(item) * HOVER_SIZE_MULT;
             }
             return super.getSize(item);
+        }
+        
+    }
+    
+    /*
+     * Assigns appropriate shapes to document glyphs.
+     */
+    public static class DocumentShapeAction extends ShapeAction {
+        
+        public DocumentShapeAction(String group) {
+            super(group);
+        }
+        
+        public DocumentShapeAction(String group, int shape) {
+            super(group, shape);
+        }
+        
+        @Override
+        public int getShape(VisualItem item) {
+            return super.getShape(item);
         }
         
     }
@@ -346,11 +349,12 @@ public class DocumentGrid extends Display {
         
         @Override
         public void render(Graphics2D g, VisualItem item) {
-
+            super.render(g, item);
+            
             // idea: rather than rendering fixed-size, can we first compute size of text, then set size of item equal to size of text?
             
-            
             Shape shape = getShape(item);
+            
             if (shape != null) {
 
 //                double xPos = shape.getBounds().getX();
@@ -370,9 +374,9 @@ public class DocumentGrid extends Display {
 //                double h = item.getBounds().getHeight();
                 double x1 = (double)item.get(VisualItem.X);
                 double y1 = (double) item.get(VisualItem.Y);
-                double w = (double) item.get(VisualItem.X2) - x1;
-                double h = (double) item.get(VisualItem.Y2) - y1;
-                shape.getBounds().setBounds((int)x1, (int)y1, (int)w, (int)h);
+//                double w = (double) item.get(VisualItem.X2) - x1;
+//                double h = (double) item.get(VisualItem.Y2) - y1;
+//                shape.getBounds().setBounds((int)x1, (int)y1, (int)w, (int)h);
 
                 // TODO set font size based on number of active nodes? based on size of rect?
 
@@ -397,35 +401,37 @@ public class DocumentGrid extends Display {
                 int[] textDims = getTextDims(g, f, s);
                 int textWidth = textDims[0];
                 int textHeight = textDims[1];
-                if ( shape instanceof RectangularShape ) {
-                    RectangularShape r = (RectangularShape) shape;
-                    double x = r.getX();
-                    double y = r.getY();
+//                if ( shape instanceof RectangularShape ) {
+//                    RectangularShape r = (RectangularShape) shape;
+//                    double x = r.getX();
+//                    double y = r.getY();
+                    double x = x1;
+                    double y = y1;
                     
                     // use our own painting code, for fine-grained control of size
                     // TODO move this into separate method, add code for more robust glyph vis.? see prefuse.util.GraphicsLib.paint()
                     Color strokeColor = ColorLib.getColor(item.getStrokeColor());
                     Color fillColor = ColorLib.getColor(item.getFillColor());
                     
-                    if (isHover) {
-                        item.setBounds(x1, y1, x1+textWidth, y1+textHeight);
+//                    if (isHover) {
+//                        item.setBounds(x1, y1, x1+textWidth, y1+textHeight);
                         g.setPaint(fillColor);
 //                        g.fillRect((int)x, (int)y, textWidth, textHeight);
                         g.fillRect((int)x1, (int)y1, textWidth, textHeight);
                         g.setPaint(strokeColor);
 //                        g.drawRect((int)x, (int)y, textWidth, textHeight);
                         g.drawRect((int)x1, (int)y1, textWidth, textHeight);
-                    } else {
-                        item.setBounds(x1, y1, x1+w, y1+h);
-                        g.setPaint(fillColor);
-                        g.fillRect((int)x1, (int)y1, (int)(w), (int)(h));
-                        g.setPaint(strokeColor);
-                        g.drawRect((int)x1, (int)y1, (int)(w), (int)(h));
-                    }
+//                    } else {
+////                        item.setBounds(x1, y1, x1+w, y1+h);
+//                        g.setPaint(fillColor);
+//                        g.fillRect((int)x1, (int)y1, (int)(w), (int)(h));
+//                        g.setPaint(strokeColor);
+//                        g.drawRect((int)x1, (int)y1, (int)(w), (int)(h));
+//                    }
                     
-                }
+//                }
                 
-            super.render(g, item);
+//            super.render(g, item);
                 
 //                drawStringMultiline(g, f, s, xPos, yPos);
                 drawStringMultiline(g, f, s, x1, y1);
@@ -480,129 +486,6 @@ public class DocumentGrid extends Display {
             lineCounter++;
         }
     }
-    
-    public class DocGlyphControl extends ControlAdapter {
-
-//        public static final double SELECTED_MULT = 30.;
-
-        public DocGlyphControl() {
-            super();
-        }
-
-        @Override
-        public void itemEntered(VisualItem item, MouseEvent e) {
-            Display d = (Display) e.getSource();
-
-//            if (item instanceof NodeItem) {
-                // blowup box on hover, populate with doc text
-//            double x = item.getBounds().getX();
-//            double y = item.getBounds().getY();
-//            double width = item.getBounds().getWidth();
-//            double height = item.getBounds().getHeight();
-//            
-//            double blowupWidth = width*SELECTED_MULT;
-//            double blowupHeight = height*SELECTED_MULT;
-//            
-//            item.getBounds().setRect(x, y, blowupWidth, blowupHeight);
-
-            // TODO replace box blowup with editible pane
-            // note: sizing now handled in renderer
-//                item.setSize(item.getSize() * SELECTED_MULT);
-
-                // redraw
-//            m_vis.run("update");
-                m_vis.run("repaint");
-
-//            }
-
-        }
-
-        @Override
-        public void itemExited(VisualItem item, MouseEvent e) {
-            Display d = (Display) e.getSource();
-
-//            if (item instanceof NodeItem) {
-                // shrink box to orig size
-
-//            double x = item.getBounds().getX();
-//            double y = item.getBounds().getY();
-//            double blowupWidth = item.getBounds().getWidth();
-//            double blowupHeight = item.getBounds().getHeight();
-//            
-//            double width = blowupWidth/SELECTED_MULT;
-//            double height = blowupHeight/SELECTED_MULT;
-//            
-//            item.getBounds().setRect(x, y, width, height);
-
-            // TODO replace box blowup with editible pane
-            // note: sizing now handled in renderer
-//                item.setSize(item.getSize() / SELECTED_MULT);
-
-                // redraw
-//            m_vis.run("update");
-                m_vis.run("repaint");
-
-//            }
-            
-        }
-        
-        @Override
-        public void itemPressed(VisualItem item, MouseEvent e) {
-            Display d = (Display)e.getSource();
-            
-            
-        }
-        
-        @Override
-        public void itemReleased(VisualItem item, MouseEvent e) {
-            
-            // check to see whether item's attribute values match those of the current cell
-            //  if not, reassign!
-            
-            
-        }
-
-        @Override
-        public void itemClicked(VisualItem item, MouseEvent e) {
-            Display d = (Display) e.getSource();
-
-            // temporarily load text popup on click
-            // eventually, we want to embed these functions into the display itself
-            int itemId = -1;
-            if (item.canGetInt(NODE_ID)) {
-                itemId = item.getInt(NODE_ID);
-                controller.displayDocDetailsWindow(itemId);
-            }
-            
-
-////            if (item instanceof NodeItem) {
-//                String text = item.getString(NODE_TEXT);
-//
-//                JPopupMenu jpub = new JPopupMenu();
-//                jpub.add(text);
-//                jpub.show(e.getComponent(), (int) item.getX(),
-//                        (int) item.getY());
-////            }
-
-                
-        }
-
-        @Override
-        public void itemDragged(VisualItem item, MouseEvent e) {}
-        
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     

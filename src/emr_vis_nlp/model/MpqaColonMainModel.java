@@ -313,4 +313,18 @@ public class MpqaColonMainModel implements MainModel {
         
     }
     
+    @Override
+    public boolean updateDocumentAttr(int docID, String docAttr, String docAttrVal) {
+        
+        try {
+            documentList.get(docID).getAttributes().put(docAttr, docAttrVal);
+        } catch (IndexOutOfBoundsException e) {
+            e.printStackTrace();
+            System.out.println("MpqaColonMainModel: err: no document /w idNum="+docID);
+            return false;
+        }
+        return true;
+        
+    }
+    
 }

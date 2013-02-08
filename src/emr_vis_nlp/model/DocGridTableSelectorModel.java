@@ -19,6 +19,8 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
     
 //    public static final String NOT_SEL_MSG = "(not selected)";
     public static final String NOT_SEL_MSG = "";
+    public static final String X_AXIS_SEL = "x_axis";
+    public static final String Y_AXIS_SEL = "y_axis";
     
     private static Map<String, Boolean> abnormalNamesMap = null;
     
@@ -57,8 +59,8 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         // TODO more interesting / informative selection options? better selection method beyond jcombobox?
         optionList = new String[numOptions];
         optionList[0] = NOT_SEL_MSG;
-        optionList[1] = "x_axis";
-        optionList[2] = "y_axis";
+        optionList[1] = X_AXIS_SEL;
+        optionList[2] = Y_AXIS_SEL;
 //        for (int i = 1; i < numOptions; i++) {
 //            optionList[i] = i + "!";
 //        }
@@ -118,6 +120,8 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
                     }
                 }
             }
+        } else {
+            // if NOT_SEL_MSG, make sure 2 axes are selected?
         }
 
     }
@@ -212,6 +216,7 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
             
         }
         
+        // shouldn't reach here, means nothing is selected!
         return "";
         
     }
@@ -227,6 +232,7 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
             
         }
         
+        // shouldn't reach here, means nothing is selected!
         return "";
         
     }

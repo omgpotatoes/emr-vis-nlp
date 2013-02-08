@@ -36,7 +36,7 @@ public class DocDetailsTableModel extends AbstractTableModel {
     /**
      * map for this document's attributes
      */
-    private Map<String, String> docAttributeMap;
+    private final Map<String, String> docAttributeMap;
     /**
      * map containing back-end nlp predictions for this document
      */

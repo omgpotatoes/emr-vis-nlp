@@ -96,5 +96,10 @@ public class NullMainModel implements MainModel {
     public Map<String, Integer> getAttributeValueCountMap(String attrName) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+
+    @Override
+    public boolean updateDocumentAttr(int docID, String docAttr, String docAttrVal) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
     
 }

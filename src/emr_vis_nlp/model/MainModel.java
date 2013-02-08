@@ -33,6 +33,8 @@ public interface MainModel {
     public Map<String, Integer> getAttributeValueCountMap(String attrName);
     /** enable selected documents in model */
     public void setSelectedAttributes(List<Boolean> selectedAttributes);
+    /** updates target document's target attribute with the designated value */
+    public boolean updateDocumentAttr(int docID, String docAttr, String docAttrVal);
     
     // for machine learning
     public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId);

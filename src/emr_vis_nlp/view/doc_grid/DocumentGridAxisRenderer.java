@@ -30,62 +30,38 @@ public class DocumentGridAxisRenderer extends AbstractShapeRenderer {
     // don't need to worry about alignment;
     //  !isX == left & center (with offsets to put labels in middle!)
     //  isX == center & bottom (again, with appropriate offsets!)
-    private int m_xalign;
-    private int m_yalign;
+//    private int m_xalign;
+//    private int m_yalign;
+    
     private int m_ascent;
+    
+    private int m_xalign_vert;
+    private int m_yalign_vert;
+    private int m_xalign_horiz;
+    private int m_yalign_horiz;
     
     private DocumentGridLayout docGridLayout;  // pointer to DocumentGridLayout for which this instance is drawing the axes
     
-    /**
-     * Create a new AxisRenderer. By default, axis labels are drawn along the
-     * left edge and underneath the tick marks.
-     */
-    public DocumentGridAxisRenderer() {
-        this(Constants.LEFT, Constants.BOTTOM);
+    public DocumentGridAxisRenderer(DocumentGridLayout docGridLayout) {
+        this.docGridLayout = docGridLayout;
+        m_xalign_horiz = Constants.LEFT;
+        m_yalign_horiz = Constants.CENTER;
+        m_xalign_vert = Constants.CENTER;
+        m_yalign_vert = Constants.BOTTOM;
     }
     
-    /**
-     * Create a new AxisRenderer.
-     * @param xalign the horizontal alignment for the axis label. One of
-     * {@link prefuse.Constants#LEFT}, {@link prefuse.Constants#RIGHT},
-     * or {@link prefuse.Constants#CENTER}.
-     * @param yalign the vertical alignment for the axis label. One of
-     * {@link prefuse.Constants#TOP}, {@link prefuse.Constants#BOTTOM},
-     * or {@link prefuse.Constants#CENTER}.
-     */
-    public DocumentGridAxisRenderer(int xalign, int yalign) {
-        m_xalign = xalign;
-        m_yalign = yalign;
-    }
-    
-    /**
-     * Set the horizontal alignment of axis labels.
-     * @param xalign the horizontal alignment for the axis label. One of
-     * {@link prefuse.Constants#LEFT}, {@link prefuse.Constants#RIGHT},
-     * or {@link prefuse.Constants#CENTER}.
-     */
-    public void setHorizontalAlignment(int xalign) {
-        m_xalign = xalign;
-    }
-    
-    /**
-     * Set the vertical alignment of axis labels.
-     * @param yalign the vertical alignment for the axis label. One of
-     * {@link prefuse.Constants#TOP}, {@link prefuse.Constants#BOTTOM},
-     * or {@link prefuse.Constants#CENTER}.
-     */
-    public void setVerticalAlignment(int yalign) {
-        m_yalign = yalign;
-    }
     
     /**
      * @see prefuse.render.AbstractShapeRenderer#getRawShape(prefuse.visual.VisualItem)
      */
+    @Override
     protected Shape getRawShape(VisualItem item) {
         double x1 = item.getDouble(VisualItem.X);
         double y1 = item.getDouble(VisualItem.Y);
         double x2 = item.getDouble(VisualItem.X2);
         double y2 = item.getDouble(VisualItem.Y2);
+        boolean isX = item.getBoolean(DocumentGridAxisLayout.IS_X);
+        double midPoint = item.getDouble(DocumentGridAxisLayout.MID_POINT);
         m_line.setLine(x1,y1,x2,y2);
         
         if ( !item.canGetString(VisualItem.LABEL) )
@@ -101,76 +77,103 @@ public class DocumentGridAxisRenderer extends AbstractShapeRenderer {
         
         double tx, ty;
         
-        // get text x-coord
-        switch ( m_xalign ) {
-        case Constants.FAR_RIGHT:
-            tx = x2 + 2;
-            break;
-        case Constants.FAR_LEFT:
+        if (isX) {
+            // vertical axis
+            // get text x-coord, center at midPoint
+//            tx = x1 + (x2-x1)/2 - w/2;
+            tx = midPoint + (x2-midPoint)/2 - w/2;
+            // get text y-coord
+            ty = y2-h;
+        } else {
+            // horiz axis
+            // get text x-coord
             tx = x1 - w - 2;
-            break;
-        case Constants.CENTER:
-            tx = x1 + (x2-x1)/2 - w/2;
-            break;
-        case Constants.RIGHT:
-            tx = x2 - w;
-            break;
-        case Constants.LEFT:
-        default:
-            tx = x1;
+            // get text y-coord, center at midPoint
+//            ty = y1 + (y2-y1)/2 - h/2;
+            ty = midPoint + (y2-midPoint)/2 - h/2;
         }
-        // get text y-coord
-        switch ( m_yalign ) {
-        case Constants.FAR_TOP:
-            ty = y1-h;
-            break;
-        case Constants.FAR_BOTTOM:
-            ty = y2;
-            break;
-        case Constants.CENTER:
-            ty = y1 + (y2-y1)/2 - h/2;
-            break;
-        case Constants.TOP:
-            ty = y1;
-            break;
-        case Constants.BOTTOM:
-        default:
-            ty = y2-h; 
-        }
+        
+        // don't have to worry about switching;
+//        // get text x-coord
+//        switch ( m_xalign ) {
+//        case Constants.FAR_RIGHT:
+//            tx = x2 + 2;
+//            break;
+//        case Constants.FAR_LEFT:
+//            tx = x1 - w - 2;
+//            break;
+//        case Constants.CENTER:
+//            tx = x1 + (x2-x1)/2 - w/2;
+//            break;
+//        case Constants.RIGHT:
+//            tx = x2 - w;
+//            break;
+//        case Constants.LEFT:
+//        default:
+//            tx = x1;
+//        }
+//        // get text y-coord
+//        switch ( m_yalign ) {
+//        case Constants.FAR_TOP:
+//            ty = y1-h;
+//            break;
+//        case Constants.FAR_BOTTOM:
+//            ty = y2;
+//            break;
+//        case Constants.CENTER:
+//            ty = y1 + (y2-y1)/2 - h/2;
+//            break;
+//        case Constants.TOP:
+//            ty = y1;
+//            break;
+//        case Constants.BOTTOM:
+//        default:
+//            ty = y2-h; 
+//        }
+        
         m_box.setFrame(tx,ty,w,h);
         return m_box;
     }
     
     /**
-     * @see prefuse.render.Renderer#render(java.awt.Graphics2D, prefuse.visual.VisualItem)
+     * @see prefuse.render.Renderer#render(java.awt.Graphics2D,
+     * prefuse.visual.VisualItem)
      */
-    public void render(Graphics2D g, VisualItem item) { 
-    	Shape s = getShape(item); 
-    	GraphicsLib.paint(g, item, m_line, getStroke(item), getRenderType(item)); 
-    	 
-    	// check if we have a text label, if so, render it 
-    	if ( item.canGetString(VisualItem.LABEL) ) { 
-	    	float x = (float)m_box.getMinX(); 
-	    	float y = (float)m_box.getMinY() + m_ascent; 
+    @Override
+    public void render(Graphics2D g, VisualItem item) {
+        Shape s = getShape(item);
+        GraphicsLib.paint(g, item, m_line, getStroke(item), getRenderType(item));
 
-	    	// draw label background 
-	    	GraphicsLib.paint(g, item, s, null, RENDER_TYPE_FILL); 
+        // check if we have a text label, if so, render it 
+        String str;
+        if (item.canGetString(VisualItem.LABEL)) {
+            str = (String) item.getString(VisualItem.LABEL);
+            if (str != null && !str.equals("")) {
+                float x = (float) m_box.getMinX();
+                float y = (float) m_box.getMinY() + m_ascent;
 
-	    	String str = item.getString(VisualItem.LABEL); 
-	    	AffineTransform origTransform = g.getTransform();
-	    	AffineTransform transform = this.getTransform(item);
-	    	if ( transform != null ) g.setTransform(transform);
+                // draw label background 
+                GraphicsLib.paint(g, item, s, null, RENDER_TYPE_FILL);
 
-	    	g.setFont(item.getFont()); 
-	    	g.setColor(ColorLib.getColor(item.getTextColor())); 
+                AffineTransform origTransform = g.getTransform();
+                AffineTransform transform = this.getTransform(item);
+                if (transform != null) {
+                    g.setTransform(transform);
+                }
+
+                g.setFont(item.getFont());
+                g.setColor(ColorLib.getColor(item.getTextColor()));
                 // TODO properly hunt down source of null str! for now, triage
                 if (str != null) {
                     g.drawString(str, x, y);
                 }
 
-	    	if ( transform != null ) g.setTransform(origTransform); 
-    	}
-	}
+                if (transform != null) {
+                    g.setTransform(origTransform);
+                }
+            }
+        }
+    }
 
     /**
      * @see prefuse.render.Renderer#locatePoint(java.awt.geom.Point2D, prefuse.visual.VisualItem)

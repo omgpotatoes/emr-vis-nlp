@@ -1,6 +1,5 @@
 package emr_vis_nlp.main;
 
-import emr_vis_nlp.controller.DefaultMainController;
 import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.model.DocTableModel;
 import emr_vis_nlp.model.JTableCombos;
@@ -623,6 +622,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         documentGrid = controller.buildDocumentGrid();
         jSplitPaneDocGrid.setBottomComponent(documentGrid);
         updateDocumentGridSize();
+//        controller.updateDocumentGrid();
+//        updateDocumentGridSize();
     }
     
     @Override
@@ -673,7 +674,11 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     @Override
     public void axisAttrSelectionChanged() {
         // update relevant panes
+//        // TODO don't rebuild whole grid, just update existing grid! (for animation)
+          // ^ must fix bug in axislayout; what if # of categories differs between previous and current selected attrs?
         rebuildDocumentGridView();
+//        controller.updateDocumentGrid();
+        updateDocumentGridSize();
     }
 
     /**
@@ -722,7 +727,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         }
         
         // setup controller
-        MainController controller = new DefaultMainController();
+        MainController controller = new MainController();
 
         // setup model
         MainModel model = new NullMainModel(controller);
