@@ -1,6 +1,6 @@
 package emr_vis_nlp.view;
 
-import emr_vis_nlp.model.DocGridTableSelectorModel;
+import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.model.Document;
 import java.awt.Color;
 import java.awt.Dimension;

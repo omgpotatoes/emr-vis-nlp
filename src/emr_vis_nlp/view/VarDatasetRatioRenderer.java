@@ -21,7 +21,7 @@ import javax.swing.table.TableCellRenderer;
  * 
  * @author alexander.p.conrad@gmail.com
  */
-public class VarDatasetRatioRenderer extends JLabel implements TableCellRenderer {
+public class VarDatasetRatioRenderer implements TableCellRenderer {
     
 //    public VarDatasetRatioRenderer() {
 //        
@@ -47,7 +47,10 @@ public class VarDatasetRatioRenderer extends JLabel implements TableCellRenderer
         } else {
 //            if (value instanceof String) {
 //            if (column == 0) {
-                setToolTipText((String)value);
+//                setToolTipText((String)value);
+//            int rowModel = table.convertRowIndexToModel(row);
+//            String valueFromModel = (String)table.getModel().getValueAt(rowModel,column);
+//            setToolTipText(valueFromModel);
 //            }
             return new DefaultTableCellRenderer().getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         }

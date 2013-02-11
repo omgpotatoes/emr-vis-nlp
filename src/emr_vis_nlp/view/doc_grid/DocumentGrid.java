@@ -2,10 +2,9 @@ package emr_vis_nlp.view.doc_grid;
 
 import emr_vis_nlp.controller.MainController;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.geom.RectangularShape;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import javax.swing.BorderFactory;
 import prefuse.Constants;
@@ -18,8 +17,9 @@ import prefuse.action.assignment.ShapeAction;
 import prefuse.action.assignment.SizeAction;
 import prefuse.action.layout.graph.ForceDirectedLayout;
 import prefuse.activity.Activity;
+import prefuse.activity.ActivityAdapter;
+import prefuse.activity.ActivityListener;
 import prefuse.controls.Control;
-import prefuse.controls.ControlAdapter;
 import prefuse.controls.PanControl;
 import prefuse.controls.WheelZoomControl;
 import prefuse.data.Schema;
@@ -63,6 +63,10 @@ public class DocumentGrid extends Display {
     private DocumentGridAxisLayout docGridAxisLayout;
     // handles generation of glyphs
     private DocumentShapeAction docShapeAction;
+    // handles glyph coloration
+    private DocumentColorAction docColorAction;
+    // handles glyph border coloration
+    private DocumentBorderColorAction docBorderColorAction;
     // handles shape sizing
     private DocumentSizeAction docSizeAction;
     // backing table containing data
@@ -72,7 +76,7 @@ public class DocumentGrid extends Display {
     // controller governing this DocumentGrid
     private MainController controller;
     
-    public DocumentGrid(MainController controller, DocumentGridTable t, String xAxisInitName, String yAxisInitName) {
+    public DocumentGrid(MainController controller, DocumentGridTable t, String xAxisInitName, String yAxisInitName, String shapeInitName, String colorInitName) {
         super(new Visualization());
         this.t = t;
         this.controller = controller;
@@ -85,19 +89,18 @@ public class DocumentGrid extends Display {
         // add document layout action
         List<String> xAxisInitCategories = t.getValueListForAttribute(xAxisInitName);
         List<String> yAxisInitCategories = t.getValueListForAttribute(yAxisInitName);
-        documentGridLayout = new DocumentGridLayout(DATA_GROUP, xAxisInitName, yAxisInitName, xAxisInitCategories, yAxisInitCategories);
+        documentGridLayout = new DocumentGridLayout(controller, DATA_GROUP, xAxisInitName, yAxisInitName, xAxisInitCategories, yAxisInitCategories);
         init.add(documentGridLayout);
         // add axes layout action
         docGridAxisLayout = new DocumentGridAxisLayout(ALL_LABEL, documentGridLayout);
         init.add(docGridAxisLayout);
         // set glyph shapes
-        // TODO more complex / variad shapes! encode data as glyph?
 //        docShapeAction = new DocShapeAction(DATA_GROUP, Constants.SHAPE_RECTANGLE);
-        docShapeAction = new DocumentShapeAction(DATA_GROUP, Constants.SHAPE_DIAMOND);
-        init.add(docShapeAction);
+//        docShapeAction = new DocumentShapeAction(DATA_GROUP, Constants.SHAPE_DIAMOND);
+//        init.add(docShapeAction);
         // encode size
-        docSizeAction = new DocumentSizeAction(DATA_GROUP);
-        init.add(docSizeAction);
+//        docSizeAction = new DocumentSizeAction(DATA_GROUP);
+//        init.add(docSizeAction);
         // add init actionlist to vis
         m_vis.putAction("init", init);
         
@@ -118,22 +121,37 @@ public class DocumentGrid extends Display {
         
         // ActionList for initially stabilizing the forces
         ActionList preforce = new ActionList(1000);
-        preforce.add(new DataMountainForceLayout(true));
+//        preforce.add(new DataMountainForceLayout(true));
+        preforce.add(new DataMountainForceLayout(false));
         m_vis.putAction("preforce", preforce);
         
         // update actionlist: performs coloration, sizing
         // TODO: merge update and init?
 //        ActionList update = new ActionList();
         ActionList update = new ActionList(Activity.INFINITY);
-        // TODO size action
+        ActionList updateOnce = new ActionList();
+        // size action
 //        SizeAction sizeActionUpdate = new DocGlyphSizeAction(DATA_GROUP);
 //        update.add(sizeActionUpdate);
+        // TODO set size to roughly be a function of ## items in display?
+        docSizeAction = new DocumentSizeAction(DATA_GROUP, 3);
         update.add(docSizeAction);
+        updateOnce.add(docSizeAction);
+        // shape action
+        // get current attrs from table
+        List<String> shapeInitCategories = t.getValueListForAttribute(shapeInitName);
+//        docShapeAction = new DocumentShapeAction(DATA_GROUP, Constants.SHAPE_DIAMOND, shapeInitName, shapeInitCategories);
+        docShapeAction = new DocumentShapeAction(DATA_GROUP, shapeInitName, shapeInitCategories);
+        update.add(docShapeAction);
+        updateOnce.add(docShapeAction);
         // color action(s)
-        ColorAction colorActionUpdate = new DocGlyphColorAction(DATA_GROUP);
-        update.add(colorActionUpdate);
-        ColorAction borderColorActionUpdate = new DocGlyphBorderColorAction(DATA_GROUP);
-        update.add(borderColorActionUpdate);
+        List<String> colorInitCategories = t.getValueListForAttribute(colorInitName);
+        docColorAction = new DocumentColorAction(DATA_GROUP, colorInitName, colorInitCategories);
+        update.add(docColorAction);
+        updateOnce.add(docColorAction);
+        docBorderColorAction = new DocumentBorderColorAction(DATA_GROUP);
+        update.add(docBorderColorAction);
+        updateOnce.add(docBorderColorAction);
         // TODO add axes color actions?
 //        ColorAction labelColorActionUpdate = new LabelColorAction(ALL_LABEL);
 //        update.add(labelColorActionUpdate);
@@ -141,25 +159,25 @@ public class DocumentGrid extends Display {
         update.add(new RepaintAction());
         // add update actionlist to vis
         m_vis.putAction("update", update);
-
+        m_vis.putAction("updateOnce", updateOnce);
 
         // force stabilizing action? (borrowed from datamountain)
 //        ActionList preforce = new ActionList(1000);
 //        preforce.add(new DataMountainForceLayout(true));
 //        m_vis.putAction("preforce", preforce);
 //
-        // force action? (borrowed from datamountain)
-//        final ForceDirectedLayout fl = new DataMountainForceLayout(false);
-//        ActivityListener fReset = new ActivityAdapter() {
-//            public void activityCancelled(Activity a) {
-//                fl.reset(); 
-//             } 
-//        };
-//        ActionList forces = new ActionList(Activity.INFINITY);
-//        forces.add(fl);
+        // force action, to move docs out of the way when dragging (borrowed from datamountain)
+        final ForceDirectedLayout fl = new DataMountainForceLayout(false);
+        ActivityListener fReset = new ActivityAdapter() {
+            public void activityCancelled(Activity a) {
+                fl.reset(); 
+             } 
+        };
+        ActionList forces = new ActionList(Activity.INFINITY);
+        forces.add(fl);
 //        forces.add(update);
-//        forces.addActivityListener(fReset);
-//        m_vis.putAction("forces", forces);
+        forces.addActivityListener(fReset);
+        m_vis.putAction("forces", forces);
         
         // set basic properties of the display
         setSize(700, 600);
@@ -178,10 +196,18 @@ public class DocumentGrid extends Display {
         addControlListener(new DocGridDragControl(DATA_GROUP, documentGridLayout, controller));
         
         // run actionlists
-        m_vis.run("init");
+//        m_vis.run("init");
 //        m_vis.runAfter("preforce", "update");  // temporarily (?) disable for testing
 //        m_vis.run("preforce");
-        m_vis.run("update");  // remove if forces ("runAfter") are reenabled
+//        m_vis.run("update");  // remove if forces ("runAfter") are reenabled
+        
+        // first pass: before layout, do updateOnce to set sizes
+//        m_vis.alwaysRunAfter("init", "preforce");
+//        m_vis.alwaysRunAfter("preforce", "update");
+        m_vis.alwaysRunAfter("init", "update");
+        
+        m_vis.runAfter("updateOnce", "init");
+        m_vis.run("updateOnce");
         
     }
     
@@ -195,10 +221,17 @@ public class DocumentGrid extends Display {
         setSize(newWidth, newHeight);
         
         // redo layout, force initialization
-        m_vis.run("init");
 //        m_vis.runAfter("preforce", "update");  // temporarily (?) disable for testing
 //        m_vis.run("preforce");
-        m_vis.run("update");  // remove if forces ("runAfter") are reenabled
+//        m_vis.run("update");  // remove if forces ("runAfter") are reenabled
+//        m_vis.runAfter("init", "preforce");  // temporarily (?) disable for testing
+        m_vis.run("init");
+    }
+    
+    public void resetView() {
+//        m_vis.runAfter("init", "preforce");  // temporarily (?) disable for testing
+//        m_vis.run("init");
+        m_vis.run("preforce");
     }
     
     public void updateXAxis(String xAxisAttrName) {
@@ -212,13 +245,28 @@ public class DocumentGrid extends Display {
 //        docGridAxisLayout.updateXAxis
         documentGridLayout.updateYAxis(yAxisAttrName, yAxisCategories);
     }
+    
+    public void updateColorAttr(String colorAttrName) {
+        List<String> colorCategories = t.getValueListForAttribute(colorAttrName);
+        // update colorAction
+        docColorAction.updateColorAttr(colorAttrName, colorCategories);
+    }
+    
+    public void updateShapeAttr(String shapeAttrName) {
+        List<String> shapeCategories = t.getValueListForAttribute(shapeAttrName);
+        // update shapeAction
+        docShapeAction.updateShapeAttr(shapeAttrName, shapeCategories);
+    }
 
+    
+    
+    
     /**
      * ColorAction for assigning border colors to document glyphs.
      */
-    public static class DocGlyphBorderColorAction extends ColorAction {
+    public static class DocumentBorderColorAction extends ColorAction {
 
-        public DocGlyphBorderColorAction(String group) {
+        public DocumentBorderColorAction(String group) {
             super(group, VisualItem.STROKECOLOR);
         }
 
@@ -238,48 +286,85 @@ public class DocumentGrid extends Display {
     /**
      * Set fill and border colors based on various criteria, and font colors.
      */
-    public static class DocGlyphColorAction extends ColorAction {
+    public static class DocumentColorAction extends ColorAction {
 
 //        private ColorMap cmap = new ColorMap(
 //                ColorLib.getInterpolatedPalette(10,
 //                ColorLib.rgb(85, 85, 85), ColorLib.rgb(0, 0, 0)), 0, 9);
-
-        public DocGlyphColorAction(String group) {
+        
+        public static final Color[] GLYPH_COLOR_PALETTE = {
+            new Color(191, 48, 48), new Color(18, 178, 37), new Color(176, 95, 220), 
+            new Color(160, 82, 45), new Color(91, 229, 108),  new Color(99, 148, 220)
+        };
+        
+        private String colorAttrName;
+        private List<String> colorAttrCategories;
+        private Map<String, Color> catToColorMap;
+        
+        public DocumentColorAction(String group, String colorAttrName, List<String> colorAttrCategories) {
             super(group, VisualItem.FILLCOLOR);
+            this.colorAttrName = colorAttrName;
+            this.colorAttrCategories = colorAttrCategories;
+            // build map from category value to color for quick lookup
+            catToColorMap = new HashMap<>();
+            for (int i=0; i<colorAttrCategories.size(); i++) {
+                int paletteIndex = i % GLYPH_COLOR_PALETTE.length;
+                String category = colorAttrCategories.get(i);
+                catToColorMap.put(category, GLYPH_COLOR_PALETTE[paletteIndex]);
+            }
         }
 
         @Override
         public int getColor(VisualItem item) {
             
-            // TODO make color based upon doc properties
+            // get value for target attr in item
+            if (item.canGetString(colorAttrName)) {
+                String attrVal = item.getString(colorAttrName);
+                Color attrValColor = catToColorMap.get(attrVal);
+                return attrValColor.getRGB();
+            }
+            
             Color white = Color.WHITE;
             return white.getRGB();
             
         }
+        
+        public void updateColorAttr(String colorAttrName, List<String> colorAttrCategories) {
+            this.colorAttrName = colorAttrName;
+            this.colorAttrCategories = colorAttrCategories;
+            // refresh?
+            catToColorMap = new HashMap<>();
+            for (int i=0; i<colorAttrCategories.size(); i++) {
+                int paletteIndex = i % GLYPH_COLOR_PALETTE.length;
+                String category = colorAttrCategories.get(i);
+                catToColorMap.put(category, GLYPH_COLOR_PALETTE[paletteIndex]);
+            }
+        }
+        
     }
     
-    /**
-     * Color action for setting appearance of axes labels.
-     */
-    public static class LabelColorAction extends ColorAction {
-
-//        private ColorMap cmap = new ColorMap(
-//                ColorLib.getInterpolatedPalette(10,
-//                ColorLib.rgb(85, 85, 85), ColorLib.rgb(0, 0, 0)), 0, 9);
-
-        public LabelColorAction(String group) {
-            super(group, VisualItem.FILLCOLOR);
-        }
-
-        @Override
-        public int getColor(VisualItem item) {
-            
-            // TODO make color based upon doc properties
-            Color white = Color.WHITE;
-            return white.getRGB();
-            
-        }
-    }
+//    /**
+//     * Color action for setting appearance of axes labels.
+//     */
+//    public static class LabelColorAction extends ColorAction {
+//
+////        private ColorMap cmap = new ColorMap(
+////                ColorLib.getInterpolatedPalette(10,
+////                ColorLib.rgb(85, 85, 85), ColorLib.rgb(0, 0, 0)), 0, 9);
+//
+//        public LabelColorAction(String group) {
+//            super(group, VisualItem.FILLCOLOR);
+//        }
+//
+//        @Override
+//        public int getColor(VisualItem item) {
+//            
+//            // TODO make color based upon doc properties
+//            Color white = Color.WHITE;
+//            return white.getRGB();
+//            
+//        }
+//    }
 
     /*
      * Handles sizing of document glyphs, controls size change of glyph on
@@ -290,10 +375,10 @@ public class DocumentGrid extends Display {
     public static class DocumentSizeAction extends SizeAction {
         
         public static final double HOVER_SIZE_MULT = 1.5;
-        public static final double BASE_SIZE = 10;
+//        public static final double BASE_SIZE = 10;
         
-        public DocumentSizeAction(String group) {
-            super(group, BASE_SIZE);
+        public DocumentSizeAction(String group, double baseSize) {
+            super(group, baseSize);
 //            super(group);
         }
         
@@ -318,17 +403,56 @@ public class DocumentGrid extends Display {
      */
     public static class DocumentShapeAction extends ShapeAction {
         
-        public DocumentShapeAction(String group) {
+        public static final int[] GLYPH_SHAPE_PALETTE = {
+            Constants.SHAPE_RECTANGLE, Constants.SHAPE_DIAMOND, Constants.SHAPE_ELLIPSE, 
+            Constants.SHAPE_HEXAGON, Constants.SHAPE_CROSS, Constants.SHAPE_STAR
+        };
+        
+        private String shapeAttrName;
+        private List<String> shapeAttrCategories;
+        private Map<String, Integer> catToShapeMap;
+        
+        public DocumentShapeAction(String group, String shapeAttrName, List<String> shapeAttrCategories) {
             super(group);
+            this.shapeAttrName = shapeAttrName;
+            this.shapeAttrCategories = shapeAttrCategories;
+            catToShapeMap = new HashMap<>();
+            for (int i=0; i<shapeAttrCategories.size(); i++) {
+                int paletteIndex = i % GLYPH_SHAPE_PALETTE.length;
+                String category = shapeAttrCategories.get(i);
+                catToShapeMap.put(category, GLYPH_SHAPE_PALETTE[paletteIndex]);
+            }
         }
         
-        public DocumentShapeAction(String group, int shape) {
-            super(group, shape);
-        }
+//        public DocumentShapeAction(String group, int shape, String shapeAttrName, List<String> shapeAttrCategories) {
+//            super(group, shape);
+//            this.shapeAttrName = shapeAttrName;
+//            this.shapeAttrCategories = shapeAttrCategories;
+//        }
         
         @Override
         public int getShape(VisualItem item) {
-            return super.getShape(item);
+            
+            if (item.canGetString(shapeAttrName)) {
+                String attrVal = item.getString(shapeAttrName);
+                int shape = catToShapeMap.get(attrVal);
+                return shape;
+            }
+            
+            return(Constants.SHAPE_TRIANGLE_DOWN);
+            //return super.getShape(item);
+        }
+        
+        public void updateShapeAttr(String shapeAttrName, List<String> shapeAttrCategories) {
+            this.shapeAttrName = shapeAttrName;
+            this.shapeAttrCategories = shapeAttrCategories;
+            catToShapeMap = new HashMap<>();
+            for (int i=0; i<shapeAttrCategories.size(); i++) {
+                int paletteIndex = i % GLYPH_SHAPE_PALETTE.length;
+                String category = shapeAttrCategories.get(i);
+                catToShapeMap.put(category, GLYPH_SHAPE_PALETTE[paletteIndex]);
+            }
+            // refresh?
         }
         
     }
@@ -340,10 +464,11 @@ public class DocumentGrid extends Display {
     public static class DocGlyphRenderer extends ShapeRenderer {
         
         // base size for visualitems (in pixels)
-        public static final int BASE_SIZE = 10;
+//        public static final int BASE_SIZE = 10;
         
         public DocGlyphRenderer() {
-            super(BASE_SIZE);
+//            super(BASE_SIZE);
+            super();
             m_manageBounds = false;
         }
         
@@ -411,7 +536,8 @@ public class DocumentGrid extends Display {
                     // use our own painting code, for fine-grained control of size
                     // TODO move this into separate method, add code for more robust glyph vis.? see prefuse.util.GraphicsLib.paint()
                     Color strokeColor = ColorLib.getColor(item.getStrokeColor());
-                    Color fillColor = ColorLib.getColor(item.getFillColor());
+//                    Color fillColor = ColorLib.getColor(item.getFillColor());
+                    Color fillColor = Color.WHITE;
                     
 //                    if (isHover) {
 //                        item.setBounds(x1, y1, x1+textWidth, y1+textHeight);
@@ -510,7 +636,7 @@ public class DocumentGrid extends Display {
             
             ForceSimulator fsim = new ForceSimulator();
             fsim.addForce(new NBodyForce(-0.4f, 25f, NBodyForce.DEFAULT_THETA));
-            fsim.addForce(new SpringForce(1e-5f,0f));
+//            fsim.addForce(new SpringForce(1e-5f,0f));
             fsim.addForce(new DragForce());
             setForceSimulator(fsim);
             

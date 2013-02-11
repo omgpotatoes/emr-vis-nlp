@@ -1,10 +1,10 @@
 package emr_vis_nlp.main;
 
+import emr_vis_nlp.view.JTableCombos;
+import emr_vis_nlp.view.doc_table.DocTableModel;
+import emr_vis_nlp.view.doc_table.AttrTableModel;
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.model.DocTableModel;
-import emr_vis_nlp.model.JTableCombos;
-import emr_vis_nlp.model.MainModel;
-import emr_vis_nlp.model.NullMainModel;
+import emr_vis_nlp.model.*;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
 import emr_vis_nlp.view.VarDatasetRatioRenderer;
@@ -38,7 +38,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     /**
      * backing model for the simple attribute selection table
      */
-    private TableModel attrSelectionTableModel;
+    private AttrTableModel attrSelectionTableModel;
     /**
      * backing model for the treemap attribute selection table
      */
@@ -98,6 +98,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jTableSimpleDocs = new javax.swing.JTable();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTableAttrSelection = new javax.swing.JTable();
+        jButtonSelectNoneDocTable = new javax.swing.JButton();
+        jButtonSelectAllDocTable = new javax.swing.JButton();
         jPanelDocMap = new javax.swing.JPanel();
         jSplitPaneDocMap = new javax.swing.JSplitPane();
         jPanel5 = new javax.swing.JPanel();
@@ -114,6 +116,9 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jTextFieldSearch2 = new javax.swing.JTextField();
         jScrollPane4 = new javax.swing.JScrollPane();
         jTableAttrSelection3 = new JTableCombos();
+        jButtonSelectAllDocGrid = new javax.swing.JButton();
+        jButtonSelectNoneDocGrid = new javax.swing.JButton();
+        jButtonReset = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -179,18 +184,34 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         });
         jScrollPane2.setViewportView(jTableAttrSelection);
 
+        jButtonSelectNoneDocTable.setText("Select None");
+        jButtonSelectNoneDocTable.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonSelectNoneDocTableActionPerformed(evt);
+            }
+        });
+
+        jButtonSelectAllDocTable.setText("Select All");
+        jButtonSelectAllDocTable.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonSelectAllDocTableActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanelDocTableLayout = new javax.swing.GroupLayout(jPanelDocTable);
         jPanelDocTable.setLayout(jPanelDocTableLayout);
         jPanelDocTableLayout.setHorizontalGroup(
             jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanelDocTableLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanelDocTableLayout.createSequentialGroup()
+                .addGroup(jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(jPanelDocTableLayout.createSequentialGroup()
                         .addComponent(jLabelSearch)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jTextFieldSearch))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 166, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
+                    .addComponent(jButtonSelectNoneDocTable, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButtonSelectAllDocTable, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 598, Short.MAX_VALUE)
                 .addContainerGap())
@@ -200,13 +221,17 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelDocTableLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane1)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 517, Short.MAX_VALUE)
                     .addGroup(jPanelDocTableLayout.createSequentialGroup()
                         .addGroup(jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabelSearch)
                             .addComponent(jTextFieldSearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 488, Short.MAX_VALUE)))
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButtonSelectAllDocTable)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButtonSelectNoneDocTable)))
                 .addContainerGap())
         );
 
@@ -373,6 +398,29 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jTableAttrSelection3.setDefaultRenderer(JPanel.class, new VarDatasetRatioRenderer());
         jScrollPane4.setViewportView(jTableAttrSelection3);
 
+        jButtonSelectAllDocGrid.setText("Select All");
+        jButtonSelectAllDocGrid.setEnabled(false);
+        jButtonSelectAllDocGrid.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonSelectAllDocGridActionPerformed(evt);
+            }
+        });
+
+        jButtonSelectNoneDocGrid.setText("Select None");
+        jButtonSelectNoneDocGrid.setEnabled(false);
+        jButtonSelectNoneDocGrid.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonSelectNoneDocGridActionPerformed(evt);
+            }
+        });
+
+        jButtonReset.setText("Reset");
+        jButtonReset.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonResetActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -380,9 +428,14 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabelSearch2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTextFieldSearch2, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButtonSelectNoneDocGrid, javax.swing.GroupLayout.DEFAULT_SIZE, 175, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabelSearch2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jTextFieldSearch2))
+                    .addComponent(jButtonSelectAllDocGrid, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButtonReset, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -393,7 +446,14 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
                     .addComponent(jLabelSearch2)
                     .addComponent(jTextFieldSearch2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE))
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 390, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButtonSelectAllDocGrid)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButtonSelectNoneDocGrid)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButtonReset)
+                .addContainerGap())
         );
 
         jSplitPaneDocGrid.setLeftComponent(jPanel1);
@@ -550,6 +610,30 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         // TODO add your handling code here:
     }//GEN-LAST:event_jTextFieldSearch2ActionPerformed
 
+    private void jButtonSelectAllDocGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectAllDocGridActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButtonSelectAllDocGridActionPerformed
+
+    private void jButtonSelectNoneDocGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectNoneDocGridActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButtonSelectNoneDocGridActionPerformed
+
+    private void jButtonResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonResetActionPerformed
+        controller.resetDocGridView();
+    }//GEN-LAST:event_jButtonResetActionPerformed
+
+    private void jButtonSelectAllDocTableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectAllDocTableActionPerformed
+        if (attrSelectionTableModel != null) {
+            attrSelectionTableModel.selectAll();
+        }
+    }//GEN-LAST:event_jButtonSelectAllDocTableActionPerformed
+
+    private void jButtonSelectNoneDocTableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectNoneDocTableActionPerformed
+        if (attrSelectionTableModel != null) {
+            attrSelectionTableModel.selectNone();
+        }
+    }//GEN-LAST:event_jButtonSelectNoneDocTableActionPerformed
+
     public void updateDocTreemapSize() {
         // update size of treemap
         if (docTreeMapViewComponent != null) {
@@ -589,7 +673,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     public void resetAttributeSelectionTable() {
 
         // tableModel for document table-based view
-        TableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModel();
+        AttrTableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModel();
 //        TableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModelFocusOnly();
         attrSelectionTableModel = newAttrSelectionTableModel;
         jTableAttrSelection.setModel(attrSelectionTableModel);
@@ -754,6 +838,11 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButtonReset;
+    private javax.swing.JButton jButtonSelectAllDocGrid;
+    private javax.swing.JButton jButtonSelectAllDocTable;
+    private javax.swing.JButton jButtonSelectNoneDocGrid;
+    private javax.swing.JButton jButtonSelectNoneDocTable;
     private javax.swing.JFileChooser jFileChooser1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabelSearch;

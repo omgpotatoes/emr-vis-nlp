@@ -1,5 +1,10 @@
 package emr_vis_nlp.controller;
 
+import emr_vis_nlp.view.DocDetailsTableModel;
+import emr_vis_nlp.view.doc_map.TreeMapSelectorTableModel;
+import emr_vis_nlp.view.doc_table.DocTableModel;
+import emr_vis_nlp.view.doc_table.AttrTableModel;
+import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.model.*;
 import emr_vis_nlp.view.DocFocusPopup;
 import emr_vis_nlp.view.MainView;
@@ -125,7 +130,7 @@ public class MainController {
      *
      * @return
      */
-    public TableModel buildSimpleAttrSelectionTableModel() {
+    public AttrTableModel buildSimpleAttrSelectionTableModel() {
         AttrTableModel attrTableModel = new AttrTableModel(model.getAllAttributes(), model.getAllSelectedAttributes(), this);
 //        TableModel attrSelectionTableModel = model.buildSimpleAttrSelectionTableModel();
         return attrTableModel;
@@ -185,8 +190,7 @@ public class MainController {
         List<String> allAttributes = model.getAllAttributes();
         List<Boolean> allAttributesEnabled = model.getAllSelectedAttributes();
 
-        // TODO proper integration with nlp back-end prediction models
-        Map<String, PredictionCertaintyTuple> attrPredictionMap = new HashMap<>();
+        Map<String, PredictionCertaintyTuple> attrPredictionMap = model.getPredictionsForDoc(docGlobalId);
 
         TableModel docDetailsTableModel = new DocDetailsTableModel(this, doc, docGlobalId, attrPredictionMap, allAttributes, allAttributesEnabled);
         return docDetailsTableModel;
@@ -195,238 +199,40 @@ public class MainController {
 
     public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId) {
 
-        try {
-            abstDoc.remove(0, abstDoc.getLength());
-        } catch (BadLocationException e) {
-            e.printStackTrace();
-            System.out.println("err: could not reset doc text for doc " + globalDocId + " focus window");
-        }
+        if (model != null) {
 
-        String docText = model.getAllDocuments().get(globalDocId).getText();
+            // delegate this to the model, if possible
+            if (globalAttrId != -1 && model.canWriteDocTextWithHighlights(globalDocId, globalAttrId)) {
+                model.writeDocTextWithHighlights(abstDoc, globalDocId, globalAttrId);
+            } else {
 
+                // if model doesn't support highlighting for this text, just insert plaintext
+                try {
+                    abstDoc.remove(0, abstDoc.getLength());
+                } catch (BadLocationException e) {
+                    e.printStackTrace();
+                    System.out.println("err: could not reset doc text for doc " + globalDocId + " focus window");
+                }
 
+                int maxFontSize = 32;
+                int minFontSize = 12;
 
-        if (globalAttrId != -1) {
+                String docText = model.getAllDocuments().get(globalDocId).getText();
+                SimpleAttributeSet attrSet = new SimpleAttributeSet();
+                StyleConstants.setFontSize(attrSet, minFontSize);
+                try {
+                    abstDoc.insertString(abstDoc.getLength(), docText, attrSet);
+                } catch (BadLocationException e) {
+                    e.printStackTrace();
+                    System.out.println("err: could not update doc text for doc " + globalDocId + " focus window");
+                }
 
-            int maxFontSize = 28;
-            int minFontSize = 12;
-
-            // TODO incorporate nlp back-end prediction models
-            // for now, just return basic text
-            SimpleAttributeSet attrSet = new SimpleAttributeSet();
-            StyleConstants.setFontSize(attrSet, minFontSize);
-            try {
-                abstDoc.insertString(abstDoc.getLength(), docText, attrSet);
-            } catch (BadLocationException e) {
-                e.printStackTrace();
-                System.out.println("err: could not update doc text for doc " + globalDocId + " focus window");
-            }
-
-
-
-
-
-
-
-
-//            // from annotator.MainWindow: (code to adapt:)
-//            
-//            // if feature is a regexp
-//            if (isSimpleSQVar) {
-//                // highlight regexp
-//                Pattern varRegExpPattern = Pattern.compile(simpleSQVarRegExpStr);
-//                Matcher varRegExpMatcher = varRegExpPattern.matcher(docText);
-//                boolean hasPattern = varRegExpMatcher.find();
-//
-//
-//                // strategy: while hasPattern == true, continue to look for matches; 
-//                //  store start, end match indices in a list
-//                List<Integer> startIndices = new ArrayList<>();
-//                List<Integer> endIndices = new ArrayList<>();
-//
-//                while (hasPattern) {
-//
-//                    int start = varRegExpMatcher.start();
-//                    int end = varRegExpMatcher.end();
-//                    String matchedSubstring = varRegExpMatcher.group();
-//
-//                    // debug
-//                    System.out.println("debug: found match in doc " + activeDataset.getDocuments().get(selectedDocumentIndex).getName() + " for attr " + selectedAttr + ": \"" + matchedSubstring + "\"");
-//
-//                    startIndices.add(start);
-//                    endIndices.add(end);
-//
-//                    hasPattern = varRegExpMatcher.find();
-//                }
-//
-//                int lastEndIndex = 0;
-//                if (startIndices.size() > 0) {
-//
-//                    while (startIndices.size() > 0) {
-//
-//                        // iterate through indices, writing the previous unmatched
-//                        // portion and following matched portion
-//
-//                        int plainIndexStart = lastEndIndex;
-//                        int plainIndexEnd = startIndices.remove(0);
-//                        int matchedIndexEnd = endIndices.remove(0);
-//
-//                        // unmatched
-//                        try {
-//                            int fontSize = minFontSize;
-//                            SimpleAttributeSet attrSet = new SimpleAttributeSet();
-//                            StyleConstants.setFontSize(attrSet, fontSize);
-//                            abstDoc.insertString(abstDoc.getLength(), docText.substring(plainIndexStart, plainIndexEnd),
-//                                    attrSet);
-//                        } catch (BadLocationException e) {
-//                            e.printStackTrace();
-//                            System.out.println("err: could not add unweighted term to report panel: "
-//                                    + docText.substring(plainIndexStart,
-//                                    plainIndexEnd));
-//                        }
-//
-//                        // matched
-//                        try {
-////						double weight = 1.0;
-//                            double weight = 0.8;
-//                            int fontSize = (int) (maxFontSize * weight);
-//                            if (fontSize < minFontSize) {
-//                                fontSize = minFontSize;
-//                            }
-//                            SimpleAttributeSet attrSet = new SimpleAttributeSet();
-//                            StyleConstants.setFontSize(attrSet, fontSize);
-//                            StyleConstants.setBackground(attrSet, new Color(0, 255,
-//                                    255, (int) (255 * weight)));
-//                            abstDoc.insertString(abstDoc.getLength(), docText.substring(plainIndexEnd, matchedIndexEnd),
-//                                    attrSet);
-//                        } catch (BadLocationException e) {
-//                            e.printStackTrace();
-//                            System.out.println("err: could not add weighted term to report panel: "
-//                                    + docText.substring(plainIndexEnd,
-//                                    matchedIndexEnd));
-//                        }
-//
-//                        lastEndIndex = matchedIndexEnd;
-//
-//                    }
-//
-//                    // print the last bit of unmatched text, if present (should be)
-//                    try {
-//                        int fontSize = minFontSize;
-//                        SimpleAttributeSet attrSet = new SimpleAttributeSet();
-//                        StyleConstants.setFontSize(attrSet, fontSize);
-//                        abstDoc.insertString(abstDoc.getLength(), docText.substring(lastEndIndex),
-//                                attrSet);
-//                    } catch (BadLocationException e) {
-//                        e.printStackTrace();
-//                        System.out.println("err: could not add unweighted term to report panel: "
-//                                + docText.substring(lastEndIndex));
-//                    }
-//
-//                } else {
-//                    // regexp doesn't match, so just load plain doc
-//                    try {
-//                        int fontSize = minFontSize;
-//                        SimpleAttributeSet attrSet = new SimpleAttributeSet();
-//                        StyleConstants.setFontSize(attrSet, fontSize);
-//                        abstDoc.insertString(abstDoc.getLength(), docText, attrSet);
-//                    } catch (BadLocationException e) {
-//                        e.printStackTrace();
-//                        System.out.println("err: could not load plain doc in panel (regexp not matched)");
-//                    }
-//                }
-//            } else {
-//                // highlight sufficiently-weighted terms, if any
-//                Scanner docTextLineSplitter = new Scanner(docText);
-//                while (docTextLineSplitter.hasNextLine()) {
-//                    String line = docTextLineSplitter.nextLine();
-//                    Scanner lineSplitter = new Scanner(line);
-//                    while (lineSplitter.hasNext()) {
-//
-//                        String term = lineSplitter.next();
-//
-//                        // if term is highly weighted, draw with emphasis;
-//                        // otherwise, draw normally
-//                        double weight = 0.;
-//                        double weightDiffMult = 1.3; // the larger this is, the
-//                        // higher the threshold for
-//                        // highlighting
-//                        if (!abnormalNameMap.containsKey(selectedAttr)
-//                                && predictionNameMap.containsKey(selectedAttr)
-//                                && ((termWeightMap.containsKey(term) && (weight = termWeightMap.get(term)) > (maxWeight - ((maxWeight - minWeight) / weightDiffMult))) || (termWeightMap.containsKey(term.toLowerCase()) && (weight = termWeightMap.get(term.toLowerCase())) > (maxWeight - ((maxWeight - minWeight) / weightDiffMult))))) {
-//
-//                            // if term is weighted sufficiently for the indicator
-//                            try {
-//                                int fontSize = (int) (maxFontSize * (weight / maxWeight));
-//                                if (fontSize < minFontSize) {
-//                                    fontSize = minFontSize;
-//                                }
-//                                SimpleAttributeSet attrSet = new SimpleAttributeSet();
-//                                StyleConstants.setFontSize(attrSet, fontSize);
-//                                StyleConstants.setBackground(attrSet, new Color(0,
-//                                        255, 255,
-//                                        (int) (255 * (weight / maxWeight))));
-//                                abstDoc.insertString(abstDoc.getLength(), term
-//                                        + " ", attrSet);
-//                            } catch (BadLocationException e) {
-//                                e.printStackTrace();
-//                                System.out.println("err: could not add weighted term to report panel: "
-//                                        + term);
-//                            }
-//
-//                        } else {
-//
-//                            // term is not weighted sufficiently for indicator
-//                            try {
-//                                int fontSize = minFontSize;
-//                                SimpleAttributeSet attrSet = new SimpleAttributeSet();
-//                                StyleConstants.setFontSize(attrSet, fontSize);
-//                                abstDoc.insertString(abstDoc.getLength(), term
-//                                        + " ", attrSet);
-//                            } catch (BadLocationException e) {
-//                                e.printStackTrace();
-//                                System.out.println("err: could not add unweighted term to report panel: "
-//                                        + term);
-//                            }
-//
-//                        }
-//
-//                    }
-//
-//                    // add a newline at the end of the line
-//                    try {
-//                        int fontSize = minFontSize;
-//                        SimpleAttributeSet attrSet = new SimpleAttributeSet();
-//                        StyleConstants.setFontSize(attrSet, fontSize);
-//                        abstDoc.insertString(abstDoc.getLength(), "\n", attrSet);
-//                    } catch (BadLocationException e) {
-//                        e.printStackTrace();
-//                        System.out.println("err: could not add newline to report panel");
-//                    }
-//
-//                }
-//            }
-
-
-
-        } else {
-
-            // write plaintext for doc
-            int maxFontSize = 28;
-            int minFontSize = 12;
-            SimpleAttributeSet attrSet = new SimpleAttributeSet();
-            StyleConstants.setFontSize(attrSet, minFontSize);
-            try {
-                abstDoc.insertString(abstDoc.getLength(), docText, attrSet);
-            } catch (BadLocationException e) {
-                e.printStackTrace();
-                System.out.println("err: could not update doc text for doc " + globalDocId + " focus window");
             }
 
         }
 
     }
-
+    
     public void documentAttributesUpdated(int docGlobalID) {
 
         // refresh all relevant tables
@@ -507,15 +313,19 @@ public class MainController {
 
         String xAxisAttrName = "Indicator_9";
         String yAxisAttrName = "Indicator_21";
+        String shapeAttrName = "";
+        String colorAttrName = "";
         if (docGridSelectionModel != null) {
             xAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getXAxisAttribute();
             yAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getYAxisAttribute();
+            shapeAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getShapeAttribute();
+            colorAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getColorAttribute();
         }
 
         // build table for grid
         documentGridTable = new DocumentGridTable(model.getAllAttributes(), model.getAllDocuments(), model.getAllSelectedDocuments());
         // build, return grid (while maintaining reference)
-        documentGrid = new DocumentGrid(this, documentGridTable, xAxisAttrName, yAxisAttrName);
+        documentGrid = new DocumentGrid(this, documentGridTable, xAxisAttrName, yAxisAttrName, shapeAttrName, colorAttrName);
         return documentGrid;
 
     }
@@ -530,15 +340,21 @@ public class MainController {
 
         String xAxisAttrName = "Indicator_9";
         String yAxisAttrName = "Indicator_21";
+        String shapeAttrName = "";
+        String colorAttrName = "";
         if (docGridSelectionModel != null) {
             xAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getXAxisAttribute();
             yAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getYAxisAttribute();
+            shapeAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getShapeAttribute();
+            colorAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getColorAttribute();
         }
 
         // build table for grid
         if (documentGrid != null) {
             documentGrid.updateXAxis(xAxisAttrName);
             documentGrid.updateYAxis(yAxisAttrName);
+            documentGrid.updateShapeAttr(shapeAttrName);
+            documentGrid.updateColorAttr(colorAttrName);
         }
 
     }
@@ -549,7 +365,9 @@ public class MainController {
         DocGridTableSelectorModel gridSelectorTableModel = (DocGridTableSelectorModel) docGridSelectionModel;
         String xAxisAttr = gridSelectorTableModel.getXAxisAttribute();
         String yAxisAttr = gridSelectorTableModel.getYAxisAttribute();
-
+        String shapeAttr = gridSelectorTableModel.getShapeAttribute();
+        String colorAttr = gridSelectorTableModel.getColorAttribute();
+        
         view.axisAttrSelectionChanged();
 
     }
@@ -571,6 +389,20 @@ public class MainController {
         model.updateDocumentAttr(docID, docAttr, docAttrVal);
         // update value in applicable visual tables
         documentGridTable.setString(docID, docAttr, docAttrVal);
+    }
+    
+    public void resetDocGridView() {
+        if (documentGrid != null) {
+            documentGrid.resetView();
+        }
+    }
+    
+    public boolean hasPrediction(int globalDocId, String attrName) {
+        return model.hasPrediction(globalDocId, attrName);
+    }
+    
+    public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName) {
+        return model.getPrediction(globalDocId, attrName);
     }
     
 }

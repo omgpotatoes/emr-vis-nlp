@@ -1,10 +1,9 @@
 
 package emr_vis_nlp.model;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
-import javax.swing.table.TableModel;
+import javax.swing.text.AbstractDocument;
 
 /**
  * Interface which should be implemented by all classes seeking to act as 
@@ -38,6 +37,12 @@ public interface MainModel {
     
     // for machine learning
     public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId);
+    public boolean hasPrediction(int globalDocId, String attrName);
+    public boolean hasManAnn(int globalDocId, String attrName);
+    public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName);
+    public String getManAnn(int globalDocId, String attrName);
+    public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId);
+    public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId);
     
     // miscellaneous
     /** applies simple string as filter to set enabled / disabled docs */

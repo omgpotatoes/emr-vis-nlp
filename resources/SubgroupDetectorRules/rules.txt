@@ -1,0 +1,17 @@
+O->nsubj->T
+O->dobj->T
+O->amod->T
+O->agent->T
+O->nsubjpass->T
+O->iobj->T
+O->xsubj->T
+O->dobj->poss->T
+O->csubj->nsubj->T
+O->(mod|pmod|subj|obj|obj2|desc|advmod)->T
+O->prep_(.*?)->T
+O->dobj->T
+O->dobj->poss->T
+O->amod->poss->T
+O->csubj->nsubj->T
+O->nsubj->T
+O->nsubjpass->T

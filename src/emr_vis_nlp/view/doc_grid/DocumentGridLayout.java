@@ -1,6 +1,7 @@
 
 package emr_vis_nlp.view.doc_grid;
 
+import emr_vis_nlp.controller.MainController;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
 import prefuse.Constants;
@@ -23,6 +24,8 @@ public class DocumentGridLayout extends Layout {
     
     public static final String X_LABEL = DocumentGrid.X_LABEL;
     public static final String Y_LABEL = DocumentGrid.Y_LABEL;
+    
+    private MainController controller;
     
     // screen coordinate range
     private double x_min;
@@ -47,12 +50,13 @@ public class DocumentGridLayout extends Layout {
     private int[][] gridCellItemCount;
     
     // buffer between items
-    private static double buffer = 5.;
+    private static double buffer = 8.;
 //    private static double buffer = 2.;
 //    private static double valueBuffer = 10.;
     
-    public DocumentGridLayout(String group, String xAttr, String yAttr, List<String> xCats, List<String> yCats) {
+    public DocumentGridLayout(MainController controller, String group, String xAttr, String yAttr, List<String> xCats, List<String> yCats) {
         super(group);
+        this.controller = controller;
         
         setXAxis(xAttr, xCats);
         setYAxis(yAttr, yCats);
@@ -92,8 +96,12 @@ public class DocumentGridLayout extends Layout {
         int[] rowItemCountInit = new int[yCats.size()];
         int[] colItemCountInit = new int[xCats.size()];
         int totalItemCount = 0;
+        double avgHeight = 0;
+        double avgWidth = 0;
         while ( iter.hasNext() ) {
             VisualItem item = (VisualItem)iter.next();
+            avgHeight += item.getBounds().getHeight();
+            avgWidth += item.getBounds().getWidth();
             // get category values for the target attributes for item
             // note: fields should always be populated; we shouldn't have to check whether they're available 1st (but safest to do it anyway)
             String xAttrVal = "";
@@ -113,6 +121,9 @@ public class DocumentGridLayout extends Layout {
             }
         }
         
+        avgHeight /= numItems;
+        avgWidth /= numItems;
+        
         // keep track of number of items positioned (so far) in each grid cell
         gridCellItemCount = new int[xCats.size()][yCats.size()];
         
@@ -121,19 +132,25 @@ public class DocumentGridLayout extends Layout {
         
         // get height, width vals for items based on # per row, # possible rows, size of bounds
         setMinMax();
-        double generalCellWidth = x_range / xCats.size();
-        double geleralCellHeight = y_range / yCats.size();
+        double frameBufferX = 50;  // to ensure that we stay within the bounds of the frame
+        double frameBufferY = 25;
+        double generalCellWidth = (x_range-frameBufferX) / xCats.size();
+        double generalCellHeight = (y_range-frameBufferY) / yCats.size();
         // size of item: (assume most-efficient square layout) ((x_range - buffer * numCats) / (sqrt[#items] + buffer))
         //  for now, artificially shrink item size (till we can fix issue concerning region overrun)
         double itemSizeMult = 1.6;
-        double itemWidth = (x_range - buffer * xCats.size()) / ((Math.sqrt(numItems) + xCats.size())*itemSizeMult) - buffer;
-        double itemHeight = (y_range - buffer * yCats.size()) / ((Math.sqrt(numItems) + yCats.size())*itemSizeMult) - buffer;
-        
+//        double itemWidth = (x_range - buffer * xCats.size()) / ((Math.sqrt(numItems) + xCats.size())*itemSizeMult) - buffer;
+//        double itemHeight = (y_range - buffer * yCats.size()) / ((Math.sqrt(numItems) + yCats.size())*itemSizeMult) - buffer;
+        double itemWidth = 5;
+        double itemHeight = 5;
+//        double itemWidth = avgWidth;
+//        double itemHeight = avgHeight;
+
         // compute region sizes for each row, column cell
         xCatRegionSizes = new ArrayList<>();
         xCatPositions = new ArrayList<>();
         for (int i=0; i<xCats.size(); i++) {
-            int regionSize = (int)(x_range * ((double)colItemCountInit[i]/(double)totalItemCount));
+            int regionSize = (int)((x_range - frameBufferX) * ((double)colItemCountInit[i]/(double)totalItemCount));
             if (regionSize < 2*buffer + itemWidth) {
                 regionSize = (int)(2*buffer + itemWidth);
             }
@@ -147,7 +164,8 @@ public class DocumentGridLayout extends Layout {
         yCatRegionSizes = new ArrayList<>();
         yCatPositions = new ArrayList<>();
         for (int i=0; i<yCats.size(); i++) {
-            int regionSize = (int)(y_range * ((double)rowItemCountInit[i]/(double)totalItemCount));
+            int regionSize = (int)((y_range - frameBufferY) * ((double)rowItemCountInit[i]/(double)totalItemCount));
+            // to ensure we have enough rom for at least 1 item
             if (regionSize < 2*buffer + itemHeight) {
                 regionSize = (int)(2*buffer + itemHeight);
             }
@@ -181,6 +199,7 @@ public class DocumentGridLayout extends Layout {
             // temporarily amplify item sizes (TODO: more principled item size calculation)
 //            int itemsPerColCellRow = (int)(xCatRegionSizes.get(c) / itemWidth);
             int itemsPerColCellRow = (int)(xCatRegionSizes.get(c) / (itemWidth * itemSizeMult));
+//            int itemsPerColCellRow = (int)(xCatRegionSizes.get(c) / (itemWidth));
             if (itemsPerColCellRow == 0) itemsPerColCellRow = 1;
             itemsPerCellRowPerCol.add(itemsPerColCellRow);
         }
@@ -213,8 +232,15 @@ public class DocumentGridLayout extends Layout {
                 double cellStartX = xCatPositions.get(xAttrPos);
                 double cellStartY = yCatPositions.get(yAttrPos);
                 
+                // if we have predictions, use them! otherwise, do default
                 double withinCellOffsetX = cellCol * (buffer + itemWidth) + buffer;
                 double withinCellOffsetY = cellRow * (buffer + itemHeight) + buffer;
+                if (controller.hasPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr)) {
+                    withinCellOffsetX = xCatRegionSizes.get(xAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert();
+                }
+                if (controller.hasPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr)) {
+                    withinCellOffsetY = yCatRegionSizes.get(yAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert();
+                }
                 
                 // position actual item; also adjust size
                 double positionX = cellStartX+withinCellOffsetX;
@@ -231,7 +257,9 @@ public class DocumentGridLayout extends Layout {
 //                item.setBounds(positionX, positionY, positionX+itemWidth, positionY+itemHeight);
                 item.setBounds(Double.MIN_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
                 item.set(VisualItem.X, (double)(positionX));
+                item.setEndX(positionX);
                 item.set(VisualItem.Y, (double)(positionY));
+                item.setEndY(positionY);
                  // TODO replace X2, Y2 with proper action-based size handling?
                 item.set(VisualItem.X2, (double)(positionX+itemWidth));
                 item.set(VisualItem.Y2, (double)(positionY+itemHeight));

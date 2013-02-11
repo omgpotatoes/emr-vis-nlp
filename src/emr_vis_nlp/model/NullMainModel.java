@@ -5,6 +5,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import javax.swing.table.TableModel;
+import javax.swing.text.AbstractDocument;
 
 /**
  * Empty model for use when no dataset is loaded.
@@ -99,6 +100,36 @@ public class NullMainModel implements MainModel {
 
     @Override
     public boolean updateDocumentAttr(int docID, String docAttr, String docAttrVal) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasPrediction(int globalDocId, String attrName) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasManAnn(int globalDocId, String attrName) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String getManAnn(int globalDocId, String attrName) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     

@@ -3,13 +3,15 @@ package emr_vis_nlp.view.doc_grid;
 import emr_vis_nlp.controller.MainController;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import javax.sound.midi.ControllerEventListener;
 import javax.swing.SwingUtilities;
 import prefuse.Display;
+import prefuse.Visualization;
 import prefuse.controls.DragControl;
 import prefuse.visual.VisualItem;
 
 /**
+ * Provides mouse interaction controls for doc grid view. Partially adopted from
+ * DataMountain$DataMountainControl example in Prefuse gallery.
  *
  * @author alexander.p.conrad@gmail.com
  */
@@ -19,12 +21,12 @@ public class DocGridDragControl extends DragControl {
      * data group to which this control should apply
      */
     private String m_group;
+    private VisualItem activeItem;
     /**
      * pointer to DocumentGridLayout for which this instance is controlling
      * dragging of items
      */
     private DocumentGridLayout docGridLayout;
-    
     private MainController controller;
 
     public DocGridDragControl(String group, DocumentGridLayout docGridLayout, MainController controller) {
@@ -32,6 +34,54 @@ public class DocGridDragControl extends DragControl {
         m_group = group;
         this.docGridLayout = docGridLayout;
         this.controller = controller;
+    }
+
+    @Override
+    public void itemClicked(VisualItem item, MouseEvent e) {
+        if (!SwingUtilities.isLeftMouseButton(e)) {
+            return;
+        }
+        
+        if (item.getGroup().equals(m_group) && item.canGetInt(DocumentGridTable.NODE_ID)) {
+            int docID = item.getInt(DocumentGridTable.NODE_ID);
+            controller.buildDocDetailsWindow(docID);
+        }
+        
+    }
+    
+    @Override
+    public void itemPressed(VisualItem item, MouseEvent e) {
+        if (!SwingUtilities.isLeftMouseButton(e)) {
+            return;
+        }
+
+        // set the focus to the current node
+        Visualization vis = item.getVisualization();
+        vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(item);
+
+        item.setFixed(true);
+        dragged = false;
+        Display d = (Display) e.getComponent();
+        down = d.getAbsoluteCoordinate(e.getPoint(), down);
+
+        vis.run("forces");
+    }
+
+    @Override
+    public void itemReleased(VisualItem item, MouseEvent e) {
+        if (!SwingUtilities.isLeftMouseButton(e)) {
+            return;
+        }
+        if (dragged) {
+            activeItem = null;
+            item.setFixed(wasFixed);
+            dragged = false;
+        }
+        // clear the focus
+        Visualization vis = item.getVisualization();
+        vis.getFocusGroup(Visualization.FOCUS_ITEMS).clear();
+
+        vis.cancel("forces");
     }
 
     @Override
@@ -60,10 +110,10 @@ public class DocGridDragControl extends DragControl {
             item.setY(y + dy);
             item.setEndX(x + dx);
             item.setEndY(y + dy);
-            
+
             item.set(VisualItem.X2, x2 + dx);
             item.set(VisualItem.Y2, y2 + dy);
-            
+
 //            item.setBounds(x + dx, y + dy, x2 + dx, y2 + dy);
 
             if (repaint) {
@@ -90,47 +140,47 @@ public class DocGridDragControl extends DragControl {
             List<Integer> xCatPositions = docGridLayout.getXCatPositions();
             List<Integer> yCatPositions = docGridLayout.getYCatPositions();
             // for each region, get start and range;
-            for (int i=0; i<xCats.size(); i++) {
+            for (int i = 0; i < xCats.size(); i++) {
                 int xRegionStart = xCatPositions.get(i);
                 int xRegionEnd = xRegionStart + xCatRegionSizes.get(i);
                 if (xRegionStart < x && x < xRegionEnd) {
                     origRegionX = i;
                 }
-                if (xRegionStart < x+dx && x+dx < xRegionEnd) {
+                if (xRegionStart < x + dx && x + dx < xRegionEnd) {
                     newRegionX = i;
                 }
             }
-            for (int i=0; i<yCats.size(); i++) {
+            for (int i = 0; i < yCats.size(); i++) {
                 int yRegionStart = yCatPositions.get(i);
                 int yRegionEnd = yRegionStart + yCatRegionSizes.get(i);
                 if (yRegionStart < y && y < yRegionEnd) {
                     origRegionY = i;
                 }
-                if (yRegionStart < y+dy && y+dy < yRegionEnd) {
+                if (yRegionStart < y + dy && y + dy < yRegionEnd) {
                     newRegionY = i;
                 }
             }
-            
+
             // if both regions are same, do nothing
             int docID = item.getInt(DocumentGridTable.NODE_ID);
-            
+
             // debug
-            System.out.println("debug: item moved: docID="+docID+"xOrig="+xCats.get(origRegionX)+", xNew="+xCats.get(newRegionX)+", yOrig="+yCats.get(origRegionY)+", yNew="+yCats.get(newRegionY));
-            
+//            System.out.println("debug: item moved: docID="+docID+"xOrig="+xCats.get(origRegionX)+", xNew="+xCats.get(newRegionX)+", yOrig="+yCats.get(origRegionY)+", yNew="+yCats.get(newRegionY));
+
             // else, invoke controller to adjust document attributes
             // update for x and y separately
-            if (origRegionX != newRegionX) {
+            if (origRegionX != newRegionX && newRegionX != -1) {
                 String newCat = xCats.get(newRegionX);
                 controller.updateDocumentAttr(docID, xAttrName, newCat);
                 controller.documentAttributesUpdated(docID);
             }
-            if (origRegionY != newRegionY) {
+            if (origRegionY != newRegionY && newRegionY != -1) {
                 String newCat = yCats.get(newRegionY);
                 controller.updateDocumentAttr(docID, yAttrName, newCat);
                 controller.documentAttributesUpdated(docID);
             }
-            
-            
+
+
         }
     }
 }
