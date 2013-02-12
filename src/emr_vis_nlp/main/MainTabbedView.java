@@ -8,6 +8,7 @@ import emr_vis_nlp.model.*;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
 import emr_vis_nlp.view.VarDatasetRatioRenderer;
+import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import java.io.File;
 import javax.swing.JComponent;
@@ -46,7 +47,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     /**
      * backing model for the document grid attribute selection table
      */
-    private TableModel docGridSelectionTableModel;
+    private DocGridTableSelectorModel docGridSelectionTableModel;
     /**
      * treemap-holding object for document-oriented layout
      */
@@ -650,6 +651,10 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             int newHeight = documentGrid.getHeight();
             documentGrid.resetSize(newWidth, newHeight);
         }
+        // also, update the selection table (will need to redraw VarBarChartForCells)
+        if (docGridSelectionTableModel != null) {
+            docGridSelectionTableModel.resetVarBarCharts();
+        }
     }
     
     public void rebuildDocumentTable() {
@@ -686,7 +691,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         
         // tableModel for grid-based view
         //jTableAttrSelection2.setModel(attrSelectionTableModel);
-        TableModel newDocGridSelectionTableModel = controller.buildSimpleDocGridSelectionTableModel();
+        DocGridTableSelectorModel newDocGridSelectionTableModel = controller.buildSimpleDocGridSelectionTableModel();
         docGridSelectionTableModel = newDocGridSelectionTableModel;
         jTableAttrSelection3.setModel(docGridSelectionTableModel);
 

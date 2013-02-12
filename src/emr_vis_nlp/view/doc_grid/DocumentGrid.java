@@ -23,6 +23,8 @@ import prefuse.controls.Control;
 import prefuse.controls.PanControl;
 import prefuse.controls.WheelZoomControl;
 import prefuse.data.Schema;
+import prefuse.data.expression.Predicate;
+import prefuse.data.expression.parser.ExpressionParser;
 import prefuse.data.tuple.TupleSet;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.ShapeRenderer;
@@ -30,6 +32,7 @@ import prefuse.util.ColorLib;
 import prefuse.util.FontLib;
 import prefuse.util.force.*;
 import prefuse.visual.VisualItem;
+import prefuse.visual.expression.HoverPredicate;
 import prefuse.visual.expression.InGroupPredicate;
 
 /**
@@ -72,6 +75,10 @@ public class DocumentGrid extends Display {
     // backing table containing data
     private DocumentGridTable t;
     
+    // do bad manual matching for now
+    private String highlightAttr = null;
+    private String highlightVal = null;
+    private Predicate highlightPredicate = null;
     
     // controller governing this DocumentGrid
     private MainController controller;
@@ -134,7 +141,7 @@ public class DocumentGrid extends Display {
 //        SizeAction sizeActionUpdate = new DocGlyphSizeAction(DATA_GROUP);
 //        update.add(sizeActionUpdate);
         // TODO set size to roughly be a function of ## items in display?
-        docSizeAction = new DocumentSizeAction(DATA_GROUP, 3);
+        docSizeAction = new DocumentSizeAction(DATA_GROUP, 2.);
         update.add(docSizeAction);
         updateOnce.add(docSizeAction);
         // shape action
@@ -258,13 +265,22 @@ public class DocumentGrid extends Display {
         docShapeAction.updateShapeAttr(shapeAttrName, shapeCategories);
     }
 
+    public void resetHighlightPredicate() {
+        highlightPredicate = null;
+        m_vis.run("repaint");
+    }
     
-    
+    public void setHighlightPredicate(String attrName, String attrVal) {
+        highlightPredicate = ExpressionParser.predicate("'"+attrName+"' == '"+attrVal+"'");
+        highlightAttr = attrName;
+        highlightVal = attrVal;
+        m_vis.run("repaint");
+    }
     
     /**
      * ColorAction for assigning border colors to document glyphs.
      */
-    public static class DocumentBorderColorAction extends ColorAction {
+    public class DocumentBorderColorAction extends ColorAction {
 
         public DocumentBorderColorAction(String group) {
             super(group, VisualItem.STROKECOLOR);
@@ -278,6 +294,14 @@ public class DocumentGrid extends Display {
 //                return ColorLib.rgb(99, 130, 191);
                 return Color.LIGHT_GRAY.getRGB();
             }
+            
+//            if (highlightPredicate != null && highlightPredicate.getBoolean(item)) {
+            if (highlightPredicate != null && item.canGetString(highlightAttr) && item.getString(highlightAttr).equals(highlightVal)) {
+                // is in the hover predicate
+//                return Color.CYAN.getRGB();
+                return Color.RED.getRGB();
+            }
+            
 //            return ColorLib.gray(50);
             return Color.DARK_GRAY.getRGB();
         }

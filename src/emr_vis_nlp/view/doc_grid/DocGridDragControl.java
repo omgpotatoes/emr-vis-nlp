@@ -38,9 +38,9 @@ public class DocGridDragControl extends DragControl {
 
     @Override
     public void itemClicked(VisualItem item, MouseEvent e) {
-        if (!SwingUtilities.isLeftMouseButton(e)) {
-            return;
-        }
+//        if (!SwingUtilities.isLeftMouseButton(e)) {
+//            return;
+//        }
         
         if (item.getGroup().equals(m_group) && item.canGetInt(DocumentGridTable.NODE_ID)) {
             int docID = item.getInt(DocumentGridTable.NODE_ID);

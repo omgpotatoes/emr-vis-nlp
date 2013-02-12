@@ -63,7 +63,7 @@ public class MainController {
     /**
      * current doc grid view attr selection model (if any)
      */
-    private TableModel docGridSelectionModel = null;
+    private DocGridTableSelectorModel docGridSelectionModel = null;
     /**
      * current document grid component (if any)
      */
@@ -232,7 +232,7 @@ public class MainController {
         }
 
     }
-    
+
     public void documentAttributesUpdated(int docGlobalID) {
 
         // refresh all relevant tables
@@ -329,12 +329,12 @@ public class MainController {
         return documentGrid;
 
     }
-    
+
     /**
      * similar to buildDocumentGrid(), but rather than rebuilding the grid from
      * scratch, simply updates the attributes by which the grid is laid out.
      *
-     * @return 
+     * @return
      */
     public void updateDocumentGrid() {
 
@@ -367,42 +367,72 @@ public class MainController {
         String yAxisAttr = gridSelectorTableModel.getYAxisAttribute();
         String shapeAttr = gridSelectorTableModel.getShapeAttribute();
         String colorAttr = gridSelectorTableModel.getColorAttribute();
-        
+
         view.axisAttrSelectionChanged();
 
     }
 
-    public TableModel buildSimpleDocGridSelectionTableModel() {
+    public DocGridTableSelectorModel buildSimpleDocGridSelectionTableModel() {
         DocGridTableSelectorModel newDocGridTableModel = new DocGridTableSelectorModel(model.getAllAttributes(), this);
 //        TableModel newDocGridSelectionTableModel = model.buildSimpleDocGridSelectionTableModel();
         docGridSelectionModel = newDocGridTableModel;
         return docGridSelectionModel;
     }
 
+    /**
+     * Builds a VarBarChartForCell display for a given attribute. Returned
+     * display is meant to be used as cell in table.
+     *
+     * @param attrName
+     * @return
+     */
     public VarBarChartForCell getVarBarChartForCell(String attrName) {
-        VarBarChartForCell varBarChart = new VarBarChartForCell(attrName, model.getAllDocuments());
+        VarBarChartForCell varBarChart = new VarBarChartForCell(this, attrName, model.getAllDocuments());
         return varBarChart;
     }
-    
+
     public void updateDocumentAttr(int docID, String docAttr, String docAttrVal) {
         // update value in model
         model.updateDocumentAttr(docID, docAttr, docAttrVal);
         // update value in applicable visual tables
         documentGridTable.setString(docID, docAttr, docAttrVal);
     }
-    
+
     public void resetDocGridView() {
         if (documentGrid != null) {
             documentGrid.resetView();
         }
     }
-    
+
     public boolean hasPrediction(int globalDocId, String attrName) {
         return model.hasPrediction(globalDocId, attrName);
     }
-    
+
     public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName) {
         return model.getPrediction(globalDocId, attrName);
     }
+
+    /**
+     * Highlights documents matching attribute value criteria in applicable
+     * views.
+     *
+     * @param attrName
+     * @param attrValue
+     */
+    public void highlightDocsWithAttrVal(String attrName, String attrValue) {
+        // TODO apply to more general case
+        // for now, assume only a single highlight set at a time
+        documentGrid.setHighlightPredicate(attrName, attrValue);
+    }
+    
+    /**
+     * Unhighlights all documents in all applicable views.
+     * 
+     */
+    public void unhighlightAllDocs() {
+        documentGrid.resetHighlightPredicate();
+    }
+    
+    
     
 }

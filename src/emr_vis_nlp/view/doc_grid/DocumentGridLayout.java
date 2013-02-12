@@ -132,8 +132,8 @@ public class DocumentGridLayout extends Layout {
         
         // get height, width vals for items based on # per row, # possible rows, size of bounds
         setMinMax();
-        double frameBufferX = 50;  // to ensure that we stay within the bounds of the frame
-        double frameBufferY = 25;
+        double frameBufferX = 25;  // to ensure that we stay within the bounds of the frame
+        double frameBufferY = 50;
         double generalCellWidth = (x_range-frameBufferX) / xCats.size();
         double generalCellHeight = (y_range-frameBufferY) / yCats.size();
         // size of item: (assume most-efficient square layout) ((x_range - buffer * numCats) / (sqrt[#items] + buffer))

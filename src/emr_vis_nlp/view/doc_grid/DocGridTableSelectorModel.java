@@ -332,6 +332,13 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         return abnormalVarNames;
 
     }
+
+    public void resetVarBarCharts() {
+        // reset all VarBarCharts
+//        for (JPanel chart : distribDisplays) {
+//            ((VarBarChartForCell)chart).rebuildComponents();
+//        }
+    }
     
     
     
