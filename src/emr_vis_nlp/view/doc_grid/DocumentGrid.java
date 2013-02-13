@@ -1,12 +1,15 @@
 package emr_vis_nlp.view.doc_grid;
 
 import emr_vis_nlp.controller.MainController;
+import emr_vis_nlp.view.MainViewGlassPane;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import javax.swing.BorderFactory;
+import javax.swing.*;
+import javax.swing.text.AbstractDocument;
 import prefuse.Constants;
 import prefuse.Display;
 import prefuse.Visualization;
@@ -20,6 +23,7 @@ import prefuse.activity.Activity;
 import prefuse.activity.ActivityAdapter;
 import prefuse.activity.ActivityListener;
 import prefuse.controls.Control;
+import prefuse.controls.ControlAdapter;
 import prefuse.controls.PanControl;
 import prefuse.controls.WheelZoomControl;
 import prefuse.data.Schema;
@@ -32,7 +36,6 @@ import prefuse.util.ColorLib;
 import prefuse.util.FontLib;
 import prefuse.util.force.*;
 import prefuse.visual.VisualItem;
-import prefuse.visual.expression.HoverPredicate;
 import prefuse.visual.expression.InGroupPredicate;
 
 /**
@@ -75,9 +78,13 @@ public class DocumentGrid extends Display {
     // backing table containing data
     private DocumentGridTable t;
     
+    // glasspane for drawing styles docs on popup
+    private MainViewGlassPane glassPane;
+    
     // do bad manual matching for now
     private String highlightAttr = null;
     private String highlightVal = null;
+    private String shapeAttrName = null;
     private Predicate highlightPredicate = null;
     
     // controller governing this DocumentGrid
@@ -141,11 +148,12 @@ public class DocumentGrid extends Display {
 //        SizeAction sizeActionUpdate = new DocGlyphSizeAction(DATA_GROUP);
 //        update.add(sizeActionUpdate);
         // TODO set size to roughly be a function of ## items in display?
-        docSizeAction = new DocumentSizeAction(DATA_GROUP, 2.);
+        docSizeAction = new DocumentSizeAction(DATA_GROUP, 1.5);
         update.add(docSizeAction);
         updateOnce.add(docSizeAction);
         // shape action
         // get current attrs from table
+        shapeAttrName = shapeInitName;
         List<String> shapeInitCategories = t.getValueListForAttribute(shapeInitName);
 //        docShapeAction = new DocumentShapeAction(DATA_GROUP, Constants.SHAPE_DIAMOND, shapeInitName, shapeInitCategories);
         docShapeAction = new DocumentShapeAction(DATA_GROUP, shapeInitName, shapeInitCategories);
@@ -186,6 +194,9 @@ public class DocumentGrid extends Display {
         forces.addActivityListener(fReset);
         m_vis.putAction("forces", forces);
         
+        // get reference to glasspane
+        glassPane = controller.getGlassPane();
+        
         // set basic properties of the display
         setSize(700, 600);
         setBackground(Color.LIGHT_GRAY);
@@ -193,14 +204,16 @@ public class DocumentGrid extends Display {
         
         // set up control listeners
         // zoom with wheel
-        addControlListener(new WheelZoomControl());
+//        addControlListener(new WheelZoomControl());
         // zoom with background right-drag
 //        addControlListener(new ZoomControl(Control.RIGHT_MOUSE_BUTTON));
         // pan with background left-drag
-        addControlListener(new PanControl(Control.RIGHT_MOUSE_BUTTON));
+//        addControlListener(new PanControl(Control.RIGHT_MOUSE_BUTTON));
         // drag control for moving items to new cells
 //        addControlListener(new DragControl());
         addControlListener(new DocGridDragControl(DATA_GROUP, documentGridLayout, controller));
+        // control for loading document details in glasspane
+        addControlListener(new DocumentSelectControl(glassPane));
         
         // run actionlists
 //        m_vis.run("init");
@@ -233,11 +246,13 @@ public class DocumentGrid extends Display {
 //        m_vis.run("update");  // remove if forces ("runAfter") are reenabled
 //        m_vis.runAfter("init", "preforce");  // temporarily (?) disable for testing
         m_vis.run("init");
+        m_vis.run("preforce");
     }
     
     public void resetView() {
 //        m_vis.runAfter("init", "preforce");  // temporarily (?) disable for testing
 //        m_vis.run("init");
+        m_vis.run("init");
         m_vis.run("preforce");
     }
     
@@ -260,6 +275,7 @@ public class DocumentGrid extends Display {
     }
     
     public void updateShapeAttr(String shapeAttrName) {
+        this.shapeAttrName = shapeAttrName;
         List<String> shapeCategories = t.getValueListForAttribute(shapeAttrName);
         // update shapeAction
         docShapeAction.updateShapeAttr(shapeAttrName, shapeCategories);
@@ -638,6 +654,42 @@ public class DocumentGrid extends Display {
     }
     
     
+    public class DocumentSelectControl extends ControlAdapter {
+        
+        private boolean isPopupLoaded;
+        private MainViewGlassPane glassPane;
+        
+        public DocumentSelectControl(MainViewGlassPane glassPane) {
+            super();
+            this.glassPane = glassPane;
+            isPopupLoaded = false;
+        }
+        
+        @Override
+        public void itemPressed(VisualItem item, MouseEvent e) {
+            // load (or unload) marked-up text into glasspane on rightclick
+            if (SwingUtilities.isRightMouseButton(e) && item.canGetInt(DocumentGridTable.NODE_ID)) {
+                int nodeId = item.getInt(DocumentGridTable.NODE_ID);
+//                String attrIdStr = documentGridLayout.getXAttr();
+                String attrIdStr = shapeAttrName;
+                
+                if (isPopupLoaded) {
+                    // hide glasspane
+                    glassPane.hidePane();
+                } else {
+                    // build text, position text, show glasspane
+                    // TODO generalized highlighting; for now, just highlight doc wrt. X-Axis?
+                    AbstractDocument doc = glassPane.getAbstDoc();
+                    controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
+                    int x = e.getX();
+                    int y = e.getY();
+                    glassPane.displayPaneAtPoint(x, y);
+                }
+            }
+        }
+        
+    }
+
     
     
     
@@ -659,9 +711,9 @@ public class DocumentGrid extends Display {
             super("data",enforceBounds,false);
             
             ForceSimulator fsim = new ForceSimulator();
-            fsim.addForce(new NBodyForce(-0.4f, 25f, NBodyForce.DEFAULT_THETA));
+            fsim.addForce(new NBodyForce(-0.4f, 20f, NBodyForce.DEFAULT_THETA));
 //            fsim.addForce(new SpringForce(1e-5f,0f));
-            fsim.addForce(new DragForce());
+            fsim.addForce(new DragForce(0.05f));
             setForceSimulator(fsim);
             
             m_nodeGroup = "data";

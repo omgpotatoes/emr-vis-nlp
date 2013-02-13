@@ -15,4 +15,6 @@ public interface MainView {
     
     public void axisAttrSelectionChanged();
     
+    public MainViewGlassPane getGlassPane();
+    
 }

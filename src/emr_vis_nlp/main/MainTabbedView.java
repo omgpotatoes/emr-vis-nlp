@@ -7,6 +7,7 @@ import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.model.*;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
+import emr_vis_nlp.view.MainViewGlassPane;
 import emr_vis_nlp.view.VarDatasetRatioRenderer;
 import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
@@ -53,6 +54,10 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
      */
 //    private DocumentTreeMapView docTreeMapView;
     private JComponent docTreeMapViewComponent;
+    /*
+     * glasspane onto which various views may write
+     */
+    private MainViewGlassPane glassPane;
     
     /*
      * object for document-grid layout
@@ -72,6 +77,11 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         // initialize event listeners
         initListeners();
+        
+        // init glasspane
+        glassPane = new MainViewGlassPane();
+        glassPane.addMouseListener(glassPane);
+        setGlassPane(glassPane);
 
     }
 
@@ -737,6 +747,11 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
 
 
+    }
+    
+    @Override
+    public MainViewGlassPane getGlassPane() {
+        return glassPane;
     }
 
     @Override

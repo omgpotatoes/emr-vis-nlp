@@ -6,15 +6,12 @@ import emr_vis_nlp.view.doc_table.DocTableModel;
 import emr_vis_nlp.view.doc_table.AttrTableModel;
 import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.model.*;
-import emr_vis_nlp.view.DocFocusPopup;
-import emr_vis_nlp.view.MainView;
-import emr_vis_nlp.view.VarBarChartForCell;
+import emr_vis_nlp.view.*;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import emr_vis_nlp.view.doc_grid.DocumentGridTable;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JComponent;
@@ -197,6 +194,30 @@ public class MainController {
 
     }
 
+    public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, String attrName) {
+        
+        // map attrName to int
+        if (model != null) {
+            List<String> attrs = model.getAllAttributes();
+            int attrIndex = -1;
+            for (int a=0; a<attrs.size(); a++) {
+                if (attrs.get(a).equals(attrName)) {
+                    attrIndex = a;
+                    break;
+                }
+            }
+            
+            if (attrIndex != -1) {
+                writeDocTextWithHighlights(abstDoc, globalDocId, attrIndex);
+            } else {
+                System.err.println("MainController.writeDocTextWithHighlights: could not find index for attribute: "+attrName);
+            }
+            
+        }
+        
+    }
+    
+    
     public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId) {
 
         if (model != null) {
@@ -433,6 +454,11 @@ public class MainController {
         documentGrid.resetHighlightPredicate();
     }
     
-    
+    public MainViewGlassPane getGlassPane() {
+        if (view != null) {
+            return view.getGlassPane();
+        }
+        return null;
+    }
     
 }

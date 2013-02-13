@@ -51,20 +51,24 @@ public class DocGridDragControl extends DragControl {
     
     @Override
     public void itemPressed(VisualItem item, MouseEvent e) {
-        if (!SwingUtilities.isLeftMouseButton(e)) {
-            return;
+        if (SwingUtilities.isLeftMouseButton(e)) {
+            // drag
+            // set the focus to the current node
+            Visualization vis = item.getVisualization();
+            vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(item);
+            item.setFixed(true);
+            dragged = false;
+            Display d = (Display) e.getComponent();
+            down = d.getAbsoluteCoordinate(e.getPoint(), down);
+            vis.run("forces");
+        } else if (SwingUtilities.isRightMouseButton(e)) {
+            // open details
+            if (item.getGroup().equals(m_group) && item.canGetInt(DocumentGridTable.NODE_ID)) {
+                int docID = item.getInt(DocumentGridTable.NODE_ID);
+                controller.buildDocDetailsWindow(docID);
+            }
         }
-
-        // set the focus to the current node
-        Visualization vis = item.getVisualization();
-        vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(item);
-
-        item.setFixed(true);
-        dragged = false;
-        Display d = (Display) e.getComponent();
-        down = d.getAbsoluteCoordinate(e.getPoint(), down);
-
-        vis.run("forces");
+        
     }
 
     @Override
