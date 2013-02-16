@@ -34,6 +34,7 @@
 		<!-- execute the main class -->
 		<java classpathref="run.path.id" classname="emr_vis_nlp.main.MainTabbedView" fork="true">
 			<jvmarg value="-Xmx1g" />
+			<jvmarg value="-Dapple.laf.useScreenMenuBar=true"/>
 			<!--<arg value="path_to_ehr_doclist"/>-->
 		</java>
 	</target>
