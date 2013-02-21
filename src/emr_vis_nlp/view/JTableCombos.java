@@ -56,6 +56,7 @@ public class JTableCombos extends JTable {
                         // TODO generalize this code to multiple regions!
                         double regionBound1 = xChart + widthChart * 1.0/3.0;
                         double regionBound2 = xChart + widthChart * 2.0/3.0;
+                        chart.unhighlightCells();
                         if (xPointer > xChart && xPointer < regionBound1) {
                             chart.clickOnCell(0);
                         } else if (xPointer < regionBound2) {
@@ -66,6 +67,15 @@ public class JTableCombos extends JTable {
                             // shouldn't happen
                             System.err.println("JTableCombos: unexpected mouse click event: "+e.toString());
                         }
+                        // clear all other boxes
+                        int numRows = getModel().getRowCount();
+                        for (int r=0; r<numRows; r++) {
+                            if (r != row) {
+                                VarBarChartForCell otherChart = (VarBarChartForCell)(getModel().getValueAt(r, column));
+                                otherChart.unhighlightCells();
+                            }
+                        }
+                        
                         ((AbstractTableModel)target.getModel()).fireTableDataChanged();
                     }
 //                }

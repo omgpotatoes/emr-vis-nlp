@@ -22,10 +22,7 @@ import prefuse.action.layout.graph.ForceDirectedLayout;
 import prefuse.activity.Activity;
 import prefuse.activity.ActivityAdapter;
 import prefuse.activity.ActivityListener;
-import prefuse.controls.Control;
 import prefuse.controls.ControlAdapter;
-import prefuse.controls.PanControl;
-import prefuse.controls.WheelZoomControl;
 import prefuse.data.Schema;
 import prefuse.data.expression.Predicate;
 import prefuse.data.expression.parser.ExpressionParser;
@@ -57,6 +54,7 @@ public class DocumentGrid extends Display {
     public static final String NODE_ISACTIVE = DocumentGridTable.NODE_ISACTIVE;
     public static final String CONTINUOUS_SUFFIX = DocumentGridTable.CONTINUOUS_SUFFIX;
     
+    // names for prefuse-specific groups
     public static final String X_LABEL = "xlab";
     public static final String Y_LABEL = "ylab";
     public static final String ALL_LABEL = "all_label";
@@ -90,10 +88,10 @@ public class DocumentGrid extends Display {
     // controller governing this DocumentGrid
     private MainController controller;
     
-    public DocumentGrid(MainController controller, DocumentGridTable t, String xAxisInitName, String yAxisInitName, String shapeInitName, String colorInitName) {
+    public DocumentGrid(DocumentGridTable t, String xAxisInitName, String yAxisInitName, String shapeInitName, String colorInitName) {
         super(new Visualization());
         this.t = t;
-        this.controller = controller;
+        this.controller = MainController.getMainController();
         // add data to visualization (tables, ...)
         m_vis.addTable(DATA_GROUP, t);
 
@@ -529,7 +527,10 @@ public class DocumentGrid extends Display {
                 String s = item.getString(NODE_NAME);
                 boolean isHover = false;
                 if (item.isHover()) {
-                    s = item.getString(NODE_TEXT);
+                    // no longer displaying doc text on hover; instead, display details on rightclick
+//                    s = item.getString(NODE_TEXT);
+                    s += " (right-click for highlighted text)";
+                    
                     isHover = true;
                 }
                 
@@ -648,12 +649,14 @@ public class DocumentGrid extends Display {
         int lineCounter = 1;
         while (lineSplitter.hasNextLine()) {
             String line = lineSplitter.nextLine();
-            g.drawString(line, (float) (xPos), (float) (yPos + h*lineCounter));
+            g.drawString(line, (float) (xPos), (float) (yPos + h * lineCounter));
             lineCounter++;
         }
     }
     
-    
+    /**
+     * This control is responsible for drawing document details information onto the glasspane when appropriate.
+     */
     public class DocumentSelectControl extends ControlAdapter {
         
         private boolean isPopupLoaded;
@@ -683,19 +686,24 @@ public class DocumentGrid extends Display {
                     controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
                     int x = e.getX();
                     int y = e.getY();
+                    // TODO make sure that pane is within window bounds!
+                    int x2 = x+glassPane.getPopupWidth();
+                    int y2 = y+glassPane.getPopupHeight();
+                    Rectangle glassBounds = glassPane.getBounds();
+                    double boundsWidth = glassBounds.getWidth();
+                    double boundsHeight = glassBounds.getHeight();
+                    if (x2 > boundsWidth) {
+                        x = x - (int)(x2 - boundsWidth);
+                    }
+                    if (y2 > boundsHeight) {
+                        y = y - (int)(y2 - boundsHeight);
+                    }
                     glassPane.displayPaneAtPoint(x, y);
                 }
             }
         }
         
     }
-
-    
-    
-    
-    
-    
-    
     
     /*
      * datamountain force controllers, temporarily (?) adopted for this graph layout
@@ -768,6 +776,5 @@ public class DocumentGrid extends Display {
                 fsim.addSpring(fitem, aitem, 0);
             }     
         }       
-    } // end of inner class DataMountainForceLayout
-    
+    } 
 }

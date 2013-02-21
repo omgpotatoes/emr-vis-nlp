@@ -20,7 +20,7 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 /**
- * Main tab-based view for the emr-vis-nlp system.
+ * Main top-level tab-based view for the emr-vis-nlp system.
  *
  * @author alexander.p.conrad@gmail.com
  */
@@ -68,10 +68,10 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     /**
      * Creates new form MainTabbedView
      */
-    public MainTabbedView(MainController controller) {
+    public MainTabbedView() {
         super("emr-vis-nlp | main");
 
-        this.controller = controller;
+        this.controller = MainController.getMainController();
 
         // initialize GUI components
         initComponents();
@@ -139,6 +139,12 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("emr-vis-nlp");
+
+        jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                jTabbedPane1StateChanged(evt);
+            }
+        });
 
         jTextFieldSearch.setOpaque(false);
         jTextFieldSearch.addActionListener(new java.awt.event.ActionListener() {
@@ -377,6 +383,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jLabelSearch2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabelSearch2.setText("Search:");
 
+        jTextFieldSearch2.setEditable(false);
         jTextFieldSearch2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jTextFieldSearch2ActionPerformed(evt);
@@ -541,7 +548,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             File file = jFileChooser1.getSelectedFile();
 
             // send doclist file to controller, instruct it to load new model
-            controller.loadDoclist(file);
+            controller.setModelFromDoclist(file);
 
         } else {
             System.out.println("debug: \"Choose Doclist\" action cancelled by user");
@@ -645,6 +652,15 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             attrSelectionTableModel.selectNone();
         }
     }//GEN-LAST:event_jButtonSelectNoneDocTableActionPerformed
+
+    private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
+        
+        // if selection is doc grid, redraw at appropriate size
+        if (jTabbedPane1.getSelectedIndex() == 2) {
+            updateDocumentGridSize();
+        }
+        
+    }//GEN-LAST:event_jTabbedPane1StateChanged
 
     public void updateDocTreemapSize() {
         // update size of treemap
@@ -763,6 +779,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         // update simple document table
         // ask controller for a new model, with current column selections
         rebuildDocumentTable();
+        // update document grid
+        rebuildDocumentGridView();
 
     }
     
@@ -844,20 +862,21 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         
         
         // setup controller
-        MainController controller = new MainController();
+        MainController controller = MainController.getMainController();
 
         // setup model
-        MainModel model = new NullMainModel(controller);
+        MainModel model = new NullMainModel();
         controller.setModel(model);
 
         // setup view
-        final MainView mainView = new MainTabbedView(controller);
+        final MainView mainView = new MainTabbedView();
         controller.setView(mainView);
 
         // if doclist was passed on command line, load it
+        // TODO do proper command-line parsing, ie via Apache Commons
         if (args.length != 0) {
             String doclistPathFromArgs = args[0];
-            controller.loadDoclist(new File(doclistPathFromArgs));
+            controller.setModelFromDoclist(new File(doclistPathFromArgs));
         }
 
         /*

@@ -17,8 +17,8 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
 
     private JScrollPane jScrollPaneDocText;
     private JTextPane jTextPaneDocText;
-    private int width = 500;
-    private int height = 500;
+    private int width = 450;
+    private int height = 400;
 
     public MainViewGlassPane() {
         super();
@@ -72,4 +72,13 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
     public void mouseExited(MouseEvent e) {
         // do nothing
     }
+    
+    public int getPopupWidth() {
+        return width;
+    }
+    
+    public int getPopupHeight() {
+        return height;
+    }
+    
 }

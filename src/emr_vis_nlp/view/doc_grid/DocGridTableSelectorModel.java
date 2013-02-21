@@ -53,9 +53,9 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
     private String[] optionList;
     
     
-    public DocGridTableSelectorModel(List<String> _allAttributes, MainController controller) {
+    public DocGridTableSelectorModel(List<String> _allAttributes) {
 
-        this.controller = controller;
+        this.controller = MainController.getMainController();
 
         // build list of possible combo box items
         // TODO more interesting / informative selection options? better selection method beyond jcombobox?
@@ -203,7 +203,7 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
                 // check to ensure that there are no duplicate selections
                 validateTableSelections(rowIndex);
                 // inform controller of change
-                controller.updateDocGridAttributes();
+                controller.updateDocumentGrid();
             }
         }
 

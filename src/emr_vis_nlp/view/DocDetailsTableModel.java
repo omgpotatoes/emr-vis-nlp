@@ -61,8 +61,8 @@ public class DocDetailsTableModel extends AbstractTableModel {
      */
     private List<String> colNames;
 
-    public DocDetailsTableModel(MainController controller, Document thisDoc, int thisDocGlobalIndex, Map<String, PredictionCertaintyTuple> attrPredictionMap, List<String> allAttributes, List<Boolean> allAttributesEnabled) {
-        this.controller = controller;
+    public DocDetailsTableModel(Document thisDoc, int thisDocGlobalIndex, Map<String, PredictionCertaintyTuple> attrPredictionMap, List<String> allAttributes, List<Boolean> allAttributesEnabled) {
+        this.controller = MainController.getMainController();
         this.thisDoc = thisDoc;
         this.thisDocGlobalIndex = thisDocGlobalIndex;
         this.attrPredictionMap = attrPredictionMap;
@@ -215,9 +215,7 @@ public class DocDetailsTableModel extends AbstractTableModel {
                 // value
                 String name = visibleAttributes.get(rowIndex);
 //                controller.setValueForDocAttr(valueStr, thisDocGlobalIndex, name);
-                synchronized (docAttributeMap) {
-                    docAttributeMap.put(name, valueStr); // should not directly manipulate the document attr map in this class?
-                }
+                controller.updateDocumentAttr(thisDocGlobalIndex, name, valueStr);
                 controller.documentAttributesUpdated(thisDocGlobalIndex);
                 break;
             default:

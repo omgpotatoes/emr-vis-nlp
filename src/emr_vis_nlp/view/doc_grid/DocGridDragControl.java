@@ -35,18 +35,15 @@ public class DocGridDragControl extends DragControl {
         this.docGridLayout = docGridLayout;
         this.controller = controller;
     }
-
+    
     @Override
     public void itemClicked(VisualItem item, MouseEvent e) {
-//        if (!SwingUtilities.isLeftMouseButton(e)) {
-//            return;
-//        }
-        
-        if (item.getGroup().equals(m_group) && item.canGetInt(DocumentGridTable.NODE_ID)) {
-            int docID = item.getInt(DocumentGridTable.NODE_ID);
-            controller.buildDocDetailsWindow(docID);
+        if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() >= 2) {
+            if (item.getGroup().equals(m_group) && item.canGetInt(DocumentGridTable.NODE_ID)) {
+                int docID = item.getInt(DocumentGridTable.NODE_ID);
+                controller.displayDocDetailsWindow(docID);
+            }
         }
-        
     }
     
     @Override
@@ -61,14 +58,7 @@ public class DocGridDragControl extends DragControl {
             Display d = (Display) e.getComponent();
             down = d.getAbsoluteCoordinate(e.getPoint(), down);
             vis.run("forces");
-        } else if (SwingUtilities.isRightMouseButton(e)) {
-            // open details
-            if (item.getGroup().equals(m_group) && item.canGetInt(DocumentGridTable.NODE_ID)) {
-                int docID = item.getInt(DocumentGridTable.NODE_ID);
-                controller.buildDocDetailsWindow(docID);
-            }
         }
-        
     }
 
     @Override

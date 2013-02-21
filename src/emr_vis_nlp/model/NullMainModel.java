@@ -19,8 +19,8 @@ public class NullMainModel implements MainModel {
      */
     private MainController controller;
 
-    public NullMainModel(MainController controller) {
-        this.controller = controller;
+    public NullMainModel() {
+        this.controller = MainController.getMainController();
     }
 
 //    @Override

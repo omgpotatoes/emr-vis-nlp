@@ -3,6 +3,7 @@ package emr_vis_nlp.view;
 import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.model.Document;
+import emr_vis_nlp.model.mpqa_colon.DatasetTermTranslator;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -70,8 +71,12 @@ public class VarBarChartForCell extends JPanel {
             //  assume that docs are only of biomed type
 //            String[] vals = {"-1", "0", "1"};
 //            String[] vals = {"not_eligible", "eligible", "pass"};
-            String[] vals = {"N/A", "Fail", "Pass"};  // TODO make these model-independent!
-//            String[] vals = DatasetTermTranslator.getDefaultValList();
+//            String[] vals = {"N/A", "Fail", "Pass"};
+            List<String> valList = DatasetTermTranslator.getDefaultValList();
+            String[] vals = new String[valList.size()];
+            for (int v=0; v<valList.size(); v++) {
+                vals[v] = valList.get(v);
+            }
             Map<String, Integer> valCountMap = new HashMap<>();
             for (String val : vals) {
                 valCountMap.put(val, 0);
@@ -186,7 +191,7 @@ public class VarBarChartForCell extends JPanel {
 //            // old alpha code for incorporating cluster selection no longer needed; see previous version's code if needed
             
             // update tooltip text
-            setToolTipText(attrName+":  "+((int)(100*valPercs[0]))+"% N/A, "+((int)(100*valPercs[1]))+"% Fail, "+((int)(100*valPercs[2]))+"% Pass");
+            setToolTipText(attrName+":  "+((int)(100*valPercs[0]))+"% N/A, "+((int)(100*valPercs[1]))+"% Fail, "+((int)(100*valPercs[2]))+"% Pass (click to select)");
             
         }
         
@@ -195,6 +200,8 @@ public class VarBarChartForCell extends JPanel {
         
     }
     
+    // old way of doing this: overridding the paintComponent method (but this led to problems when we wanted to enable interaction)
+    // keeping code around for now, in case we decide to switch back to this approach
 //    @Override
 //    public void paintComponent(Graphics graphics) {
 //        super.paintComponent(graphics);
@@ -303,10 +310,25 @@ public class VarBarChartForCell extends JPanel {
 //
 //    }
     
+    /**
+     * Intermediate method for connecting the mouseevents captured by the JTable to the event handling code in the actual cell itself.
+     * 
+     * @param cell index indicating which of the (3?) cells the click took place in.
+     */
     public void clickOnCell(int cell) {
         allCols.get(cell).mouseClicked(null);
     }
     
+    /**
+     * Resets the highlight state on all cells in this VarBarChart.
+     */
+    public void unhighlightCells() {
+        for (int c=0; c<allCols.size(); c++) {
+            allCols.get(c).setIsHighlighted(false);
+        }
+    }
+    
+    // warning! mouse events are being intercepted by the JTable in which this VarBarChart is embedded!
     class VarBarChartColumn extends JPanel implements MouseListener {
         
         public final Color colorDefault = Color.blue;

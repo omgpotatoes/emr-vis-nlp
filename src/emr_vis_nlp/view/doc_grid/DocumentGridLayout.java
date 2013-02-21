@@ -22,8 +22,8 @@ import prefuse.visual.VisualItem;
 public class DocumentGridLayout extends Layout {
 
     
-    public static final String X_LABEL = DocumentGrid.X_LABEL;
-    public static final String Y_LABEL = DocumentGrid.Y_LABEL;
+    private static final String X_LABEL = DocumentGrid.X_LABEL;
+    private static final String Y_LABEL = DocumentGrid.Y_LABEL;
     
     private MainController controller;
     
@@ -37,27 +37,48 @@ public class DocumentGridLayout extends Layout {
     private Rectangle2D bounds;
     
     // attributes for plotting points
+    // TODO eliminate this group of lists by defining new objects for category positioning information for each category?
+    // name of attribute on x-axis
     private String xAttr;
+    // name of arrtibute on y-axis
     private String yAttr;
+    // list of categorical values for x-axis attribute
     private List<String> xCats;
+    // list of categorical values for y-axis attribute
     private List<String> yCats;
+    // list of Visualization coordinates where the region corresponding to each of the x-axis categories should begin
     private List<Integer> xCatPositions;
+    // list of Visualization coordinates where the region corresponding to each of the y-axis categories should begin
     private List<Integer> yCatPositions;
+    // list of Visualization coordinate ranges for the region corresponding to each of the x-axis categories
     private List<Integer> xCatRegionSizes;
+    // list of Visualization coordinate ranges for the region corresponding to each of the y-axis categories
     private List<Integer> yCatRegionSizes;
+    // map from x-attribute category name to its index in the other lists
     private Map<String, Integer> xCatPositionMap;
+    // map from y-attribute category name to its index in the other lists
     private Map<String, Integer> yCatPositionMap;
+    // counts for number of documents in each cell created by the x- and y-attribute categories
     private int[][] gridCellItemCount;
     
-    // buffer between items
+    // buffer between items (when using static positioning)
     private static double buffer = 8.;
-//    private static double buffer = 2.;
-//    private static double valueBuffer = 10.;
     
+    /**
+     * 
+     * 
+     * @param controller the governing MainController for this instance
+     * @param group
+     * @param xAttr
+     * @param yAttr
+     * @param xCats
+     * @param yCats 
+     */
     public DocumentGridLayout(MainController controller, String group, String xAttr, String yAttr, List<String> xCats, List<String> yCats) {
         super(group);
         this.controller = controller;
         
+        // perform initial attribute assignment
         setXAxis(xAttr, xCats);
         setYAxis(yAttr, yCats);
         
@@ -77,12 +98,16 @@ public class DocumentGridLayout extends Layout {
      * Set the minimum and maximum pixel values.
      */
     private void setMinMax() {
+        int xBufferMin = 30;
+        int yBufferMin = 5;
+        int xBufferMax = 5;
+        int yBufferMax = 40;
         bounds = getLayoutBounds();
-        x_min = bounds.getMinX();
-        x_max = bounds.getMaxX();
+        x_min = bounds.getMinX() + xBufferMin;
+        x_max = bounds.getMaxX() - xBufferMax;
         x_range = x_max - x_min;
-        y_min = bounds.getMinY();
-        y_max = bounds.getMaxY();
+        y_min = bounds.getMinY() + yBufferMin;
+        y_max = bounds.getMaxY() - yBufferMax;
         y_range = y_max - y_min;
     }
     
@@ -96,12 +121,12 @@ public class DocumentGridLayout extends Layout {
         int[] rowItemCountInit = new int[yCats.size()];
         int[] colItemCountInit = new int[xCats.size()];
         int totalItemCount = 0;
-        double avgHeight = 0;
-        double avgWidth = 0;
+//        double avgHeight = 0;
+//        double avgWidth = 0;
         while ( iter.hasNext() ) {
             VisualItem item = (VisualItem)iter.next();
-            avgHeight += item.getBounds().getHeight();
-            avgWidth += item.getBounds().getWidth();
+//            avgHeight += item.getBounds().getHeight();
+//            avgWidth += item.getBounds().getWidth();
             // get category values for the target attributes for item
             // note: fields should always be populated; we shouldn't have to check whether they're available 1st (but safest to do it anyway)
             String xAttrVal = "";
@@ -121,8 +146,8 @@ public class DocumentGridLayout extends Layout {
             }
         }
         
-        avgHeight /= numItems;
-        avgWidth /= numItems;
+//        avgHeight /= numItems;
+//        avgWidth /= numItems;
         
         // keep track of number of items positioned (so far) in each grid cell
         gridCellItemCount = new int[xCats.size()][yCats.size()];
@@ -132,10 +157,10 @@ public class DocumentGridLayout extends Layout {
         
         // get height, width vals for items based on # per row, # possible rows, size of bounds
         setMinMax();
-        double frameBufferX = 25;  // to ensure that we stay within the bounds of the frame
-        double frameBufferY = 50;
-        double generalCellWidth = (x_range-frameBufferX) / xCats.size();
-        double generalCellHeight = (y_range-frameBufferY) / yCats.size();
+//        double frameBufferX = 25;  // to ensure that we stay within the bounds of the frame
+//        double frameBufferY = 50;
+//        double generalCellWidth = (x_range-frameBufferX) / xCats.size();
+//        double generalCellHeight = (y_range-frameBufferY) / yCats.size();
         // size of item: (assume most-efficient square layout) ((x_range - buffer * numCats) / (sqrt[#items] + buffer))
         //  for now, artificially shrink item size (till we can fix issue concerning region overrun)
         double itemSizeMult = 1.6;
@@ -150,7 +175,8 @@ public class DocumentGridLayout extends Layout {
         xCatRegionSizes = new ArrayList<>();
         xCatPositions = new ArrayList<>();
         for (int i=0; i<xCats.size(); i++) {
-            int regionSize = (int)((x_range - frameBufferX) * ((double)colItemCountInit[i]/(double)totalItemCount));
+//            int regionSize = (int)((x_range - frameBufferX) * ((double)colItemCountInit[i]/(double)totalItemCount));
+            int regionSize = (int)((x_range) * ((double)colItemCountInit[i]/(double)totalItemCount));
             if (regionSize < 2*buffer + itemWidth) {
                 regionSize = (int)(2*buffer + itemWidth);
             }
@@ -164,7 +190,8 @@ public class DocumentGridLayout extends Layout {
         yCatRegionSizes = new ArrayList<>();
         yCatPositions = new ArrayList<>();
         for (int i=0; i<yCats.size(); i++) {
-            int regionSize = (int)((y_range - frameBufferY) * ((double)rowItemCountInit[i]/(double)totalItemCount));
+//            int regionSize = (int)((y_range - frameBufferY) * ((double)rowItemCountInit[i]/(double)totalItemCount));
+            int regionSize = (int)((y_range) * ((double)rowItemCountInit[i]/(double)totalItemCount));
             // to ensure we have enough rom for at least 1 item
             if (regionSize < 2*buffer + itemHeight) {
                 regionSize = (int)(2*buffer + itemHeight);

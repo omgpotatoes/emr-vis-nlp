@@ -1,6 +1,7 @@
 
 package emr_vis_nlp.view.doc_grid;
 
+import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Shape;
@@ -163,13 +164,22 @@ public class DocumentGridAxisRenderer extends AbstractShapeRenderer {
 
                 g.setFont(item.getFont());
                 g.setColor(ColorLib.getColor(item.getTextColor()));
-                // TODO properly hunt down source of null str! for now, triage
-                if (str != null) {
-                    g.drawString(str, x, y);
-                }
-
-                if (transform != null) {
-                    g.setTransform(origTransform);
+                
+                if (!(str.length() > 5 && str.substring(str.length() - 5, str.length()).equals("_last"))) {
+                    
+                    g.setColor(Color.WHITE);
+                    // TODO properly hunt down source of null str! for now, triage
+                    if (str != null) {
+                        // bump y down by appropriate amount
+                        FontMetrics fm = g.getFontMetrics(item.getFont());
+                        int strHeight = fm.getAscent();
+//                        g.drawString(str, x, y);
+                        g.drawString(str, x, y+strHeight);
+                    }
+                    
+                    if (transform != null) {
+                        g.setTransform(origTransform);
+                    }
                 }
             }
         }

@@ -18,7 +18,8 @@ public class DocFocusPopup extends javax.swing.JFrame {
     /** number of DocFocusInternalFrames currently open */
     protected static int openFrameCount = 0;
     protected static final int xOffset = 30, yOffset = 30;
-
+    protected static final int initWidth = 800, initHeight = 500;
+    
     /**
      * governing controller
      */
@@ -43,10 +44,10 @@ public class DocFocusPopup extends javax.swing.JFrame {
     /**
      * Creates new form DocFocusPopup
      */
-    public DocFocusPopup(MainController controller, Document doc, int docGlobalID) {
+    public DocFocusPopup(Document doc, int docGlobalID) {
         super("document "+doc.getName());
         
-        this.controller = controller;
+        this.controller = MainController.getMainController();
         this.doc = doc;
         this.docGlobalID = docGlobalID;
 
@@ -61,7 +62,7 @@ public class DocFocusPopup extends javax.swing.JFrame {
         // initialize custom listeners
         initListeners();
         
-        setSize(800, 500);
+        setSize(initWidth, initHeight);
         setLocation(xOffset*openFrameCount, yOffset*openFrameCount);
         openFrameCount++;
         
@@ -98,9 +99,7 @@ public class DocFocusPopup extends javax.swing.JFrame {
 
             }
         });
-
-
-
+        
     }
 
     public void rebuildDocDetailsTable() {
@@ -232,9 +231,6 @@ public class DocFocusPopup extends javax.swing.JFrame {
         boolean removalSuccess = controller.removeDocDetailsWindow(this);
         // debug
 //        System.out.println("debug: doc " + docGlobalID + " popup removed from controller: " + removalSuccess);
-
-        // close window
-//        this.dispose();
         
     }//GEN-LAST:event_formWindowClosing
 
