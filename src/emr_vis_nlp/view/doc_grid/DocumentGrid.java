@@ -4,6 +4,7 @@ import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.view.MainViewGlassPane;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.List;
 import java.util.Map;
@@ -18,10 +19,12 @@ import prefuse.action.RepaintAction;
 import prefuse.action.assignment.ColorAction;
 import prefuse.action.assignment.ShapeAction;
 import prefuse.action.assignment.SizeAction;
+import prefuse.action.distortion.Distortion;
 import prefuse.action.layout.graph.ForceDirectedLayout;
 import prefuse.activity.Activity;
 import prefuse.activity.ActivityAdapter;
 import prefuse.activity.ActivityListener;
+import prefuse.controls.AnchorUpdateControl;
 import prefuse.controls.ControlAdapter;
 import prefuse.data.Schema;
 import prefuse.data.expression.Predicate;
@@ -61,6 +64,10 @@ public class DocumentGrid extends Display {
     
     public static final String DATA_GROUP = "data";
     
+    // initial size
+    private int initWidth = 700;
+    private int initHeight = 600;
+    
     // handles layout of the document glyphs
     private DocumentGridLayout documentGridLayout;
     // handles layout of the attribute value axes
@@ -87,6 +94,14 @@ public class DocumentGrid extends Display {
     
     // controller governing this DocumentGrid
     private MainController controller;
+    
+    // scale for fisheye distortion
+    private double fisheyeDistortScale = 4;
+    private double fisheyeDistortSize = 2;
+    private Distortion feye;
+    private Rectangle2D feyeBoundingBox;
+    
+    
     
     public DocumentGrid(DocumentGridTable t, String xAxisInitName, String yAxisInitName, String shapeInitName, String colorInitName) {
         super(new Visualization());
@@ -147,7 +162,7 @@ public class DocumentGrid extends Display {
 //        update.add(sizeActionUpdate);
         // TODO set size to roughly be a function of ## items in display?
         docSizeAction = new DocumentSizeAction(DATA_GROUP, 1.5);
-        update.add(docSizeAction);
+//        update.add(docSizeAction);
         updateOnce.add(docSizeAction);
         // shape action
         // get current attrs from table
@@ -155,7 +170,7 @@ public class DocumentGrid extends Display {
         List<String> shapeInitCategories = t.getValueListForAttribute(shapeInitName);
 //        docShapeAction = new DocumentShapeAction(DATA_GROUP, Constants.SHAPE_DIAMOND, shapeInitName, shapeInitCategories);
         docShapeAction = new DocumentShapeAction(DATA_GROUP, shapeInitName, shapeInitCategories);
-        update.add(docShapeAction);
+//        update.add(docShapeAction);
         updateOnce.add(docShapeAction);
         // color action(s)
         List<String> colorInitCategories = t.getValueListForAttribute(colorInitName);
@@ -192,6 +207,31 @@ public class DocumentGrid extends Display {
         forces.addActivityListener(fReset);
         m_vis.putAction("forces", forces);
         
+        
+        // ActionList for interspersed FDL iterations with fisheye
+        ActionList fishForce = new ActionList();
+//        preforce.add(new DataMountainForceLayout(true));
+        fishForce.add(new DataMountainForceLayout(false, -0.4f, 30f, 0f, false));
+        m_vis.putAction("fishforce", fishForce);
+        
+        // ActionList for performing fisheye distortion
+        // TODO merge with update ActionList?
+        ActionList distort = new ActionList();
+        // manually define boundingbox for fisheye as width, height of view
+        feyeBoundingBox = new Rectangle(0, 0, initWidth, initHeight);
+        feye = new FisheyeDistortionDocGrid(fisheyeDistortScale, fisheyeDistortSize, feyeBoundingBox);
+        feye.setSizeDistorted(true);
+//        feye.setGroup(DATA_GROUP);  // don't set group; we want to handle the axes also?
+        distort.add(feye);
+//        distort.add(docSizeAction);
+        distort.add(docColorAction);
+        distort.add(docBorderColorAction);
+        distort.add(fishForce);
+//        distort.add(forces);
+//        distort.add(update);
+        distort.add(new RepaintAction());
+        m_vis.putAction("distort", distort);
+        
         // get reference to glasspane
         glassPane = controller.getGlassPane();
         
@@ -212,6 +252,8 @@ public class DocumentGrid extends Display {
         addControlListener(new DocGridDragControl(DATA_GROUP, documentGridLayout, controller));
         // control for loading document details in glasspane
         addControlListener(new DocumentSelectControl(glassPane));
+        // control for performing fisheye distortion
+        addControlListener(new AnchorUpdateControl(feye, "distort"));
         
         // run actionlists
 //        m_vis.run("init");
@@ -227,6 +269,8 @@ public class DocumentGrid extends Display {
         m_vis.runAfter("updateOnce", "init");
         m_vis.run("updateOnce");
         
+//        m_vis.run("forces");
+        
     }
     
     /**
@@ -238,11 +282,15 @@ public class DocumentGrid extends Display {
     public void resetSize(int newWidth, int newHeight) {
         setSize(newWidth, newHeight);
         
+        // update bounds for fisheye distortion
+        feyeBoundingBox.setRect(0, 0, newWidth, newHeight);
+        
         // redo layout, force initialization
 //        m_vis.runAfter("preforce", "update");  // temporarily (?) disable for testing
 //        m_vis.run("preforce");
 //        m_vis.run("update");  // remove if forces ("runAfter") are reenabled
 //        m_vis.runAfter("init", "preforce");  // temporarily (?) disable for testing
+        m_vis.run("updateOnce");
         m_vis.run("init");
         m_vis.run("preforce");
     }
@@ -250,6 +298,7 @@ public class DocumentGrid extends Display {
     public void resetView() {
 //        m_vis.runAfter("init", "preforce");  // temporarily (?) disable for testing
 //        m_vis.run("init");
+        m_vis.run("updateOnce");
         m_vis.run("init");
         m_vis.run("preforce");
     }
@@ -512,6 +561,7 @@ public class DocumentGrid extends Display {
         
         @Override
         public void render(Graphics2D g, VisualItem item) {
+            // draw basic glyph
             super.render(g, item);
             
             // idea: rather than rendering fixed-size, can we first compute size of text, then set size of item equal to size of text?
@@ -524,24 +574,24 @@ public class DocumentGrid extends Display {
 //                double yPos = shape.getBounds().getY();
 //            double xPos = item.getX();
 //            double yPos = item.getY();
-                String s = item.getString(NODE_NAME);
-                boolean isHover = false;
-                if (item.isHover()) {
-                    // no longer displaying doc text on hover; instead, display details on rightclick
-//                    s = item.getString(NODE_TEXT);
-                    s += " (right-click for highlighted text)";
-                    
-                    isHover = true;
-                }
-                
+                String s = "doc="+item.getString(NODE_NAME);
+//                boolean isHover = false;
+//                if (item.isHover()) {
+//                    // no longer displaying doc text on hover; instead, display details on rightclick
+////                    s = item.getString(NODE_TEXT);
+//                    s += " (right-click for highlighted text)";
+//                    
+//                    isHover = true;
+//                }
+                s += "\n" + item.getString(NODE_TEXT);
 //                double x1 = item.getBounds().getX();
 //                double y1 = item.getBounds().getY();
 //                double w = item.getBounds().getWidth();
 //                double h = item.getBounds().getHeight();
                 double x1 = (double)item.get(VisualItem.X);
                 double y1 = (double) item.get(VisualItem.Y);
-//                double w = (double) item.get(VisualItem.X2) - x1;
-//                double h = (double) item.get(VisualItem.Y2) - y1;
+                double w = (double) this.getShape(item).getBounds2D().getWidth();
+                double h = (double) this.getShape(item).getBounds2D().getHeight();
 //                shape.getBounds().setBounds((int)x1, (int)y1, (int)w, (int)h);
 
                 // TODO set font size based on number of active nodes? based on size of rect?
@@ -571,8 +621,8 @@ public class DocumentGrid extends Display {
 //                    RectangularShape r = (RectangularShape) shape;
 //                    double x = r.getX();
 //                    double y = r.getY();
-                    double x = x1;
-                    double y = y1;
+//                    double x = x1;
+//                    double y = y1;
                     
                     // use our own painting code, for fine-grained control of size
                     // TODO move this into separate method, add code for more robust glyph vis.? see prefuse.util.GraphicsLib.paint()
@@ -582,12 +632,12 @@ public class DocumentGrid extends Display {
                     
 //                    if (isHover) {
 //                        item.setBounds(x1, y1, x1+textWidth, y1+textHeight);
-                        g.setPaint(fillColor);
-//                        g.fillRect((int)x, (int)y, textWidth, textHeight);
-                        g.fillRect((int)x1, (int)y1, textWidth, textHeight);
-                        g.setPaint(strokeColor);
-//                        g.drawRect((int)x, (int)y, textWidth, textHeight);
-                        g.drawRect((int)x1, (int)y1, textWidth, textHeight);
+//                        g.setPaint(fillColor);
+////                        g.fillRect((int)x, (int)y, textWidth, textHeight);
+//                        g.fillRect((int)x1, (int)y1, textWidth, textHeight);
+//                        g.setPaint(strokeColor);
+////                        g.drawRect((int)x, (int)y, textWidth, textHeight);
+//                        g.drawRect((int)x1, (int)y1, textWidth, textHeight);
 //                    } else {
 ////                        item.setBounds(x1, y1, x1+w, y1+h);
 //                        g.setPaint(fillColor);
@@ -601,7 +651,7 @@ public class DocumentGrid extends Display {
 //            super.render(g, item);
                 
 //                drawStringMultiline(g, f, s, xPos, yPos);
-                drawStringMultiline(g, f, s, x1, y1);
+                drawStringMultiline(g, f, s, x1, y1, w, h);
 
             }
 
@@ -637,7 +687,7 @@ public class DocumentGrid extends Display {
         
     }
     
-    public static void drawStringMultiline(Graphics2D g, Font f, String s, double xPos, double yPos) {
+    public static void drawStringMultiline(Graphics2D g, Font f, String s, double xPos, double yPos, double width, double height) {
         FontMetrics fm = g.getFontMetrics(f);
         int w = fm.stringWidth(s);
         int h = fm.getAscent();
@@ -646,12 +696,58 @@ public class DocumentGrid extends Display {
         g.setFont(f);
         
         Scanner lineSplitter = new Scanner(s);
-        int lineCounter = 1;
-        while (lineSplitter.hasNextLine()) {
+        // TODO draw as much as can fit in each item
+        // read all content from scanner, storing in string lists (where each string == 1 line), each string should be as long as possible without overflowing the space
+        int maxRows = (int)height/h;
+        List<String> textRows = new ArrayList<>();
+        while (lineSplitter.hasNextLine() && textRows.size() < maxRows) {
             String line = lineSplitter.nextLine();
-            g.drawString(line, (float) (xPos), (float) (yPos + h * lineCounter));
-            lineCounter++;
+            // if line is blank, insert to maintain paragraph seps
+            if (line.trim().equals("")) {
+                textRows.add("");
+            }
+            // else, pass to inner loop
+            StringBuilder currentBuilder = new StringBuilder();
+            int currentStrWidth = 0;
+            Scanner splitter = new Scanner(line);
+            while (splitter.hasNext() && textRows.size() < maxRows) {
+                String token = splitter.next()+" ";
+                // TODO incorporate weight detection, formatting for token?
+                currentStrWidth += fm.stringWidth(token);
+                if (currentStrWidth >= width) {
+                    // if string length >= glyph width, build row
+                    textRows.add(currentBuilder.toString());
+                    currentBuilder = new StringBuilder();
+                    currentBuilder.append(token);
+                    currentStrWidth = fm.stringWidth(token);
+                } else {
+                    // if not yet at end of row, append to builder
+                    currentBuilder.append(token);
+                }
+                
+            }
+            
+            // if we've still space and still have things to write, add them here
+            if (textRows.size() < maxRows) {
+                textRows.add(currentBuilder.toString());
+                currentBuilder = new StringBuilder();
+                currentStrWidth = 0;
+            }
+            
         }
+        
+        // write each line to object
+        for (int t=0; t<textRows.size(); t++) {
+            String line = textRows.get(t);
+            g.drawString(line, (float) (xPos-(width/2.)), (float) (yPos-(height/2.) + h * (t+1)));
+        }
+        
+//        int lineCounter = 1;
+//        while (lineSplitter.hasNextLine()) {
+//            String line = lineSplitter.nextLine();
+//            g.drawString(line, (float) (xPos-(width/2.)), (float) (yPos-(height/2.) + h * lineCounter));
+//            lineCounter++;
+//        }
     }
     
     /**
@@ -719,9 +815,24 @@ public class DocumentGrid extends Display {
             super("data",enforceBounds,false);
             
             ForceSimulator fsim = new ForceSimulator();
+            // (gravConstant, minDistance, theta)
             fsim.addForce(new NBodyForce(-0.4f, 20f, NBodyForce.DEFAULT_THETA));
 //            fsim.addForce(new SpringForce(1e-5f,0f));
             fsim.addForce(new DragForce(0.05f));
+            setForceSimulator(fsim);
+            
+            m_nodeGroup = "data";
+            m_edgeGroup = null;
+        }
+        
+        public DataMountainForceLayout(boolean enforceBounds, float gravConstant, float minDistance, float dragCoeff, boolean runOnce) {
+            super("data",enforceBounds,runOnce);
+            
+            ForceSimulator fsim = new ForceSimulator();
+            // (gravConstant, minDistance, theta)
+            fsim.addForce(new NBodyForce(gravConstant, minDistance, NBodyForce.DEFAULT_THETA));
+//            fsim.addForce(new SpringForce(1e-5f,0f));
+            fsim.addForce(new DragForce(dragCoeff));
             setForceSimulator(fsim);
             
             m_nodeGroup = "data";

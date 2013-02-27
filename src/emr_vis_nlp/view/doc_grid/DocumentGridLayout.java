@@ -98,6 +98,7 @@ public class DocumentGridLayout extends Layout {
      * Set the minimum and maximum pixel values.
      */
     private void setMinMax() {
+        // TODO perform buffering based on % of cell, not on fixed pixel counts!
         int xBufferMin = 30;
         int yBufferMin = 5;
         int xBufferMax = 5;

@@ -63,7 +63,15 @@ public class DocumentGridAxisRenderer extends AbstractShapeRenderer {
         double y2 = item.getDouble(VisualItem.Y2);
         boolean isX = item.getBoolean(DocumentGridAxisLayout.IS_X);
         double midPoint = item.getDouble(DocumentGridAxisLayout.MID_POINT);
-        m_line.setLine(x1,y1,x2,y2);
+//        m_line.setLine(x1,y1,x2,y2);
+        // horizontal or vertical coords should be manually held constant so that fisheye works properly
+        if (isX) {
+            // vertical line
+            m_line.setLine(x1,y1,x1,y2);
+        } else {
+            // horizontal line 
+            m_line.setLine(x1,y1,x2,y1);
+        }
         
         if ( !item.canGetString(VisualItem.LABEL) )
             return m_line;
@@ -82,7 +90,8 @@ public class DocumentGridAxisRenderer extends AbstractShapeRenderer {
             // vertical axis
             // get text x-coord, center at midPoint
 //            tx = x1 + (x2-x1)/2 - w/2;
-            tx = midPoint + (x2-midPoint)/2 - w/2;
+//            tx = midPoint + (x1+midPoint)/2 - w/2;
+            tx = x1 + midPoint/2 - w/2;
             // get text y-coord
             ty = y2-h;
         } else {
@@ -91,7 +100,7 @@ public class DocumentGridAxisRenderer extends AbstractShapeRenderer {
             tx = x1 - w - 2;
             // get text y-coord, center at midPoint
 //            ty = y1 + (y2-y1)/2 - h/2;
-            ty = midPoint + (y2-midPoint)/2 - h/2;
+            ty = y1 + midPoint/2 - h/2;
         }
         
         // don't have to worry about switching;
