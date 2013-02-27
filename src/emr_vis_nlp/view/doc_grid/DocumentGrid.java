@@ -1,6 +1,7 @@
 package emr_vis_nlp.view.doc_grid;
 
 import emr_vis_nlp.controller.MainController;
+import emr_vis_nlp.main.MainTabbedView;
 import emr_vis_nlp.view.MainViewGlassPane;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -68,6 +69,8 @@ public class DocumentGrid extends Display {
     private int initWidth = 700;
     private int initHeight = 600;
     
+    // renderer for doc glyphs
+    private DocGlyphRenderer nodeRenderer;
     // handles layout of the document glyphs
     private DocumentGridLayout documentGridLayout;
     // handles layout of the attribute value axes
@@ -90,26 +93,30 @@ public class DocumentGrid extends Display {
     private String highlightAttr = null;
     private String highlightVal = null;
     private String shapeAttrName = null;
+    private String colorAttrName = null;
     private Predicate highlightPredicate = null;
     
     // controller governing this DocumentGrid
     private MainController controller;
     
     // scale for fisheye distortion
-    private double fisheyeDistortScale = 4;
-    private double fisheyeDistortSize = 2;
+    private double fisheyeDistortScale = 12.;
+    private double fisheyeDistortSize = 1.1;
     private Distortion feye;
+    private Distortion bifocal;
     private Rectangle2D feyeBoundingBox;
+    private AnchorUpdateControl anchorUpdateControl;
     
-    
+    private Display display;
     
     public DocumentGrid(DocumentGridTable t, String xAxisInitName, String yAxisInitName, String shapeInitName, String colorInitName) {
         super(new Visualization());
+        display = this;
         this.t = t;
         this.controller = MainController.getMainController();
         // add data to visualization (tables, ...)
         m_vis.addTable(DATA_GROUP, t);
-
+        colorAttrName = colorInitName;
 
         // init actionlist: performs initial document layout
         ActionList init = new ActionList();
@@ -132,7 +139,7 @@ public class DocumentGrid extends Display {
         m_vis.putAction("init", init);
         
         // set up renderer for nodes, set rendererFactory
-        DocGlyphRenderer nodeRenderer = new DocGlyphRenderer();
+        nodeRenderer = new DocGlyphRenderer();
         // perform additional optional renderer setup here
         // add primary renderer to visualization
         DefaultRendererFactory rf = new DefaultRendererFactory();
@@ -217,16 +224,19 @@ public class DocumentGrid extends Display {
         // ActionList for performing fisheye distortion
         // TODO merge with update ActionList?
         ActionList distort = new ActionList();
+//        ActionList distort = new ActionList(Activity.INFINITY);
         // manually define boundingbox for fisheye as width, height of view
         feyeBoundingBox = new Rectangle(0, 0, initWidth, initHeight);
         feye = new FisheyeDistortionDocGrid(fisheyeDistortScale, fisheyeDistortSize, feyeBoundingBox);
         feye.setSizeDistorted(true);
 //        feye.setGroup(DATA_GROUP);  // don't set group; we want to handle the axes also?
         distort.add(feye);
+//        bifocal = new BifocalDistortionDocGrid(0.2,4.5,feyeBoundingBox);
+//        distort.add(bifocal);
 //        distort.add(docSizeAction);
         distort.add(docColorAction);
         distort.add(docBorderColorAction);
-        distort.add(fishForce);
+//        distort.add(fishForce);
 //        distort.add(forces);
 //        distort.add(update);
         distort.add(new RepaintAction());
@@ -253,7 +263,9 @@ public class DocumentGrid extends Display {
         // control for loading document details in glasspane
         addControlListener(new DocumentSelectControl(glassPane));
         // control for performing fisheye distortion
-        addControlListener(new AnchorUpdateControl(feye, "distort"));
+        anchorUpdateControl = new AnchorUpdateControl(feye, "distort");
+        addControlListener(anchorUpdateControl);
+//        addControlListener(new AnchorUpdateControl(bifocal, "distort"));
         
         // run actionlists
 //        m_vis.run("init");
@@ -318,6 +330,7 @@ public class DocumentGrid extends Display {
     public void updateColorAttr(String colorAttrName) {
         List<String> colorCategories = t.getValueListForAttribute(colorAttrName);
         // update colorAction
+        this.colorAttrName = colorAttrName;
         docColorAction.updateColorAttr(colorAttrName, colorCategories);
     }
     
@@ -494,6 +507,7 @@ public class DocumentGrid extends Display {
             Constants.SHAPE_RECTANGLE, Constants.SHAPE_DIAMOND, Constants.SHAPE_ELLIPSE, 
             Constants.SHAPE_HEXAGON, Constants.SHAPE_CROSS, Constants.SHAPE_STAR
         };
+//        public static final int[] GLYPH_SHAPE_PALETTE = {Constants.SHAPE_RECTANGLE};
         
         private String shapeAttrName;
         private List<String> shapeAttrCategories;
@@ -799,6 +813,54 @@ public class DocumentGrid extends Display {
             }
         }
         
+        @Override
+    public void itemEntered(VisualItem item, MouseEvent e) {
+        // suspend fisheye, run FDL
+            // set the focus to the current node
+//            Visualization vis = item.getVisualization();
+//            vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(item);
+//            item.setFixed(true);
+//            dragged = false;
+//            Display d = (Display) e.getComponent();
+//            down = d.getAbsoluteCoordinate(e.getPoint(), down);
+//            vis.cancel("distort");
+//            vis.run("forces");
+            
+            
+            // freeze the screen?
+            m_vis.cancel("distort");
+            display.removeControlListener(anchorUpdateControl);
+            
+            // appear the glasspane at appropriate size & location
+            // get relative location of Visualization
+            int xOffset = 0;
+            int yOffset = 0;
+            JComponent component = display;
+//            do {
+//                Point visLocation = display.getLocation();
+//                xOffset += visLocation.x;
+//                yOffset += visLocation.y;
+//            } while ((!component.getParent().getClass().equals(MainTabbedView.class)) && (component = (JComponent)component.getParent()) != null); // TODO more general, not just mainTabbedView!
+//            // debug
+//            System.out.println("debug: "+this.getClass().getName()+": location: "+xOffset+", "+yOffset);
+            int nodeId = item.getInt(DocumentGridTable.NODE_ID);
+            String attrIdStr = colorAttrName;  // TODO make highlighting more general, not just based on color!
+            AbstractDocument doc = glassPane.getAbstDoc();
+            controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
+            double x = item.getX()+xOffset;
+            double y = item.getY()+yOffset;
+            double w = nodeRenderer.getShape(item).getBounds2D().getWidth();
+            double h = nodeRenderer.getShape(item).getBounds2D().getHeight();
+            glassPane.displaySizedPane((int) x, (int) y, (int) w, (int) h);
+            
+        }
+        
+        @Override
+         public void itemExited(VisualItem item, MouseEvent e) {
+            // resume the fisheye distortions
+            display.addControlListener(anchorUpdateControl);
+        }
+ 
     }
     
     /*
@@ -816,9 +878,9 @@ public class DocumentGrid extends Display {
             
             ForceSimulator fsim = new ForceSimulator();
             // (gravConstant, minDistance, theta)
-            fsim.addForce(new NBodyForce(-0.4f, 20f, NBodyForce.DEFAULT_THETA));
+            fsim.addForce(new NBodyForce(-0.6f, 40f, NBodyForce.DEFAULT_THETA));
 //            fsim.addForce(new SpringForce(1e-5f,0f));
-            fsim.addForce(new DragForce(0.05f));
+            fsim.addForce(new DragForce(0.08f));
             setForceSimulator(fsim);
             
             m_nodeGroup = "data";

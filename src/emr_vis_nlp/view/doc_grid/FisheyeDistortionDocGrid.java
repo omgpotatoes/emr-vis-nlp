@@ -108,7 +108,7 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
         
         // ignore bbox, bounds parameters, use bbox assigned at instantiation?
 //        bbox = m_bbox;
-        bbox = new Rectangle((int)x, (int)y, 50, 50);  // should bbox represent box for target item?
+        bbox = new Rectangle((int)x, (int)y, 25, 25);  // TODO get proper size info into this method!
         bounds = m_bbox;
         
         if ( m_distortX ) {

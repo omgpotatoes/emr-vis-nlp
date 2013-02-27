@@ -57,7 +57,7 @@ public class DocGridDragControl extends DragControl {
             dragged = false;
             Display d = (Display) e.getComponent();
             down = d.getAbsoluteCoordinate(e.getPoint(), down);
-            vis.run("forces");
+//            vis.run("forces");
         }
     }
 
@@ -177,4 +177,31 @@ public class DocGridDragControl extends DragControl {
 
         }
     }
+    
+    
+    @Override
+    public void itemEntered(VisualItem item, MouseEvent e) {
+        // suspend fisheye, run FDL
+            // set the focus to the current node
+//            Visualization vis = item.getVisualization();
+//            vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(item);
+//            item.setFixed(true);
+//            dragged = false;
+//            Display d = (Display) e.getComponent();
+//            down = d.getAbsoluteCoordinate(e.getPoint(), down);
+//            vis.cancel("distort");
+//            vis.run("forces");
+        
+    }
+    
+    @Override
+    public void itemExited(VisualItem item, MouseEvent e) {
+        // suspend FDL, run fisheye
+//            Visualization vis = item.getVisualization();
+//            vis.cancel("forces");
+//            vis.run("distort");
+    }
+    
+    
+    
 }
