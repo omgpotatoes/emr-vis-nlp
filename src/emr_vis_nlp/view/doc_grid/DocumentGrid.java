@@ -1,7 +1,6 @@
 package emr_vis_nlp.view.doc_grid;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.main.MainTabbedView;
 import emr_vis_nlp.view.MainViewGlassPane;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -351,6 +350,10 @@ public class DocumentGrid extends Display {
         highlightAttr = attrName;
         highlightVal = attrVal;
         m_vis.run("repaint");
+    }
+    
+    public void enableMouseListeners() {
+        anchorUpdateControl.setEnabled(true);
     }
     
     /**
@@ -829,26 +832,36 @@ public class DocumentGrid extends Display {
             
             // freeze the screen?
             m_vis.cancel("distort");
-            display.removeControlListener(anchorUpdateControl);
+//            display.removeControlListener(anchorUpdateControl);
+//            synchronized (anchorUpdateControl) {
+//                try {
+//                    anchorUpdateControl.wait();
+//                } catch (InterruptedException ex) {
+//                    // debug
+//                    System.out.println("debug: " + this.getClass().getName() + ": anchorUpdateControl.wait() interrupted");
+//                }
+//            }
+            anchorUpdateControl.setEnabled(false);
             
             // appear the glasspane at appropriate size & location
             // get relative location of Visualization
             int xOffset = 0;
             int yOffset = 0;
             JComponent component = display;
-//            do {
-//                Point visLocation = display.getLocation();
-//                xOffset += visLocation.x;
-//                yOffset += visLocation.y;
+            do {
+                Point visLocation = component.getLocation();
+                xOffset += visLocation.x;
+                yOffset += visLocation.y;
 //            } while ((!component.getParent().getClass().equals(MainTabbedView.class)) && (component = (JComponent)component.getParent()) != null); // TODO more general, not just mainTabbedView!
-//            // debug
-//            System.out.println("debug: "+this.getClass().getName()+": location: "+xOffset+", "+yOffset);
+                } while ((!component.getParent().getClass().equals(JRootPane.class)) && (component = (JComponent)component.getParent()) != null); // TODO more general, not just mainTabbedView!
+            // debug
+            System.out.println("debug: "+this.getClass().getName()+": offsets: "+xOffset+", "+yOffset);
             int nodeId = item.getInt(DocumentGridTable.NODE_ID);
             String attrIdStr = colorAttrName;  // TODO make highlighting more general, not just based on color!
             AbstractDocument doc = glassPane.getAbstDoc();
             controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
-            double x = item.getX()+xOffset;
-            double y = item.getY()+yOffset;
+            double x = item.getX()+xOffset - (nodeRenderer.getShape(item).getBounds2D().getWidth())/2;
+            double y = item.getY()+yOffset - (nodeRenderer.getShape(item).getBounds2D().getHeight())/2;
             double w = nodeRenderer.getShape(item).getBounds2D().getWidth();
             double h = nodeRenderer.getShape(item).getBounds2D().getHeight();
             glassPane.displaySizedPane((int) x, (int) y, (int) w, (int) h);
@@ -858,7 +871,11 @@ public class DocumentGrid extends Display {
         @Override
          public void itemExited(VisualItem item, MouseEvent e) {
             // resume the fisheye distortions
-            display.addControlListener(anchorUpdateControl);
+//            display.addControlListener(anchorUpdateControl);
+//            synchronized (anchorUpdateControl) {
+//                anchorUpdateControl.notify();
+//            }
+//            anchorUpdateControl.setEnabled(true);
         }
  
     }

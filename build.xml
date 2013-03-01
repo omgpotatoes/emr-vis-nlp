@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:ivy="antlib:org.apache.ivy.ant" name="emr-vis-nlp" default="compile_and_run" basedir=".">
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="emr-vis-nlp" default="run" basedir=".">
 	<description>Builds and runs the project emr-vis-nlp.</description>
 	
 	<!-- set global properties for this build -->
@@ -30,7 +30,7 @@
 		<javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="lib.path.id" includeAntRuntime="false" />
 	</target>
 	
-	<target name="run" description="--> executes the default main view" >
+	<target name="runonly" description="--> executes the default main view" >
 		<!-- execute the main class -->
 		<java classpathref="run.path.id" classname="emr_vis_nlp.main.MainTabbedView" fork="true">
 			<jvmarg value="-Xmx1g" />
@@ -39,7 +39,7 @@
 		</java>
 	</target>
 	
-	<target name="compile_and_run" depends="compile,run" description="--> compiles project, then executes the default main class" >
+	<target name="run" depends="compile,runonly" description="--> compiles project, then executes the default main class" >
 	</target>
 	
 	<target name="clean" description="--> cleans up the junk we've created here" >

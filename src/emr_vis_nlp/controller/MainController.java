@@ -603,4 +603,10 @@ public class MainController {
         return null;
     }
     
+    public DocumentGrid getDocumentGrid() {
+        if (documentGrid != null)
+            return documentGrid;
+        return null;
+    }
+    
 }
