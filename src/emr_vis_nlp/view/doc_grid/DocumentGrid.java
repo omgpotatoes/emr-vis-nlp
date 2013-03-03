@@ -965,6 +965,73 @@ public class DocumentGrid extends Display {
                 fsim.addItem(fitem);
                 fsim.addSpring(fitem, aitem, 0);
             }     
-        }       
+        }   
+        
+        @Override
+        public void setX(VisualItem item, VisualItem referrer, double x) {
+            // ensure that the item is not pushed over a boundary
+            double width = nodeRenderer.getShape(item).getBounds2D().getWidth();
+            double oldX = item.getX();
+            double newX = x;
+            List<Integer> boundaryPositions = documentGridLayout.getXCatPositions();
+            
+            boolean crossesBoundary = false;
+            for (int i=0; i<boundaryPositions.size(); i++) {
+                int boundaryPosition = boundaryPositions.get(i);
+                if ((oldX-width/2 > boundaryPosition && newX-width/2 < boundaryPosition)|| 
+                        (oldX+width/2 < boundaryPosition && newX+width/2 > boundaryPosition)) {
+                    crossesBoundary = true;
+                }
+            }
+            
+            // ensure it didn't go beyond maximum as well!
+            if (boundaryPositions.size()>0) {
+                int maxBoundaryPosition = boundaryPositions.get(boundaryPositions.size()-1);
+                maxBoundaryPosition += documentGridLayout.getXCatRegionSizes().get(documentGridLayout.getXCatRegionSizes().size()-1);
+                if ((oldX-width/2 > maxBoundaryPosition && newX-width/2 < maxBoundaryPosition)|| 
+                        (oldX+width/2 < maxBoundaryPosition && newX+width/2 > maxBoundaryPosition)) {
+                    crossesBoundary = true;
+                }
+            }
+            
+            if (!crossesBoundary) {
+                super.setX(item, referrer, x);
+            }
+            
+        }
+        
+        @Override
+        public void setY(VisualItem item, VisualItem referrer, double y) {
+            // ensure that the item is not pushed over a boundary
+            double height = nodeRenderer.getShape(item).getBounds2D().getHeight();
+            double oldY = item.getY();
+            double newY = y;
+            List<Integer> boundaryPositions = documentGridLayout.getYCatPositions();
+            
+            boolean crossesBoundary = false;
+            for (int i=0; i<boundaryPositions.size(); i++) {
+                int boundaryPosition = boundaryPositions.get(i);
+                if ((oldY-height/2 > boundaryPosition && newY-height/2 < boundaryPosition)|| 
+                        (oldY+height/2 < boundaryPosition && newY+height/2 > boundaryPosition)) {
+                    crossesBoundary = true;
+                }
+            }
+            
+            // ensure it didn't go beyond maximum as well!
+            if (boundaryPositions.size()>0) {
+                int maxBoundaryPosition = boundaryPositions.get(boundaryPositions.size()-1);
+                maxBoundaryPosition += documentGridLayout.getYCatRegionSizes().get(documentGridLayout.getYCatRegionSizes().size()-1);
+                if ((oldY-height/2 > maxBoundaryPosition && newY-height/2 < maxBoundaryPosition)|| 
+                        (oldY+height/2 < maxBoundaryPosition && newY+height/2 > maxBoundaryPosition)) {
+                    crossesBoundary = true;
+                }
+            }
+            
+            if (!crossesBoundary) {
+                super.setY(item, referrer, y);
+            }
+            
+        }
+        
     } 
 }

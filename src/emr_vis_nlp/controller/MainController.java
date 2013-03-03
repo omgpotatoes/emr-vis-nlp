@@ -591,6 +591,18 @@ public class MainController {
         documentGrid.resetHighlightPredicate();
     }
     
+    public void disableDocsWithAttrVal(String attrName, String attrValue) {
+        //TODO
+    }
+    
+    public void enableDocsWithAttrVal(String attrName, String attrValue) {
+        //TODO
+    }
+    
+    public void enableAllDocs() {
+        //TODO
+    }
+    
     /**
      * Retrieves the glasspane from the mainview for use by other requesting views.
      * 

@@ -64,6 +64,10 @@ public class DocumentGridLayout extends Layout {
     // buffer between items (when using static positioning)
     private static double buffer = 8.;
     
+    // buffer on edges of each region, as % of region
+    private static double regionBuff = 0.15;
+    
+    
     /**
      * 
      * 
@@ -260,18 +264,24 @@ public class DocumentGridLayout extends Layout {
                 double cellStartX = xCatPositions.get(xAttrPos);
                 double cellStartY = yCatPositions.get(yAttrPos);
                 
+                double cellBufferX = xCatRegionSizes.get(xAttrPos) * regionBuff;
+                double cellBufferY = yCatRegionSizes.get(yAttrPos) * regionBuff;
+                // TODO
+                
                 // if we have predictions, use them! otherwise, do default
                 double withinCellOffsetX = cellCol * (buffer + itemWidth) + buffer;
                 double withinCellOffsetY = cellRow * (buffer + itemHeight) + buffer;
                 // dynamically buffer: 20% of cell?
-                double bufferPerc = 0.2;
+//                double bufferPerc = 0.2;
                 if (controller.hasPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr)) {
 //                    withinCellOffsetX = xCatRegionSizes.get(xAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert();
-                    withinCellOffsetX = (xCatRegionSizes.get(xAttrPos)*bufferPerc) + (xCatRegionSizes.get(xAttrPos) - (xCatRegionSizes.get(xAttrPos)*2*bufferPerc)) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert();
+//                    withinCellOffsetX = (xCatRegionSizes.get(xAttrPos)*bufferPerc) + (xCatRegionSizes.get(xAttrPos) - (xCatRegionSizes.get(xAttrPos)*2*bufferPerc)) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert();
+                    withinCellOffsetX = cellBufferX + xCatRegionSizes.get(xAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert() * (1 - (2*regionBuff));
                 }
                 if (controller.hasPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr)) {
 //                    withinCellOffsetY = yCatRegionSizes.get(yAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert();
-                    withinCellOffsetY = (yCatRegionSizes.get(yAttrPos)*bufferPerc) + (yCatRegionSizes.get(yAttrPos) - (yCatRegionSizes.get(yAttrPos)*2*bufferPerc)) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert();
+//                    withinCellOffsetY = (yCatRegionSizes.get(yAttrPos)*bufferPerc) + (yCatRegionSizes.get(yAttrPos) - (yCatRegionSizes.get(yAttrPos)*2*bufferPerc)) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert();
+                    withinCellOffsetY = cellBufferY + yCatRegionSizes.get(yAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert() * (1 - (2*regionBuff));
                 }
                 
                 // position actual item; also adjust size
