@@ -298,6 +298,7 @@ public class DocumentGridLayout extends Layout {
 //                item.setSize(10);
 //                item.setBounds(positionX, positionY, positionX+itemWidth, positionY+itemHeight);
                 item.setBounds(Double.MIN_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+//                item.setBounds(positionX, positionY, itemWidth, itemHeight);
                 item.set(VisualItem.X, (double)(positionX));
                 item.setEndX(positionX);
                 item.set(VisualItem.Y, (double)(positionY));

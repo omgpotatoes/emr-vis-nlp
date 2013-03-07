@@ -74,7 +74,7 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         for (int a = 0; a < _allAttributes.size(); a++) {
             String attributeName = _allAttributes.get(a);
             allAttributes.add(attributeName);
-            JComboBox attributeSelectorBox = new JComboBox(optionList);
+            JComboBox attributeSelectorBox = new JComboBoxSortable(optionList);
             allAttributesSelectorBoxes.add(attributeSelectorBox);
             if (a < numOptions) {
                 attributeSelectorBox.setSelectedIndex(a);
@@ -340,6 +340,17 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
 //        }
     }
     
-    
+    public class JComboBoxSortable extends JComboBox {
+        
+        public JComboBoxSortable(String[] vals) {
+            super(vals);
+        }
+        
+        @Override
+        public String toString() {
+            return getSelectedItem().toString();
+        }
+        
+    }
     
 }

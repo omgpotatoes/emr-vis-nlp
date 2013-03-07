@@ -889,6 +889,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             }
         });
     }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButtonReset;
     private javax.swing.JButton jButtonSelectAllDocGrid;

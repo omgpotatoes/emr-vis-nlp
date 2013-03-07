@@ -11,12 +11,9 @@ import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import emr_vis_nlp.view.doc_grid.DocumentGridTable;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.table.TableModel;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -75,7 +72,11 @@ public class MainController {
      * backing table for current document grid (if any)
      */
     DocumentGridTable documentGridTable = null;
-
+    /*
+     * list of predicates for document disabling
+     */
+    private Map<AttrValPredicate, Boolean> disabledAttrValsMap;
+    
     /**
      * Factory method for generating a singleton MainController.
      * 
@@ -94,6 +95,7 @@ public class MainController {
     private MainController() {
         activePopups = new ArrayList<>();
         activePopupIDs = new ArrayList<>();
+        disabledAttrValsMap = new HashMap<>();
     }
 
     /**
@@ -592,15 +594,45 @@ public class MainController {
     }
     
     public void disableDocsWithAttrVal(String attrName, String attrValue) {
-        //TODO
+        AttrValPredicate pred = new AttrValPredicate(attrName, attrValue);
+        disabledAttrValsMap.put(pred, true);
+        attrValPairsUpdated();
     }
     
     public void enableDocsWithAttrVal(String attrName, String attrValue) {
-        //TODO
+        AttrValPredicate pred = new AttrValPredicate(attrName, attrValue);
+        if (disabledAttrValsMap.containsKey(pred)) {
+            disabledAttrValsMap.remove(pred);
+        }
+        attrValPairsUpdated();
     }
     
     public void enableAllDocs() {
-        //TODO
+        disabledAttrValsMap.clear();
+        attrValPairsUpdated();
+    }
+    
+    private void attrValPairsUpdated() {
+        // update appropriate components
+        // build predicate string for Prefuse components
+        StringBuilder predDisabledAttrValsBuilder = new StringBuilder();
+        Set<AttrValPredicate> keySet = disabledAttrValsMap.keySet();
+        Iterator<AttrValPredicate> keySetIterator = keySet.iterator();
+        while (keySetIterator.hasNext()) {
+            AttrValPredicate pred = keySetIterator.next();
+//            predDisabledAttrValsBuilder.append(pred.getTrueStrPred());
+            predDisabledAttrValsBuilder.append(pred.getFalseStrPred());
+            if (keySetIterator.hasNext()) {
+//                predDisabledAttrValsBuilder.append(" OR ");
+                predDisabledAttrValsBuilder.append(" AND ");
+            }
+        }
+        // push string to appropriate Prefuse components
+        String predDisabledAttrVals = predDisabledAttrValsBuilder.toString();
+        if (documentGrid != null) {
+            documentGrid.resetDocsVisiblePredicate(predDisabledAttrVals);
+        }
+        
     }
     
     /**

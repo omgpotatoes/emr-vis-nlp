@@ -28,9 +28,11 @@ public class JTableCombos extends JTable {
                     int column = target.getSelectedColumn();
                     if (column == 2) {
                         // in histogram column
-                        Rectangle cellRect = target.getCellRect(row, column, false);
+                        // translate properly from table to model!
+                        int modelRow = convertRowIndexToModel(row);
+                        Rectangle cellRect = target.getCellRect(modelRow, column, false);
 //                        Rectangle cellRect = target.getCellRect(row, column, true);
-                        VarBarChartForCell chart = (VarBarChartForCell)(getModel().getValueAt(row, column));
+                        VarBarChartForCell chart = (VarBarChartForCell)(getModel().getValueAt(modelRow, column));
                         // figure out which of the cols was clicked
 //                        int xPointer = e.getXOnScreen();
 //                        int yPointer = e.getYOnScreen();
@@ -56,7 +58,7 @@ public class JTableCombos extends JTable {
                         // TODO generalize this code to multiple regions!
                         double regionBound1 = xChart + widthChart * 1.0/3.0;
                         double regionBound2 = xChart + widthChart * 2.0/3.0;
-                        chart.unhighlightCells();
+//                        chart.unhighlightCells();
                         if (xPointer > xChart && xPointer < regionBound1) {
                             chart.clickOnCell(0);
                         } else if (xPointer < regionBound2) {
@@ -68,13 +70,15 @@ public class JTableCombos extends JTable {
                             System.err.println("JTableCombos: unexpected mouse click event: "+e.toString());
                         }
                         // clear all other boxes
-                        int numRows = getModel().getRowCount();
-                        for (int r=0; r<numRows; r++) {
-                            if (r != row) {
-                                VarBarChartForCell otherChart = (VarBarChartForCell)(getModel().getValueAt(r, column));
-                                otherChart.unhighlightCells();
-                            }
-                        }
+                        // click now applies to filtering rather than highlighting
+//                        int numRows = getModel().getRowCount();
+//                        //for (int r=0; r<rows; r++) {
+//                        for (int r=0; r<numRows; r++) {
+//                            if (r != row) {
+//                                VarBarChartForCell otherChart = (VarBarChartForCell)(getModel().getValueAt(r, column));
+//                                otherChart.unhighlightCells();
+//                            }
+//                        }
                         
                         ((AbstractTableModel)target.getModel()).fireTableDataChanged();
                     }

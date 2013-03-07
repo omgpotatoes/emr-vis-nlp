@@ -35,6 +35,8 @@ public class VarBarChartForCell extends JPanel {
     private List<Document> allDocs;
     // list of all cols for cell
     private List<VarBarChartColumn> allCols;
+    // current tooltiptext
+    private String toolTipText = "";
 
     public VarBarChartForCell(MainController controller, String attrName, List<Document> allDocs) {
         super();
@@ -191,7 +193,8 @@ public class VarBarChartForCell extends JPanel {
 //            // old alpha code for incorporating cluster selection no longer needed; see previous version's code if needed
             
             // update tooltip text
-            setToolTipText(attrName+":  "+((int)(100*valPercs[0]))+"% N/A, "+((int)(100*valPercs[1]))+"% Fail, "+((int)(100*valPercs[2]))+"% Pass (click to select)");
+            toolTipText = attrName+":  "+((int)(100*valPercs[0]))+"% N/A, "+((int)(100*valPercs[1]))+"% Fail, "+((int)(100*valPercs[2]))+"% Pass (click to select)";
+            setToolTipText(toolTipText);
             
         }
         
@@ -326,6 +329,11 @@ public class VarBarChartForCell extends JPanel {
         for (int c=0; c<allCols.size(); c++) {
             allCols.get(c).setIsHighlighted(false);
         }
+    }
+    
+    @Override
+    public String toString() {
+        return toolTipText;
     }
     
     // warning! mouse events are being intercepted by the JTable in which this VarBarChart is embedded!
@@ -473,22 +481,22 @@ public class VarBarChartForCell extends JPanel {
             // debug
             System.out.println("debug: varBarChartColumn: mouseClicked for attrName = "+attrName+", attrVal = "+attrVal);
             if (isEnabled) {
+//                // for testing, just highlight
+//                if (isHighlighted) {
+//                    controller.unhighlightAllDocs();
+//                    isHighlighted = false;
+//                } else {
+//                    controller.highlightDocsWithAttrVal(attrName, attrVal);
+//                    isHighlighted = true;
+//                }
                 // disable designated docs
-                // TODO
-//                isEnabled = false;
+                isEnabled = false;
+                controller.disableDocsWithAttrVal(attrName, attrVal);
                 
-                // for testing, just highlight
-                if (isHighlighted) {
-                    controller.unhighlightAllDocs();
-                    isHighlighted = false;
-                } else {
-                    controller.highlightDocsWithAttrVal(attrName, attrVal);
-                    isHighlighted = true;
-                }
             } else {
                 // enable designated docs
-                // TODO
-//                isEnabled = true;
+                isEnabled = true;
+                controller.enableDocsWithAttrVal(attrName, attrVal);
             }
             
             repaint();

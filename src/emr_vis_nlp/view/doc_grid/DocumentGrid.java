@@ -4,6 +4,7 @@ import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.view.MainViewGlassPane;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.List;
@@ -20,6 +21,7 @@ import prefuse.action.assignment.ColorAction;
 import prefuse.action.assignment.ShapeAction;
 import prefuse.action.assignment.SizeAction;
 import prefuse.action.distortion.Distortion;
+import prefuse.action.filter.VisibilityFilter;
 import prefuse.action.layout.graph.ForceDirectedLayout;
 import prefuse.activity.Activity;
 import prefuse.activity.ActivityAdapter;
@@ -27,6 +29,7 @@ import prefuse.activity.ActivityListener;
 import prefuse.controls.AnchorUpdateControl;
 import prefuse.controls.ControlAdapter;
 import prefuse.data.Schema;
+import prefuse.data.expression.AndPredicate;
 import prefuse.data.expression.Predicate;
 import prefuse.data.expression.parser.ExpressionParser;
 import prefuse.data.tuple.TupleSet;
@@ -100,11 +103,16 @@ public class DocumentGrid extends Display {
     
     // scale for fisheye distortion
     private double fisheyeDistortScale = 12.;
-    private double fisheyeDistortSize = 1.1;
+//    private double fisheyeDistortScale = 4.;
+    private double fisheyeDistortSize = 0.9;
     private Distortion feye;
-    private Distortion bifocal;
+//    private Distortion bifocal;
     private Rectangle2D feyeBoundingBox;
     private AnchorUpdateControl anchorUpdateControl;
+    
+    // predicate controlling which document glyphs will be rendered
+    private Predicate docGlyphVisiblePredicate;
+    private GlyphVisibilityFilter docGlyphVisibleFilter;
     
     private Display display;
     
@@ -142,7 +150,12 @@ public class DocumentGrid extends Display {
         // perform additional optional renderer setup here
         // add primary renderer to visualization
         DefaultRendererFactory rf = new DefaultRendererFactory();
+//        rf.setDefaultRenderer(new NullRenderer());
         rf.setDefaultRenderer(nodeRenderer);
+//        docGlyphVisiblePredicate = new InGroupPredicate(DATA_GROUP);
+//        docGlyphVisiblePredicate = new InGroupPredicate(ALL_LABEL);
+//        docGlyphVisiblePredicate = new AndPredicate(new InGroupPredicate(DATA_GROUP), ExpressionParser.predicate("[24.1 Rate of procedures where prep adequate] != \"Pass\""));
+//        rf.add(docGlyphVisiblePredicate, nodeRenderer);
         // add auxiliary renderer for axes
         rf.add(new InGroupPredicate(ALL_LABEL), new DocumentGridAxisRenderer(documentGridLayout));
         m_vis.setRendererFactory(rf);
@@ -189,8 +202,14 @@ public class DocumentGrid extends Display {
         // TODO add axes color actions?
 //        ColorAction labelColorActionUpdate = new LabelColorAction(ALL_LABEL);
 //        update.add(labelColorActionUpdate);
+        // visibility filter
+        docGlyphVisiblePredicate = new InGroupPredicate(DATA_GROUP);
+        docGlyphVisibleFilter = new GlyphVisibilityFilter(DATA_GROUP, docGlyphVisiblePredicate);
+        update.add(docGlyphVisibleFilter);
+        updateOnce.add(docGlyphVisibleFilter);
         // repaint action
         update.add(new RepaintAction());
+        updateOnce.add(new RepaintAction());
         // add update actionlist to vis
         m_vis.putAction("update", update);
         m_vis.putAction("updateOnce", updateOnce);
@@ -304,6 +323,27 @@ public class DocumentGrid extends Display {
         m_vis.run("updateOnce");
         m_vis.run("init");
         m_vis.run("preforce");
+    }
+    
+    public void resetDocsVisiblePredicate(String predStr) {
+        
+        if (!predStr.equals("")) {
+            docGlyphVisiblePredicate = new AndPredicate(new InGroupPredicate(DATA_GROUP), ExpressionParser.predicate(predStr));
+        } else {
+            docGlyphVisiblePredicate = new InGroupPredicate(DATA_GROUP);
+        }
+        
+//        DefaultRendererFactory rf = new DefaultRendererFactory();
+////        rf.setDefaultRenderer(nodeRenderer);
+//        rf.add(docGlyphVisiblePredicate, nodeRenderer);
+//        // add auxiliary renderer for axes
+//        rf.add(new InGroupPredicate(ALL_LABEL), new DocumentGridAxisRenderer(documentGridLayout));
+//        m_vis.setRendererFactory(rf);
+        
+        if (docGlyphVisibleFilter != null) {
+            docGlyphVisibleFilter.updatePredicate(docGlyphVisiblePredicate);
+        }
+        
     }
     
     public void resetView() {
@@ -560,12 +600,37 @@ public class DocumentGrid extends Display {
         }
         
     }
+    
+    
+    public static class NullRenderer implements prefuse.render.Renderer {
+
+        public NullRenderer() {}
+
+        @Override
+        public void render(Graphics2D gd, VisualItem vi) {
+//            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean locatePoint(Point2D pd, VisualItem vi) {
+//            throw new UnsupportedOperationException("Not supported yet.");
+            return false;
+        }
+
+        @Override
+        public void setBounds(VisualItem vi) {
+//            throw new UnsupportedOperationException("Not supported yet.");
+        }
+        
+        
+        
+    }
 
     /*
      * Handles rendering of document glyphs and drawing of document text (for
      * selected document[s]). Should also handle drawing of axes. 
      */
-    public static class DocGlyphRenderer extends ShapeRenderer {
+    public class DocGlyphRenderer extends ShapeRenderer {
         
         // base size for visualitems (in pixels)
 //        public static final int BASE_SIZE = 10;
@@ -578,20 +643,28 @@ public class DocumentGrid extends Display {
         
         @Override
         public void render(Graphics2D g, VisualItem item) {
-            // draw basic glyph
-            super.render(g, item);
             
-            // idea: rather than rendering fixed-size, can we first compute size of text, then set size of item equal to size of text?
+            // execute doc visible predicate on item, to determine whether to render
+            // do this in VisibilityFilter instance instead
+//            boolean shouldBeVisible = item. ; docGlyphVisiblePredicate.
             
-            Shape shape = getShape(item);
-            
-            if (shape != null) {
+            if (item.isVisible()) {
 
+                // draw basic glyph
+                super.render(g, item);
+
+                // idea: rather than rendering fixed-size, can we first compute size of text, then set size of item equal to size of text?
+
+                Shape shape = getShape(item);
+//            item.setBounds(shape.getBounds2D().getMinX(), shape.getBounds2D().getMinY(), shape.getBounds2D().getWidth(), shape.getBounds2D().getHeight());
+                if (shape != null) {
+
+//                System.out.println("debug: "+item.getString("24.1 Rate of procedures where prep adequate"));
 //                double xPos = shape.getBounds().getX();
 //                double yPos = shape.getBounds().getY();
 //            double xPos = item.getX();
 //            double yPos = item.getY();
-                String s = "doc="+item.getString(NODE_NAME);
+                    String s = "doc=" + item.getString(NODE_NAME);
 //                boolean isHover = false;
 //                if (item.isHover()) {
 //                    // no longer displaying doc text on hover; instead, display details on rightclick
@@ -600,26 +673,26 @@ public class DocumentGrid extends Display {
 //                    
 //                    isHover = true;
 //                }
-                s += "\n" + item.getString(NODE_TEXT);
+                    s += "\n" + item.getString(NODE_TEXT);
 //                double x1 = item.getBounds().getX();
 //                double y1 = item.getBounds().getY();
 //                double w = item.getBounds().getWidth();
 //                double h = item.getBounds().getHeight();
-                double x1 = (double)item.get(VisualItem.X);
-                double y1 = (double) item.get(VisualItem.Y);
-                double w = (double) this.getShape(item).getBounds2D().getWidth();
-                double h = (double) this.getShape(item).getBounds2D().getHeight();
+                    double x1 = (double) item.get(VisualItem.X);
+                    double y1 = (double) item.get(VisualItem.Y);
+                    double w = (double) this.getShape(item).getBounds2D().getWidth();
+                    double h = (double) this.getShape(item).getBounds2D().getHeight();
 //                shape.getBounds().setBounds((int)x1, (int)y1, (int)w, (int)h);
 
-                // TODO set font size based on number of active nodes? based on size of rect?
+                    // TODO set font size based on number of active nodes? based on size of rect?
 
 //            int fontSize = Math.min((int)width, (int) height);
-                int fontSize = 10;
+                    int fontSize = 10;
 //            item.setFont(FontLib.getFont("Tahoma", Font.PLAIN, maxFontSize));
-                item.setFont(FontLib.getFont("Tahoma", Font.PLAIN, fontSize));
+                    item.setFont(FontLib.getFont("Tahoma", Font.PLAIN, fontSize));
 
-                // note: this does not draw newlines! we will need to handle this ourselves
-                Font f = item.getFont();
+                    // note: this does not draw newlines! we will need to handle this ourselves
+                    Font f = item.getFont();
 //            FontMetrics fm = g.getFontMetrics(f);
 //            int w = fm.stringWidth(s);
 //            int h = fm.getAscent();
@@ -629,24 +702,24 @@ public class DocumentGrid extends Display {
 //            g.drawString(s, (float) (xPos),
 //                    (float) (yPos + h));
 //            }
-                
-                // compute width, height for the given text
-                int[] textDims = getTextDims(g, f, s);
-                int textWidth = textDims[0];
-                int textHeight = textDims[1];
+
+                    // compute width, height for the given text
+                    int[] textDims = getTextDims(g, f, s);
+                    int textWidth = textDims[0];
+                    int textHeight = textDims[1];
 //                if ( shape instanceof RectangularShape ) {
 //                    RectangularShape r = (RectangularShape) shape;
 //                    double x = r.getX();
 //                    double y = r.getY();
 //                    double x = x1;
 //                    double y = y1;
-                    
+
                     // use our own painting code, for fine-grained control of size
                     // TODO move this into separate method, add code for more robust glyph vis.? see prefuse.util.GraphicsLib.paint()
                     Color strokeColor = ColorLib.getColor(item.getStrokeColor());
 //                    Color fillColor = ColorLib.getColor(item.getFillColor());
                     Color fillColor = Color.WHITE;
-                    
+
 //                    if (isHover) {
 //                        item.setBounds(x1, y1, x1+textWidth, y1+textHeight);
 //                        g.setPaint(fillColor);
@@ -662,13 +735,17 @@ public class DocumentGrid extends Display {
 //                        g.setPaint(strokeColor);
 //                        g.drawRect((int)x1, (int)y1, (int)(w), (int)(h));
 //                    }
-                    
+
 //                }
-                
+
 //            super.render(g, item);
-                
+
 //                drawStringMultiline(g, f, s, xPos, yPos);
-                drawStringMultiline(g, f, s, x1, y1, w, h);
+                    // debug
+//                    System.out.println("debug: "+this.getClass().getName()+": drawStringMultiline at x="+x1+", y="+y1+", w="+w+", h="+h);
+                    drawStringMultiline(g, f, s, x1, y1, w, h);
+
+                }
 
             }
 
@@ -818,8 +895,10 @@ public class DocumentGrid extends Display {
         
         @Override
     public void itemEntered(VisualItem item, MouseEvent e) {
-        // suspend fisheye, run FDL
-            // set the focus to the current node
+            
+            if (item.canGetInt(DocumentGridTable.NODE_ID)) {
+                // suspend fisheye, run FDL
+                // set the focus to the current node
 //            Visualization vis = item.getVisualization();
 //            vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(item);
 //            item.setFixed(true);
@@ -828,10 +907,10 @@ public class DocumentGrid extends Display {
 //            down = d.getAbsoluteCoordinate(e.getPoint(), down);
 //            vis.cancel("distort");
 //            vis.run("forces");
-            
-            
-            // freeze the screen?
-            m_vis.cancel("distort");
+
+
+                // freeze the screen?
+                m_vis.cancel("distort");
 //            display.removeControlListener(anchorUpdateControl);
 //            synchronized (anchorUpdateControl) {
 //                try {
@@ -841,35 +920,36 @@ public class DocumentGrid extends Display {
 //                    System.out.println("debug: " + this.getClass().getName() + ": anchorUpdateControl.wait() interrupted");
 //                }
 //            }
-            anchorUpdateControl.setEnabled(false);
-            
-            // appear the glasspane at appropriate size & location
-            // get relative location of Visualization
-            int xOffset = 0;
-            int yOffset = 0;
-            JComponent component = display;
-            do {
-                Point visLocation = component.getLocation();
-                xOffset += visLocation.x;
-                yOffset += visLocation.y;
+                anchorUpdateControl.setEnabled(false);
+
+                // appear the glasspane at appropriate size & location
+                // get relative location of Visualization
+                int xOffset = 0;
+                int yOffset = 0;
+                JComponent component = display;
+                do {
+                    Point visLocation = component.getLocation();
+                    xOffset += visLocation.x;
+                    yOffset += visLocation.y;
 //            } while ((!component.getParent().getClass().equals(MainTabbedView.class)) && (component = (JComponent)component.getParent()) != null); // TODO more general, not just mainTabbedView!
-                } while ((!component.getParent().getClass().equals(JRootPane.class)) && (component = (JComponent)component.getParent()) != null); // TODO more general, not just mainTabbedView!
-            // debug
-            System.out.println("debug: "+this.getClass().getName()+": offsets: "+xOffset+", "+yOffset);
-            int nodeId = item.getInt(DocumentGridTable.NODE_ID);
-            String attrIdStr = colorAttrName;  // TODO make highlighting more general, not just based on color!
-            AbstractDocument doc = glassPane.getAbstDoc();
-            controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
-            double x = item.getX()+xOffset - (nodeRenderer.getShape(item).getBounds2D().getWidth())/2;
-            double y = item.getY()+yOffset - (nodeRenderer.getShape(item).getBounds2D().getHeight())/2;
-            double w = nodeRenderer.getShape(item).getBounds2D().getWidth();
-            double h = nodeRenderer.getShape(item).getBounds2D().getHeight();
-            glassPane.displaySizedPane((int) x, (int) y, (int) w, (int) h);
-            
+                } while ((!component.getParent().getClass().equals(JRootPane.class)) && (component = (JComponent) component.getParent()) != null); // TODO more general, not just mainTabbedView!
+                // debug
+                System.out.println("debug: " + this.getClass().getName() + ": offsets: " + xOffset + ", " + yOffset);
+
+                int nodeId = item.getInt(DocumentGridTable.NODE_ID);
+                String attrIdStr = colorAttrName;  // TODO make highlighting more general, not just based on color!
+                AbstractDocument doc = glassPane.getAbstDoc();
+                controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
+                double x = item.getX() + xOffset - (nodeRenderer.getShape(item).getBounds2D().getWidth()) / 2;
+                double y = item.getY() + yOffset - (nodeRenderer.getShape(item).getBounds2D().getHeight()) / 2;
+                double w = nodeRenderer.getShape(item).getBounds2D().getWidth();
+                double h = nodeRenderer.getShape(item).getBounds2D().getHeight();
+                glassPane.displaySizedPane((int) x, (int) y, (int) w, (int) h);
+            }
         }
-        
+
         @Override
-         public void itemExited(VisualItem item, MouseEvent e) {
+        public void itemExited(VisualItem item, MouseEvent e) {
             // resume the fisheye distortions
 //            display.addControlListener(anchorUpdateControl);
 //            synchronized (anchorUpdateControl) {
@@ -974,23 +1054,25 @@ public class DocumentGrid extends Display {
             double oldX = item.getX();
             double newX = x;
             List<Integer> boundaryPositions = documentGridLayout.getXCatPositions();
-            
+
             boolean crossesBoundary = false;
-            for (int i=0; i<boundaryPositions.size(); i++) {
-                int boundaryPosition = boundaryPositions.get(i);
-                if ((oldX-width/2 > boundaryPosition && newX-width/2 < boundaryPosition)|| 
-                        (oldX+width/2 < boundaryPosition && newX+width/2 > boundaryPosition)) {
-                    crossesBoundary = true;
+            if (boundaryPositions != null) {
+                for (int i = 0; i < boundaryPositions.size(); i++) {
+                    int boundaryPosition = boundaryPositions.get(i);
+                    if ((oldX - width / 2 > boundaryPosition && newX - width / 2 < boundaryPosition)
+                            || (oldX + width / 2 < boundaryPosition && newX + width / 2 > boundaryPosition)) {
+                        crossesBoundary = true;
+                    }
                 }
-            }
-            
-            // ensure it didn't go beyond maximum as well!
-            if (boundaryPositions.size()>0) {
-                int maxBoundaryPosition = boundaryPositions.get(boundaryPositions.size()-1);
-                maxBoundaryPosition += documentGridLayout.getXCatRegionSizes().get(documentGridLayout.getXCatRegionSizes().size()-1);
-                if ((oldX-width/2 > maxBoundaryPosition && newX-width/2 < maxBoundaryPosition)|| 
-                        (oldX+width/2 < maxBoundaryPosition && newX+width/2 > maxBoundaryPosition)) {
-                    crossesBoundary = true;
+
+                // ensure it didn't go beyond maximum as well!
+                if (boundaryPositions.size() > 0) {
+                    int maxBoundaryPosition = boundaryPositions.get(boundaryPositions.size() - 1);
+                    maxBoundaryPosition += documentGridLayout.getXCatRegionSizes().get(documentGridLayout.getXCatRegionSizes().size() - 1);
+                    if ((oldX - width / 2 > maxBoundaryPosition && newX - width / 2 < maxBoundaryPosition)
+                            || (oldX + width / 2 < maxBoundaryPosition && newX + width / 2 > maxBoundaryPosition)) {
+                        crossesBoundary = true;
+                    }
                 }
             }
             
@@ -1009,21 +1091,23 @@ public class DocumentGrid extends Display {
             List<Integer> boundaryPositions = documentGridLayout.getYCatPositions();
             
             boolean crossesBoundary = false;
-            for (int i=0; i<boundaryPositions.size(); i++) {
-                int boundaryPosition = boundaryPositions.get(i);
-                if ((oldY-height/2 > boundaryPosition && newY-height/2 < boundaryPosition)|| 
-                        (oldY+height/2 < boundaryPosition && newY+height/2 > boundaryPosition)) {
-                    crossesBoundary = true;
+            if (boundaryPositions != null) {
+                for (int i = 0; i < boundaryPositions.size(); i++) {
+                    int boundaryPosition = boundaryPositions.get(i);
+                    if ((oldY - height / 2 > boundaryPosition && newY - height / 2 < boundaryPosition)
+                            || (oldY + height / 2 < boundaryPosition && newY + height / 2 > boundaryPosition)) {
+                        crossesBoundary = true;
+                    }
                 }
-            }
-            
-            // ensure it didn't go beyond maximum as well!
-            if (boundaryPositions.size()>0) {
-                int maxBoundaryPosition = boundaryPositions.get(boundaryPositions.size()-1);
-                maxBoundaryPosition += documentGridLayout.getYCatRegionSizes().get(documentGridLayout.getYCatRegionSizes().size()-1);
-                if ((oldY-height/2 > maxBoundaryPosition && newY-height/2 < maxBoundaryPosition)|| 
-                        (oldY+height/2 < maxBoundaryPosition && newY+height/2 > maxBoundaryPosition)) {
-                    crossesBoundary = true;
+
+                // ensure it didn't go beyond maximum as well!
+                if (boundaryPositions.size() > 0) {
+                    int maxBoundaryPosition = boundaryPositions.get(boundaryPositions.size() - 1);
+                    maxBoundaryPosition += documentGridLayout.getYCatRegionSizes().get(documentGridLayout.getYCatRegionSizes().size() - 1);
+                    if ((oldY - height / 2 > maxBoundaryPosition && newY - height / 2 < maxBoundaryPosition)
+                            || (oldY + height / 2 < maxBoundaryPosition && newY + height / 2 > maxBoundaryPosition)) {
+                        crossesBoundary = true;
+                    }
                 }
             }
             
@@ -1033,5 +1117,19 @@ public class DocumentGrid extends Display {
             
         }
         
-    } 
+    }
+    
+    public class GlyphVisibilityFilter extends VisibilityFilter {
+        
+        
+        public GlyphVisibilityFilter(String group, Predicate p) {
+            super(group, p);
+        }
+        
+        public void updatePredicate(Predicate p) {
+            super.setPredicate(p);
+        }
+        
+    }
+    
 }

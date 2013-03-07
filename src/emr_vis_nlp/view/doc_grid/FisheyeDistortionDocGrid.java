@@ -108,8 +108,16 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
         
         // ignore bbox, bounds parameters, use bbox assigned at instantiation?
 //        bbox = m_bbox;
-        bbox = new Rectangle((int)x, (int)y, 25, 25);  // TODO get proper size info into this method!
+//        // debug
+//        System.out.println("debug: "+this.getClass().getName()+": old bbox: "+bbox.toString());
+        bbox = new Rectangle((int)x, (int)y, 15, 15);  // TODO get proper size info into this method!
+//        // debug
+//        System.out.println("debug: "+this.getClass().getName()+": new bbox: "+bbox.toString());
+//        // debug
+//        System.out.println("debug: "+this.getClass().getName()+": old bounds: "+bounds.toString());
         bounds = m_bbox;
+//        // debug
+//        System.out.println("debug: "+this.getClass().getName()+": new bounds: "+bounds.toString()+"\n\n");
         
         if ( m_distortX ) {
             double ax = anchor.getX();  // ax == coord of anchor
@@ -133,7 +141,9 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
             fy = Math.abs(y-fy)/bbox.getHeight();
         }
         
-        double sf = (!m_distortY ? fx : (!m_distortX ? fy : Math.min(fx,fy)));
+//        double sf = (!m_distortY ? fx : (!m_distortX ? fy : Math.min(fx,fy)));
+        // take average instead of min?
+        double sf = (fx+fy)/2.;
         if (Double.isInfinite(sf) || Double.isNaN(sf)) {
             return 1.;
         } else {
@@ -149,6 +159,8 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
             boolean left = x<a;  // is item to left of anchor?
             double v, m = (left ? a-min : max-a);  // m == distance from anchor to nearest side
             if ( m == 0 ) m = max-min;  // (if no anchor, m == distance between sides)
+            // ignore distance to side?
+//            m = max-min;
             v = Math.abs(x - a) / m;  // v == (distance between item and anchor) / (distance from anchor to nearest side)
             v = (d+1)/(d+(1/v));  // v == (dist. distort factor + 1) / (dist. distort factor + (1 / ((distance between item and anchor) / (distance from anchor to nearest side))))
             return (left?-1:1)*m*v + a;  // (if item to left of anchor -1 else 1) * (distance between sides) * v + anhcor position)
