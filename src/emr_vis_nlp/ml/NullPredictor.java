@@ -8,13 +8,13 @@ import java.util.Map;
 import javax.swing.text.AbstractDocument;
 
 /**
- * MLPredictor which assigns predictions in a random fashion; for testing only.
+ * null predictor to eliminate null-pointer references when no real predictor is loaded.
  *
  * @author alexander.p.conrad@gmail.com
  */
-public class RandomMLPredictor extends MLPredictor {
+public class NullPredictor extends MLPredictor {
 
-    public RandomMLPredictor(MainModel model) {
+    public NullPredictor(MainModel model) {
         super(model);
     }
     
@@ -57,6 +57,5 @@ public class RandomMLPredictor extends MLPredictor {
     public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-
     
 }

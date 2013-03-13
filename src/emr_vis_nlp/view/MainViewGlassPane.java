@@ -36,6 +36,12 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
 
             @Override
             public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    // hide glasspane
+                    hidePane();
+                    // debug
+                    System.out.println("debug: " + this.getClass().getName() + ": hiding glasspane, mouse-out");
+                }
             }
 
             @Override
@@ -55,7 +61,7 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
                 // hide glasspane
                 hidePane();
                 // debug
-                System.out.println("debug: "+this.getClass().getName()+": hiding glasspane");
+                System.out.println("debug: "+this.getClass().getName()+": hiding glasspane, mouse-out");
             }
         });
         

@@ -1,0 +1,143 @@
+\begin{thebibliography}{10}
+
+\bibitem{cao_2011_div_dicon_multidimensional_clusters}
+Nan Cao, David Gotz, Jimeng Sun, and Huamin Qu.
+\newblock Dicon: Interactive visual analysis of multidimensional clusters.
+\newblock {\em IEEE Transactions on Visualization and Computer Graphics},
+  17(12):2581--2590, December 2011.
+\newblock This paper presents a method for using treemap-like glyphs in place
+  of ordinary icons in visualizations. These treemap-like glyphs can convey
+  substantial additional information about the underlying objects being
+  visualized. While this particular application focuses on using these treemaps
+  to visualize information associated with clusters, I found the idea of using
+  a visualization technique as a glyph within another visualization technique
+  compelling. Perhaps something similar could be useful for the
+  attribute-oriented main view, for example, a pie chart instead of an ordinary
+  circle to indicate the distribution of its values in the dataset?
+
+\bibitem{cribbin_2010_iv_visualizing_structure_search_results}
+Timothy Cribbin.
+\newblock Visualising the structure of document search results: a comparison of
+  graph theoretic approaches.
+\newblock {\em Information Visualization}, 9(2):83--97, June 2010.
+\newblock Discusses the the ``Isomap'' algorithm for mapping from a
+  high-dimensional space to a lower-dimensional space. Because this algorithm
+  produces a ``pathway''-like layout of points between clusters of points which
+  share similar values, it could potentially be helpful to users wishing to
+  explore the document space. We may want to eventually adopt it for our
+  scatterplot-based views, to improve usability and to make document groups
+  more readily apparent.
+
+\bibitem{cui_2011_context_word_cloud}
+Weiwei Cui, Yingcai Wu, Shixia Liu, Furu Wei, M.X. Zhou, and Huamin Qu.
+\newblock Context preserving dynamic word cloud visualization.
+\newblock {\em IEEE Trans. on Computer Graphics and Applications}, 2011 2011
+  2011.
+\newblock Incorporates additional temporal information into a series of word
+  clouds via highlighting and consistent placement of important terms across
+  clouds. May be able to use some of the ideas presented herein to enhance the
+  word cloud view, for example, by incorporating correlation information
+  between n-grams and attributes.
+
+\bibitem{heimerl_2012_tvcg_visual_classifier_training}
+Florian Heimerl, Steffen Koch, Harald Bosch, and Thomas Ertl.
+\newblock Visual classifier training for text document retrieval.
+\newblock {\em IEEE Transactions on Visualization and Computer Graphics
+  (TVCG)}, 2012.
+\newblock Presents user studies of active learning interfaces for
+  semi-supervised training of a machine learning classifier. While the task is
+  somewhat different from ours (training a model for document retrieval), one
+  component they incorporate is a wordcloud-like view. While their results
+  don't clearly demonstrate one way or another as to whether this view improved
+  task performance, it suggests that such a view might be useful for exploring
+  large collections of documents.
+
+\bibitem{kong_2012_vcg_graphical_overlays}
+Nicholas Kong and Maneesh Agrawala.
+\newblock Graphical overlays: Using layered elements to aid chart reading.
+\newblock {\em IEEE Trans. Vis. Comput. Graph.}, 18(12):2631--2638, 2012.
+\newblock This paper presents an overview of graph overlay techniques for bar,
+  line, and pie charts. These techniques han help to facilitate inference from
+  charts or to incorporate additional information. Some of these techniques may
+  be useful for enhancing our displays.
+
+\bibitem{oelke_2009_visual_opinion_customer}
+D.~Oelke, Ming Hao, C.~Rohrdantz, D.A. Keim, U.~Dayal, L.-E. Haug, and
+  H.~Janetzko.
+\newblock Visual opinion analysis of customer feedback data.
+\newblock In {\em VAST}, 2009.
+\newblock Although it's primarily an opinion mining paper, I liked the heatmaps
+  and clustered scatterplots on page 190 which they used to present their
+  results. The heatmaps incorporated saturation, hue, and the size of a simple
+  glyph to display two dimensions of information in each cell. In our project,
+  I think that we could adopt this kind of heatmap for displaying attribute
+  information, such as strength of correlation and number of documents in which
+  the two attributes share the same values. Hue could be split off for a
+  secondary purpose, such as to highlight the currently-selected attribute(s).
+
+\bibitem{rind_2010_interactive_information_visualization_ehr_review}
+A.~Rind, T.~D Wang, W.~Aigner, S.~Miksh, K.~Wongsuphasawat, Catherine Plaisant,
+  and Ben Shneiderman.
+\newblock Interactive information visualization for exploring and querying
+  electronic health records: A systematic review.
+\newblock 2010.
+\newblock Survey paper of EHR visualization systems. Most similar to this
+  project is the Gravi++ system. This system uses a main force-directed view to
+  plot patient records with respect to a set of user-selected attributes. It
+  also uses a layered pane (in Java Swing terms) to provide additional controls
+  and (presumably) details-on-demand). I think that this general layout could
+  be a good fit for our task, and the ideas contained herein for spring-based
+  layout could be useful for our analist-centric attribute-oriented views.
+
+\bibitem{Roberts:2007:SAC:1270380.1270575}
+Jonathan~C. Roberts.
+\newblock State of the art: Coordinated \& multiple views in exploratory
+  visualization.
+\newblock In {\em Proceedings of the Fifth International Conference on
+  Coordinated and Multiple Views in Exploratory Visualization}, CMV '07, pages
+  61--71, Washington, DC, USA, 2007. IEEE Computer Society.
+\newblock This brief survey paper covers some of the historical challenges in
+  research into coordinated views with an eye towards future research
+  directions. While not an exhaustive survey, this paper provides an overview
+  of some important design questions to keep in mind, such as replacement
+  versus replication of views, how to handle missing values, and supporting
+  direct versus indirect manipulation, when developing a system making use of
+  such views.
+
+\bibitem{skeels_2010_iv_uncertainty_visualization}
+Meredith~M. Skeels, Bongshin Lee, Greg Smith, and George~G. Robertson.
+\newblock Revealing uncertainty for information visualization.
+\newblock {\em Information Visualization}, 9(1):70--81, 2010.
+\newblock Discusses the kinds of uncertainty which should be displayed by an
+  interface. Specifically, this paper suggests using rings in a 2d space as an
+  analog to the 1d error bar; we could incorporate this idea into the
+  scatterplot to convey uncertainty due to back-end NLP predictions to the
+  user.
+
+\bibitem{stasko_2008_iv_jigsaw_analysis_interactive_visualization}
+John Stasko, Carsten G\"{o}rg, and Zhicheng Liu.
+\newblock Jigsaw: supporting investigative analysis through interactive
+  visualization.
+\newblock {\em Information Visualization}, 7(2):118--132, April 2008.
+\newblock Presents a large-scale system for visual representation of documents
+  and entities, linking entities across multiple documents to support
+  investigative analysis in a law enforcement scenerio. While this task is
+  quite different from ours, some of the interface ideas may be useful to
+  adopt. For example, at a high level their use of independent windows may be
+  useful for our more fine-grained views. At a more fine-grained level, their
+  graph view on page 123 displays a dataset which seems somewhat comparable to
+  the attribute-oriented data which will be needed by our scheme reviser. We
+  may be able to learn from this view when designing a main view for the
+  reviser use-case.
+
+\bibitem{Wong9730years}
+Pak~Chung Wong and R.~Daniel Bergeron.
+\newblock 30 years of multidimensional multivariate visualization.
+\newblock pages 3--33. IEEE Computer Society Press, 1997.
+\newblock This paper presents a survey of basic low-level techniques for
+  multidimentional data visualization, which is of obvious applicability to
+  this task. While the paper is rather old, some of the discussed techniques,
+  such as nested histograms within other histogram plots, may be applicable to
+  this project.
+
+\end{thebibliography}

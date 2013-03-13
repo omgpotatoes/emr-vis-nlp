@@ -1,5 +1,7 @@
 package emr_vis_nlp.controller;
 
+import emr_vis_nlp.ml.MLPredictor;
+import emr_vis_nlp.ml.deprecated.DeprecatedMLPredictor;
 import emr_vis_nlp.view.DocDetailsTableModel;
 import emr_vis_nlp.view.doc_map.TreeMapSelectorTableModel;
 import emr_vis_nlp.view.doc_table.DocTableModel;
@@ -44,6 +46,10 @@ public class MainController {
      * main view controlled by this
      */
     private MainView view;
+    /**
+     * currently-loaded machine learning predictor
+     */
+    private MLPredictor predictor;
     /**
      * list of active popup windows
      */
@@ -109,6 +115,17 @@ public class MainController {
         // update view once model loading is complete
         if (view != null) view.resetAllViews();
     }
+    
+    /**
+     * Associates the controller with a back-end NLP prediction module.
+     * 
+     * @param predictor nlp / ml module which should be used for predictions
+     */
+    public void setPredictor(MLPredictor predictor) {
+        this.predictor = predictor;
+        
+        if (view != null) view.resetAllViews();
+    }
 
     /**
      * Associates the controller with a front-end MainView to which view events should be pushed.
@@ -128,9 +145,14 @@ public class MainController {
 
         // load new model from doclist
         // TODO add support for dataset types beyond MpqaColon
+        
+        // if type == mpqa_colon {
         model = new MpqaColonMainModel(this);
         ((MpqaColonMainModel) model).loadDataFromDoclist(file);
-
+        // load predictor for dataset as well
+        predictor = new DeprecatedMLPredictor(model);
+        // }
+        
         // update view once model loading is complete
         if (view != null) view.resetAllViews();
 
@@ -249,12 +271,13 @@ public class MainController {
      */
     public DocDetailsTableModel buildAttrAndPredictionModelForDoc(int docGlobalId) {
         
-        if (model != null) {
+        if (model != null && predictor != null) {
             Document doc = model.getAllDocuments().get(docGlobalId);
             List<String> allAttributes = model.getAllAttributes();
             List<Boolean> allAttributesEnabled = model.getAllSelectedAttributes();
 
-            Map<String, PredictionCertaintyTuple> attrPredictionMap = model.getPredictionsForDoc(docGlobalId);
+//            Map<String, PredictionCertaintyTuple> attrPredictionMap = model.getPredictionsForDoc(docGlobalId);
+            Map<String, PredictionCertaintyTuple> attrPredictionMap = predictor.getPredictionsForDoc(docGlobalId);
 
             DocDetailsTableModel docDetailsTableModel = new DocDetailsTableModel(doc, docGlobalId, attrPredictionMap, allAttributes, allAttributesEnabled);
             return docDetailsTableModel;
@@ -308,10 +331,12 @@ public class MainController {
      */
     public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId) {
 
-        if (model != null) {
+        if (model != null && predictor != null) {
             // delegate this to the model, if possible
-            if (globalAttrId != -1 && model.canWriteDocTextWithHighlights(globalDocId, globalAttrId)) {
-                model.writeDocTextWithHighlights(abstDoc, globalDocId, globalAttrId);
+//            if (globalAttrId != -1 && model.canWriteDocTextWithHighlights(globalDocId, globalAttrId)) {
+//                model.writeDocTextWithHighlights(abstDoc, globalDocId, globalAttrId);
+            if (globalAttrId != -1 && predictor.canWriteDocTextWithHighlights(globalDocId, globalAttrId)) {
+                predictor.writeDocTextWithHighlights(abstDoc, globalDocId, globalAttrId);
             } else {
                 // if model doesn't support highlighting for this text, just insert plaintext
                 try {
@@ -556,7 +581,8 @@ public class MainController {
      * @return 
      */
     public boolean hasPrediction(int globalDocId, String attrName) {
-        if (model != null) return model.hasPrediction(globalDocId, attrName);
+//        if (model != null) return model.hasPrediction(globalDocId, attrName);
+        if (predictor != null) return predictor.hasPrediction(globalDocId, attrName);
         return false;
     }
     
@@ -568,7 +594,8 @@ public class MainController {
      * @return 
      */
     public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName) {
-        if (model != null) return model.getPrediction(globalDocId, attrName);
+//        if (model != null) return model.getPrediction(globalDocId, attrName);
+        if (predictor != null) return predictor.getPrediction(globalDocId, attrName);
         return null;
     }
 

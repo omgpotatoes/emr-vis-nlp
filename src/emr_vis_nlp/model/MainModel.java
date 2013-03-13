@@ -30,19 +30,21 @@ public interface MainModel {
     public List<Boolean> getAllSelectedAttributes();
     /** map of all possible values & their counts for a given attribute in the model */
     public Map<String, Integer> getAttributeValueCountMap(String attrName);
-    /** enable selected documents in model */
+    /** enable selected documents in model */  
     public void setSelectedAttributes(List<Boolean> selectedAttributes);
     /** updates target document's target attribute with the designated value */
     public boolean updateDocumentAttr(int docID, String docAttr, String docAttrVal);
     
     // for machine learning
-    public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId);
-    public boolean hasPrediction(int globalDocId, String attrName);
+    // ML / NLP components moved to emr_vis_nlp.ml.MLPredictor
+    // manAnn methods stay here
+//    public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId);
+//    public boolean hasPrediction(int globalDocId, String attrName);
     public boolean hasManAnn(int globalDocId, String attrName);
-    public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName);
+//    public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName);
     public String getManAnn(int globalDocId, String attrName);
-    public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId);
-    public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId);
+//    public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId);
+//    public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId);
     
     // miscellaneous
     /** applies simple string as filter to set enabled / disabled docs */
@@ -50,7 +52,7 @@ public interface MainModel {
 //    public void applySimpleStringFilter(String str);
     
     // visualization-oriented model builder methods
-    // TODO : move to controller!
+    // moved to controller
 //    public DocTableModel buildSimpleDocTableModel();
 //    public AttrTableModel buildSimpleAttrSelectionTableModel();
 //    public TableModel buildSimpleTreeMapSelectionTableModel();

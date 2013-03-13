@@ -27,13 +27,12 @@ public class DocumentMedColon extends Document {
     int numTermsInDoc = -1;
     private String databaseRoot;
     
-    // TODO remove these maps, migrate to attributes map
+    // no longer using colonoscopy-specific var/indi maps; instead, now using general attribute map
 //    private Map<String, String> vars;
 //    private Map<String, Integer> indicators;
     
     private boolean isPathologyPresent;
     
-
     /**
      * creates a new empty DocumentMedColon
      *
@@ -65,8 +64,7 @@ public class DocumentMedColon extends Document {
      */
     public DocumentMedColon(Element el, String rootPath, String databaseRoot) {
         super();
-
-
+        
         // simply contains id # for this document
         docPath = el.getFirstChild().getNodeValue().trim();
         rawName = docPath;
@@ -126,12 +124,14 @@ public class DocumentMedColon extends Document {
                         lineSplitter.next();
                         lineSplitter.next();
                         lineSplitter.next();
+                        // read attrs
                         String var = lineSplitter.next();
                         String varClean = DatasetTermTranslator.getAttrTranslation(var);
                         String val = lineSplitter.next();
                         String valClean = DatasetTermTranslator.getValTranslation(val);
                         attributes.put(varClean, valClean);
                         
+                        // don't worry about handling attrs and vars separately
 //                        Scanner varSplitter = new Scanner(var);
 //                        varSplitter.useDelimiter("_");
 //                        String varType = varSplitter.next().toLowerCase();
@@ -159,8 +159,7 @@ public class DocumentMedColon extends Document {
 //                        }
 
                     } catch (NoSuchElementException e) {
-                        // will happen if a value is not present
-                        // @TODO how should we handle this? ask harry?
+                        // will happen if a value is not present; 
 //                        assert false;
 //                        System.err.println("DocumentMedColon: anomalous man_anns line:   "+nextLine);
                     }

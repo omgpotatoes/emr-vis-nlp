@@ -4,6 +4,8 @@ import emr_vis_nlp.view.JTableCombos;
 import emr_vis_nlp.view.doc_table.DocTableModel;
 import emr_vis_nlp.view.doc_table.AttrTableModel;
 import emr_vis_nlp.controller.MainController;
+import emr_vis_nlp.ml.MLPredictor;
+import emr_vis_nlp.ml.NullPredictor;
 import emr_vis_nlp.model.*;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
@@ -867,6 +869,9 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         // setup model
         MainModel model = new NullMainModel();
         controller.setModel(model);
+        
+        MLPredictor predictor = new NullPredictor(model);
+        controller.setPredictor(predictor);
 
         // setup view
         final MainView mainView = new MainTabbedView();
@@ -877,6 +882,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         if (args.length != 0) {
             String doclistPathFromArgs = args[0];
             controller.setModelFromDoclist(new File(doclistPathFromArgs));
+            
         }
 
         /*

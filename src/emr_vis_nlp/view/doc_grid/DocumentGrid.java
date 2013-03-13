@@ -102,9 +102,9 @@ public class DocumentGrid extends Display {
     private MainController controller;
     
     // scale for fisheye distortion
-    private double fisheyeDistortScale = 12.;
+    private double fisheyeDistortScale = 13.;
 //    private double fisheyeDistortScale = 4.;
-    private double fisheyeDistortSize = 0.9;
+    private double fisheyeDistortSize = 1.1;
     private Distortion feye;
 //    private Distortion bifocal;
     private Rectangle2D feyeBoundingBox;
@@ -546,11 +546,11 @@ public class DocumentGrid extends Display {
      */
     public static class DocumentShapeAction extends ShapeAction {
         
-        public static final int[] GLYPH_SHAPE_PALETTE = {
-            Constants.SHAPE_RECTANGLE, Constants.SHAPE_DIAMOND, Constants.SHAPE_ELLIPSE, 
-            Constants.SHAPE_HEXAGON, Constants.SHAPE_CROSS, Constants.SHAPE_STAR
-        };
-//        public static final int[] GLYPH_SHAPE_PALETTE = {Constants.SHAPE_RECTANGLE};
+//        public static final int[] GLYPH_SHAPE_PALETTE = {
+//            Constants.SHAPE_RECTANGLE, Constants.SHAPE_DIAMOND, Constants.SHAPE_ELLIPSE, 
+//            Constants.SHAPE_HEXAGON, Constants.SHAPE_CROSS, Constants.SHAPE_STAR
+//        };
+        public static final int[] GLYPH_SHAPE_PALETTE = {Constants.SHAPE_RECTANGLE};
         
         private String shapeAttrName;
         private List<String> shapeAttrCategories;
@@ -895,6 +895,7 @@ public class DocumentGrid extends Display {
         
         @Override
     public void itemEntered(VisualItem item, MouseEvent e) {
+            
             
             if (item.canGetInt(DocumentGridTable.NODE_ID)) {
                 // suspend fisheye, run FDL

@@ -137,7 +137,7 @@ public class DatasetMedColonDoclist extends Dataset {
 //            }
             
             // we've moved away from hard-coding var, indi distinction; attribute-focus instead
-            // TODO finish var/indi -> arrtibute refactoring
+            // TODO finish var/indi -> arrtibute refactoring ?
             Map<String, String> attributes = medDoc.getAttributes();
             for (String key : attributes.keySet()) {
                 if (!allVarsAndIndisMap.containsKey(key)) {

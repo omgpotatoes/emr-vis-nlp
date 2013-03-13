@@ -103,6 +103,7 @@ public abstract class Dataset {
     public abstract void writeDoclist();
 
     // TODO refactor parsing, similarity code
+    // disable similarity-computation code for now; take care of this in other modules
 //    /**
 //     *
 //     * @return map from terms to counts for entire dataset
@@ -234,8 +235,6 @@ public abstract class Dataset {
 //
 //    }
 
-    
-    
     
     
     public static Dataset loadDatasetFromDoclist(File doclistFile) {

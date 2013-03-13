@@ -78,10 +78,10 @@ public class NullMainModel implements MainModel {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId) {
-        throw new UnsupportedOperationException();
-    }
+//    @Override
+//    public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId) {
+//        throw new UnsupportedOperationException();
+//    }
     
 //    @Override
 //    public TableModel buildSimpleTreeMapSelectionTableModel() {
@@ -103,34 +103,34 @@ public class NullMainModel implements MainModel {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override
-    public boolean hasPrediction(int globalDocId, String attrName) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+//    @Override
+//    public boolean hasPrediction(int globalDocId, String attrName) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
 
     @Override
     public boolean hasManAnn(int globalDocId, String attrName) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override
-    public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+//    @Override
+//    public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
 
     @Override
     public String getManAnn(int globalDocId, String attrName) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override
-    public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+//    @Override
+//    public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
 
-    @Override
-    public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+//    @Override
+//    public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
     
 }

@@ -1,0 +1,123 @@
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{multirow}
+
+\title{biovis use-case, visualization ideas}
+
+%\date{update: spring 2013}
+
+\begin{document}
+\maketitle
+
+
+\section{Use-Cases}\label{sec:use-cases}
+
+When thinking about the functionality of the visualization tool, we decided that it makes the most sense to think in terms of the capabilities required for three primary use cases. These three use cases are the EMR annotator, the NLP scheme reviser, and the EMR analyst, as described below:
+
+\begin{itemize}
+
+\item use-case: annotator
+\begin{itemize}
+\item goals: annotate EMRs with values for relevant variables/indicators.
+\item required capabilities: Assist annotator by suggesting values for relevant variables/indicators, and/or directing the annotator's attention to regions of a document which are likely to be relevant. Support document selection based on criteria such as document ID, certainty of NLP predictions, metadata, etc.
+\item possible visualizations: when a variable/indicator is selected, predict a value (along with certainty scores) and highlight terms in the EMR which are most strongly associated with the predicted class. When annotating a document, allow the annotator to highlight the region(s) of the document which factored most strongly in their decision in order to provide additional feedback to improve the back-end model. 
+\end{itemize}
+
+\item use-case: reviser
+\begin{itemize}
+\item goals: 
+\begin{itemize}
+\item Revise the annotation scheme. This could include addition of new attributes, removal / merging of redundant attributes, updating rules for indicator attributes, etc.
+\item Assess the quality of the NLP back-end in terms of model performance, ie, which models perform well / badly? Are the appropriate features being detected? (this second goal may lead to overlap / interaction with the annotator, as the reviser may choose attribute models for improvement via additional annotation)
+\end{itemize}
+%\item goals: design an annotation scheme which captures the salient information in a category of EMRs while minimizing redundancy. Annotation scheme can consist of a mix of intermediate variables and end-goal indicators with which an analyst would be concerned.
+\item required capabilities: viewing overall frequency counts for variable/indicator categories, viewing correlations between different variables/indicators in order to streamline the annotation scheme by minimizing redundancy, viewing summary information concerning the overall accuracy of NLP predictions, viewing summary information concerning the NLP model's decision-making (ie, top feature weights, etc.)
+\item possible visualizations: heatmap representing level of correlation between different variables/indicators and/or specific categories of said variables/indicators; force-directed map representing rule-based and correlation-based relationships between attributes; interactive grid-based or treemap-based visualization where different attributes are projected along the x and y axes on-demand, and documents are grouped accordingly; wordcloud-based visualization to convey the most-important features per attribute.
+\end{itemize}
+
+\item use-case: analyst
+\begin{itemize}
+\item goals: assess overall quality of EMRs or proceedures performed by particular doctors, hospitals, floors of hostpials, etc. Select patients or records matching particular criteria for cohort inclusion in future studies. Optionally, provide feedback conerning how well / poorly NLP predictions matched their expert judgements.
+\item required capabilities: aggregate documents according to metadata such as doctor, hospital, etc. Summarize groups of documents and compare different groups along multiple quality dimensions. Provide an informative description of the meaning of each variable/indicator.
+%\item possible visualizations: support selection and assignment of multiple document groups, both manually and according to metadata (and/or based on automatic clustering?). More informative wordclouds, bi-/tri-grams, perhaps using a more robust stopword list, or a large null biomedical corpus to shrink tf-idf scores of common terms? Support multiple wordclouds to facilitate high-level comparisons between different document groups. Display ratios of each category for each indicator/variable for selected group of documents (as with bar charts, but moved into the top-right table [dataset variable table]). Incorporate more direct drill-down from word clouds to specific instances where these terms occur in documents, and from summary visualizations of a variable/indicator to documents where a selected value actually occurs.
+\end{itemize}
+
+
+\end{itemize}
+
+\section{Visualization Components}
+
+Given the use-cases and the capabilities required by each, below are a collection of visualization techniques we've discussed which we judge to have potential uses for supporting some of the required capabilities. I've included my thoughts (still rather rough) concerning each technique, how it could be applied, and what roles it could fulfill in this system.
+
+\begin{itemize}
+
+\item Heatmaps (summary-level)
+\begin{itemize}
+\item role: Summarize correlations between large numbers of attributes and/or specific values of attributes across all documents.
+\item enhancement: By using glyphs within each cell of the heatmap, we can also use the heatmap to illustrate overall distributions of attribute values.
+\item weakness: space-inefficient (if each attribute is listed on each axis, half the table will be redundant); this could be mitigated if we provide a mechanism by which the user can manually select which attributes appear on which axes
+\item weakness: User may be overwhelmed by amount of data; does not natually orient around uniquely-strong correlations.
+\item filtering / zooming method: user manually selecting attributes to incorporate on each axis? Example: initially a large number of attributes on both axes. User deselects attributes with no strong / interesting correlations. After pruning down to a few attributes per axis, user toggles heatmap mode from attribute-only to attribute-broken-down-by-value mode to see greater detail, specifically, correlations between individual attribute values
+\item supported selection: attribute and document: clicking on cells selects attributes corresponding to the given row \& column, and also selects documents contributing to that cell (ie, documents which share the same value for the pair of attributes). Multi-cell selection should be supported.
+\item imagined use-case: (designer) uses heatmap to explore correlations between attributes in annotation scheme
+\item imagined use-case: (analyst) selects cells representing interesting attribute / attribute-value combos in order to select documents satisfying these criteria for more detailed review.
+\item additional ideas: fisheye-style lens for handling large number of attributes, or dynamically incorporating value-level visualizations on mouse-over of a cell.
+\end{itemize}
+
+\item Heatmap (group-level)
+\begin{itemize}
+\item role: Summarize correlations between small numbers of specific values of attributes across a subset of documents.
+\item thought: perhaps we should abandon this idea; most of the same functionality can be incorporated into the summary heatmap; ie, heatmap can be manually ``zoomed'' based on attribute (de)selection and selected display mode (attribute-level [coarser] versus value-of-attribute-level (finer)). Also, it seems unlikely that the user would need both the group-level and summary-level heatmaps simultaneously. 
+\item The only unique contribution that this group-level heatmap would provide is the ability to visualize attribute correlations using only a subset of the documents. The summary-level heatmap is incapable of this because heatmap cells themselves provide document selection functionality. (However, if this functionality is particularly important, we could disable document selection via heatmap cell in the summary heatmap?)
+\end{itemize}
+
+\item SVD-based scatterplots
+\begin{itemize}
+\item role: lay out documents based on a range of user-selected criteria; displays the full dataset
+\item weakness: axes have no innate meaning; SVD often weights original dimensions unpredictably
+\item filtering / zooming method: literal zooming in the space; selection of particular attributes for layout
+\item supported selection: document: individual document and group selection
+\item imagined use-case: analyst looking for documents matching a fuzzy set of attribute-value criteria would select the relevant attributes, plot the points, and then select groups of documents with roughly similar values in the new space.
+\item enhancement idea: rather than showing each individual point in a scatterplot, \cite{oelke_2009_visual_opinion_customer} clusters the points in the scatterplot, displaying the clusters in lieu of the individual points. Each cluster is accompanied by a table containing summary information describing the properties of the cluster. From the perspective of the analyst, perhaps something like this would make sense for our dataset? (Or, perhaps this should this be addressed as an entirely separate panel / visualization technique from the SVD plot?)
+\item enhancement idea: the ``gravi++'' system discussed in \cite{rind_2010_interactive_information_visualization_ehr_review} adds special auxiliary nodes to the plot which represent particular properties of interest. Perhaps it would improve the navigability of the SVD plot to add special nodes representing particular attribute values / combinations of values which may be frequent / at particular locations / otherwise important?
+\end{itemize}
+
+\item Wordclouds
+\begin{itemize}
+\item role: abstract, high-level summary of semantics present within a group of documents
+\item enhancement: encode additional information via highlighting of terms (as in \cite{cui_2011_context_word_cloud}); for example, perhaps hue and saturation could be used to encode correlations of terms with particular attributes, where hue indicates the most-strongly related attribute, and saturation indicates strength of the correlation?
+\item imagined use-case: provides additional coarse-grained information to analyst during the document group selection process
+\end{itemize}
+
+\item Force-Directed Plots
+\begin{itemize}
+\item We briefly discussed using force-directed plots early in the summer, but haven't touched on them recently. One of the problems we kept running into was that I couldn't manage to get them to effectively scale to the size of the full dataset. I still don't think that we can use them for dataset-level summary visualization, but I think they could have a role to play in individual-document/attribute-oriented visualization, ie, given a document or attribute, visualizing the strongest relationships that the given object has to others of its kind.
+\item description: nodes as docs / attributes, edges as correlations / similarities; for docs-as-nodes, relatedness can be defined via attribute selections or textual similarity (as was the case for the SVD layout); for attributes-as-nodes, relatedness can be defined in terms of correlations.
+\item role: individual-document-centric (or individual-attribute-centric) method for displaying summary information, optionally (probably) for a limited subset of the full dataset / annotation scheme
+\item weakness: probably can't visualize entire dataset at once (too much clutter, force-directedness may start to spaz out)
+\item imagined use-case: scheme reviser: (attributes-as-nodes) selects an attribute of interest, increases/decreases correlation threshold to dynamically add/remove elements to/from visualization depending whether their correlation with the attribute of interest exceeds current threshold value. 
+\item imagined use-case: analyst: (documents-as-nodes) given a document that the analyst wants to include (ie, meets certain criteria for study inclusion), sets attributes of interest and increases threshold until a sufficient number of similar documents of interest have been added to the viz.
+\end{itemize}
+
+\item Grid-Based Document Plot
+\begin{itemize}
+\item Projecting different attributes onto the x and y axes, documents (represented as glyphs) are dynamically rearranged to fall within appropriate cells.
+\item Can be generalized to a TreeMap (for more than 2 attributes?).
+\item role: document grouping according to attribute values
+\item imagined use-case: analyst wishes to see relatively how many documents meet a particular set of attribute-value criteria. Analyst enables these attributes causing documents to re-arrange themselves with respect to their values for these attributes. Analyst can then see the relative populations of each of the groups, and can drill-down into specific document groups on-demand.
+\item imagined use-case: reviser wishes to view the skew of particular attributes. Reviser enables selected attributes in order to assess relative sizes of each group, and to assess degree to which attributes are correlated. 
+\end{itemize}
+
+
+
+\end{itemize}
+
+
+
+\bibliographystyle{plain}
+\bibliography{biovis_use-cases}
+
+\end{document}
