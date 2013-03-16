@@ -82,6 +82,10 @@ public class MainController {
      * list of predicates for document disabling
      */
     private Map<AttrValPredicate, Boolean> disabledAttrValsMap;
+    /*
+     * current string for search
+     */
+    private String searchText;
     
     /**
      * Factory method for generating a singleton MainController.
@@ -102,6 +106,7 @@ public class MainController {
         activePopups = new ArrayList<>();
         activePopupIDs = new ArrayList<>();
         disabledAttrValsMap = new HashMap<>();
+        searchText = "";
     }
 
     /**
@@ -678,6 +683,16 @@ public class MainController {
         if (documentGrid != null)
             return documentGrid;
         return null;
+    }
+    
+    public void setSearchText(String text) {
+        searchText = text;
+        // update relevant views
+        view.setSearchText(searchText);
+    }
+    
+    public String getSearchText() {
+        return searchText;
     }
     
 }

@@ -276,12 +276,19 @@ public class DocumentGridLayout extends Layout {
                 if (controller.hasPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr)) {
 //                    withinCellOffsetX = xCatRegionSizes.get(xAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert();
 //                    withinCellOffsetX = (xCatRegionSizes.get(xAttrPos)*bufferPerc) + (xCatRegionSizes.get(xAttrPos) - (xCatRegionSizes.get(xAttrPos)*2*bufferPerc)) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert();
-                    withinCellOffsetX = cellBufferX + xCatRegionSizes.get(xAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert() * (1 - (2*regionBuff));
+//                    withinCellOffsetX = cellBufferX + xCatRegionSizes.get(xAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert() * (1 - (2*regionBuff));
+                    // invert, to place most-certain in the top-left!
+                    double activeRange = xCatRegionSizes.get(xAttrPos) - 2*cellBufferX;
+                    withinCellOffsetX = cellBufferX + activeRange * (1. - controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert());
                 }
                 if (controller.hasPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr)) {
 //                    withinCellOffsetY = yCatRegionSizes.get(yAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert();
 //                    withinCellOffsetY = (yCatRegionSizes.get(yAttrPos)*bufferPerc) + (yCatRegionSizes.get(yAttrPos) - (yCatRegionSizes.get(yAttrPos)*2*bufferPerc)) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert();
-                    withinCellOffsetY = cellBufferY + yCatRegionSizes.get(yAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert() * (1 - (2*regionBuff));
+//                    withinCellOffsetY = cellBufferY + yCatRegionSizes.get(yAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert() * (1 - (2*regionBuff));
+                    // invert, to place most-certain in the top-left!
+                    
+                    double activeRange = yCatRegionSizes.get(yAttrPos) - 2*cellBufferY;
+                    withinCellOffsetY = cellBufferY + activeRange * (1. - controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert());
                 }
                 
                 // position actual item; also adjust size

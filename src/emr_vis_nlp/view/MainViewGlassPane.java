@@ -97,6 +97,18 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
 
     public void hidePane() {
         setVisible(false);
+        // get the highlighted text
+        String selectedText = "";
+        if (jTextPaneDocText != null) {
+            String text = jTextPaneDocText.getSelectedText();
+            if (text != null) {
+                selectedText = text.toLowerCase().trim();
+                // update selected text 
+                MainController.getMainController().setSearchText(selectedText);
+            }
+        }
+        // debug
+//        System.out.println("debug: "+this.getClass().getName()+": selectedText = \""+selectedText+"\"");
         MainController.getMainController().getDocumentGrid().enableMouseListeners();
     }
 

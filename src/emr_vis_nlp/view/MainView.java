@@ -17,4 +17,6 @@ public interface MainView {
     
     public MainViewGlassPane getGlassPane();
     
+    public void setSearchText(String text);
+    
 }

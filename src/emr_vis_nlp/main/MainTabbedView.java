@@ -13,13 +13,19 @@ import emr_vis_nlp.view.MainViewGlassPane;
 import emr_vis_nlp.view.VarDatasetRatioRenderer;
 import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.ComponentOrientation;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.io.File;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JPanel;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import prefuse.util.FontLib;
+import prefuse.util.ui.JFastLabel;
+import prefuse.util.ui.JSearchPanel;
+import prefuse.util.ui.UILib;
 
 /**
  * Main top-level tab-based view for the emr-vis-nlp system.
@@ -66,7 +72,11 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
      * object for document-grid layout
      */
     private DocumentGrid documentGrid;
-
+    /*
+     * panel for supplying a search query
+     */
+    private JSearchPanel search;
+    
     /**
      * Creates new form MainTabbedView
      */
@@ -106,8 +116,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jFileChooser1 = new javax.swing.JFileChooser();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanelDocTable = new javax.swing.JPanel();
-        jTextFieldSearch = new javax.swing.JTextField();
-        jLabelSearch = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTableSimpleDocs = new javax.swing.JTable();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -126,13 +134,12 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jSplitPaneDocGrid = new javax.swing.JSplitPane();
         jPanelDocGridDummy = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
-        jLabelSearch2 = new javax.swing.JLabel();
-        jTextFieldSearch2 = new javax.swing.JTextField();
         jScrollPane4 = new javax.swing.JScrollPane();
         jTableAttrSelection3 = new JTableCombos();
         jButtonSelectAllDocGrid = new javax.swing.JButton();
         jButtonSelectNoneDocGrid = new javax.swing.JButton();
         jButtonReset = new javax.swing.JButton();
+        jPanelSearchContainer = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -147,16 +154,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
                 jTabbedPane1StateChanged(evt);
             }
         });
-
-        jTextFieldSearch.setOpaque(false);
-        jTextFieldSearch.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextFieldSearchActionPerformed(evt);
-            }
-        });
-
-        jLabelSearch.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelSearch.setText("Search:");
 
         jTableSimpleDocs.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -225,10 +222,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             .addGroup(jPanelDocTableLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(jPanelDocTableLayout.createSequentialGroup()
-                        .addComponent(jLabelSearch)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextFieldSearch))
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
                     .addComponent(jButtonSelectNoneDocTable, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonSelectAllDocTable, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -243,10 +236,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
                 .addGroup(jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 517, Short.MAX_VALUE)
                     .addGroup(jPanelDocTableLayout.createSequentialGroup()
-                        .addGroup(jPanelDocTableLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabelSearch)
-                            .addComponent(jTextFieldSearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(39, 39, 39)
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButtonSelectAllDocTable)
@@ -382,16 +372,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         jSplitPaneDocGrid.setRightComponent(jPanelDocGridDummy);
 
-        jLabelSearch2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelSearch2.setText("Search:");
-
-        jTextFieldSearch2.setEditable(false);
-        jTextFieldSearch2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextFieldSearch2ActionPerformed(evt);
-            }
-        });
-
         jTableAttrSelection3.setAutoCreateRowSorter(true);
         jTableAttrSelection3.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -442,6 +422,17 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             }
         });
 
+        javax.swing.GroupLayout jPanelSearchContainerLayout = new javax.swing.GroupLayout(jPanelSearchContainer);
+        jPanelSearchContainer.setLayout(jPanelSearchContainerLayout);
+        jPanelSearchContainerLayout.setHorizontalGroup(
+            jPanelSearchContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        jPanelSearchContainerLayout.setVerticalGroup(
+            jPanelSearchContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 39, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -450,11 +441,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanelSearchContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonSelectNoneDocGrid, javax.swing.GroupLayout.DEFAULT_SIZE, 175, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabelSearch2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextFieldSearch2))
                     .addComponent(jButtonSelectAllDocGrid, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonReset, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -463,11 +451,9 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabelSearch2)
-                    .addComponent(jTextFieldSearch2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jPanelSearchContainer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 390, Short.MAX_VALUE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButtonSelectAllDocGrid)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -557,20 +543,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         }
     }//GEN-LAST:event_jMenuItemLoadDatasetActionPerformed
 
-    private void jTextFieldSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldSearchActionPerformed
-
-        // whenever text is updated, perform filtering
-        String currentText = jTextFieldSearch.getText();
-
-        if (docTableModelSorter != null) {
-            // TODO finish building filter
-            
-            
-        }
-
-
-    }//GEN-LAST:event_jTextFieldSearchActionPerformed
-
     private void jTextFieldSearch1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldSearch1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jTextFieldSearch1ActionPerformed
@@ -626,10 +598,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private void jSplitPaneDocGridPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jSplitPaneDocGridPropertyChange
         updateDocumentGridSize();
     }//GEN-LAST:event_jSplitPaneDocGridPropertyChange
-
-    private void jTextFieldSearch2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldSearch2ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextFieldSearch2ActionPerformed
 
     private void jButtonSelectAllDocGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectAllDocGridActionPerformed
         // TODO add your handling code here:
@@ -742,6 +710,31 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         updateDocumentGridSize();
 //        controller.updateDocumentGrid();
 //        updateDocumentGridSize();
+        // rebuild the JSearchPanel
+        // adopted from TreeMap.java demo
+        search = controller.getDocumentGrid().getSearchQuery().createSearchPanel();
+        search.setShowResultCount(true);
+        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
+        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+        final JFastLabel title = new JFastLabel("");
+        title.setVerticalAlignment(SwingConstants.BOTTOM);
+//        final JFastLabel title = new JFastLabel("                 ");
+//        title.setPreferredSize(new Dimension(350, 20));
+//        title.setVerticalAlignment(SwingConstants.BOTTOM);
+//        title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
+//        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
+//        Box box = UILib.getBox(new Component[]{title,search}, true, 10, 3, 0);
+        Box box = UILib.getBox(new Component[]{search}, true, 0, 0, 0);
+        // TODO fix visibility!!
+        jPanelSearchContainer.removeAll();
+        jPanelSearchContainer.invalidate();
+        jPanelSearchContainer.setLayout(new FlowLayout());
+        jPanelSearchContainer.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+        jPanelSearchContainer.add(box);
+//        jPanelSearchContainer.add(new JButton("testbutton")); // for testing only
+        jPanelSearchContainer.revalidate();
+        UILib.setColor(jPanelSearchContainer, this.getBackground(), Color.black);
+//        repaint();
     }
     
     @Override
@@ -804,6 +797,13 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         rebuildDocumentGridView();
 //        controller.updateDocumentGrid();
         updateDocumentGridSize();
+    }
+    
+    @Override
+    public void setSearchText(String text) {
+        if (search != null) {
+            search.setQuery(text);
+        }
     }
 
     /**
@@ -904,9 +904,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JButton jButtonSelectNoneDocTable;
     private javax.swing.JFileChooser jFileChooser1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabelSearch;
     private javax.swing.JLabel jLabelSearch1;
-    private javax.swing.JLabel jLabelSearch2;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenu jMenuFile;
     private javax.swing.JMenuItem jMenuItemLoadDataset;
@@ -918,6 +916,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JPanel jPanelDocMap;
     private javax.swing.JPanel jPanelDocMapDummy;
     private javax.swing.JPanel jPanelDocTable;
+    private javax.swing.JPanel jPanelSearchContainer;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
@@ -929,8 +928,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JTable jTableAttrSelection2;
     private javax.swing.JTable jTableAttrSelection3;
     private javax.swing.JTable jTableSimpleDocs;
-    private javax.swing.JTextField jTextFieldSearch;
     private javax.swing.JTextField jTextFieldSearch1;
-    private javax.swing.JTextField jTextFieldSearch2;
     // End of variables declaration//GEN-END:variables
 }

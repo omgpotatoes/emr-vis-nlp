@@ -162,7 +162,11 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
         
 //        double sf = (!m_distortY ? fx : (!m_distortX ? fy : Math.min(fx,fy)));
         // take average instead of min?
-        double sf = (fx+fy)/2.;
+//        double sf = (fx+fy)/2.;
+        // try harmonic mean?
+//        double sf = (2.*fx*fy)/(fx+fy);
+        // take log of mean?
+        double sf = Math.log((fx+fy)/2.);
         if (Double.isInfinite(sf) || Double.isNaN(sf)) {
             return 1.;
         } else {

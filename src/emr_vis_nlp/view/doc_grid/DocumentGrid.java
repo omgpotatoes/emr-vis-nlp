@@ -29,16 +29,20 @@ import prefuse.activity.ActivityListener;
 import prefuse.controls.AnchorUpdateControl;
 import prefuse.controls.ControlAdapter;
 import prefuse.data.Schema;
+import prefuse.data.Tuple;
 import prefuse.data.expression.AndPredicate;
 import prefuse.data.expression.Predicate;
 import prefuse.data.expression.parser.ExpressionParser;
+import prefuse.data.query.SearchQueryBinding;
 import prefuse.data.tuple.TupleSet;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.ShapeRenderer;
 import prefuse.util.ColorLib;
 import prefuse.util.FontLib;
+import prefuse.util.UpdateListener;
 import prefuse.util.force.*;
 import prefuse.visual.VisualItem;
+import prefuse.visual.VisualTable;
 import prefuse.visual.expression.InGroupPredicate;
 
 /**
@@ -114,6 +118,9 @@ public class DocumentGrid extends Display {
     private Predicate docGlyphVisiblePredicate;
     private GlyphVisibilityFilter docGlyphVisibleFilter;
     
+    // binding for string searching
+    private SearchQueryBinding searchQ;
+    
     private Display display;
     
     public DocumentGrid(DocumentGridTable t, String xAxisInitName, String yAxisInitName, String shapeInitName, String colorInitName) {
@@ -122,7 +129,7 @@ public class DocumentGrid extends Display {
         this.t = t;
         this.controller = MainController.getMainController();
         // add data to visualization (tables, ...)
-        m_vis.addTable(DATA_GROUP, t);
+        VisualTable vt = m_vis.addTable(DATA_GROUP, t);
         colorAttrName = colorInitName;
 
         // init actionlist: performs initial document layout
@@ -176,6 +183,8 @@ public class DocumentGrid extends Display {
 //        ActionList update = new ActionList();
         ActionList update = new ActionList(Activity.INFINITY);
         ActionList updateOnce = new ActionList();
+        // actionlist for only updating colors, sizes; not positionings
+        ActionList updateColorOnly = new ActionList();
         // size action
 //        SizeAction sizeActionUpdate = new DocGlyphSizeAction(DATA_GROUP);
 //        update.add(sizeActionUpdate);
@@ -268,6 +277,29 @@ public class DocumentGrid extends Display {
         setBackground(Color.LIGHT_GRAY);
         setBorder(BorderFactory.createEmptyBorder(30,20,5,20));
         
+        // for doc highlighting on search (partially adapted from TreeMap.java in Prefuse demo gallery)
+        searchQ = new SearchQueryBinding(t, DocumentGridTable.NODE_TEXT);
+        m_vis.addFocusGroup(Visualization.SEARCH_ITEMS, searchQ.getSearchSet());
+        searchQ.getPredicate().addExpressionListener(new UpdateListener() {
+            @Override
+            public void update(Object src) {
+                // run repaint actions
+//                m_vis.cancel("animatePaint");
+//                m_vis.run("fullPaint");
+//                m_vis.run("animatePaint");
+//                m_vis.run("update");
+//                // debug
+//                System.out.println("\n\ndebug: "+this.getClass().getName()+": in SEARCH_ITEMS group: ");
+//                Iterator itemsInGroup = m_vis.getGroup(Visualization.SEARCH_ITEMS).tuples();
+//                while (itemsInGroup.hasNext()) {
+//                    Object item = itemsInGroup.next();
+//                    System.out.println("debug: \t"+item.toString());
+//                }
+                m_vis.cancel("update");
+                m_vis.run("update");
+            }
+        });
+        
         // set up control listeners
         // zoom with wheel
 //        addControlListener(new WheelZoomControl());
@@ -346,6 +378,10 @@ public class DocumentGrid extends Display {
         
     }
     
+    public SearchQueryBinding getSearchQuery() {
+        return searchQ;
+    }
+    
     public void resetView() {
 //        m_vis.runAfter("init", "preforce");  // temporarily (?) disable for testing
 //        m_vis.run("init");
@@ -407,6 +443,21 @@ public class DocumentGrid extends Display {
 
         @Override
         public int getColor(VisualItem item) {
+            
+            // highlight border of glyphs for which search is true
+//            if ( m_vis.isInGroup(item, Visualization.SEARCH_ITEMS) )
+//                return ColorLib.rgb(191,99,130);
+            // do (inefficient) manual comparison?
+            Iterator itemsInGroup = m_vis.getGroup(Visualization.SEARCH_ITEMS).tuples();
+            while (itemsInGroup.hasNext()) {
+                Tuple itemInGroup = (Tuple)itemsInGroup.next();
+                if (item.getString(DocumentGridTable.NODE_NAME).equals(itemInGroup.getString(DocumentGridTable.NODE_NAME))) {
+                    // debug
+//                    System.out.println("debug: "+this.getClass().getName()+": item in group! "+item.toString());
+                    return ColorLib.rgb(191,99,130);
+                }
+            }
+            
             // TODO set color based panel controls, certainty, selected attrs / values
 //            NodeItem nitem = (NodeItem) item;
             if (item.isHover()) {
@@ -459,6 +510,21 @@ public class DocumentGrid extends Display {
 
         @Override
         public int getColor(VisualItem item) {
+            
+//            if ( m_vis.isInGroup(item, Visualization.SEARCH_ITEMS) )
+//                return ColorLib.rgb(191,99,130);
+//            
+//            // do (inefficient) manual comparison?
+//            Iterator itemsInGroup = m_vis.getGroup(Visualization.SEARCH_ITEMS).tuples();
+//            
+//            while (itemsInGroup.hasNext()) {
+//                Tuple itemInGroup = (Tuple)itemsInGroup.next();
+//                if (item.getString(DocumentGridTable.NODE_NAME).equals(itemInGroup.getString(DocumentGridTable.NODE_NAME))) {
+//                    // debug
+//                    System.out.println("debug: "+this.getClass().getName()+": item in group! "+item.toString());
+//                    return ColorLib.rgb(191,99,130);
+//                }
+//            }
             
             // get value for target attr in item
             if (item.canGetString(colorAttrName)) {
