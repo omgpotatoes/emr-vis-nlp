@@ -204,6 +204,8 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
                 validateTableSelections(rowIndex);
                 // inform controller of change
                 controller.updateDocumentGrid();
+                // reset view
+                controller.resetDocGridView();
             }
         }
 
@@ -340,6 +342,7 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
 //        }
     }
     
+    // extention to JComboBox to support sortability within JTable
     public class JComboBoxSortable extends JComboBox {
         
         public JComboBoxSortable(String[] vals) {

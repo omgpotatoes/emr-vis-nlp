@@ -65,7 +65,7 @@ public class DocumentGridLayout extends Layout {
     private static double buffer = 8.;
     
     // buffer on edges of each region, as % of region
-    private static double regionBuff = 0.15;
+    private static double regionBuff = 0.25;
     
     
     /**

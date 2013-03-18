@@ -106,9 +106,9 @@ public class DocumentGrid extends Display {
     private MainController controller;
     
     // scale for fisheye distortion
-    private double fisheyeDistortScale = 13.;
-//    private double fisheyeDistortScale = 4.;
-    private double fisheyeDistortSize = 1.1;
+    // important: these two numbers control the distance&size and size distortions of fisheye!
+    private double fisheyeDistortScale = 25.;
+    private double fisheyeDistortSize = 0.5;
     private Distortion feye;
 //    private Distortion bifocal;
     private Rectangle2D feyeBoundingBox;
@@ -123,7 +123,7 @@ public class DocumentGrid extends Display {
     
     private Display display;
     
-    public DocumentGrid(DocumentGridTable t, String xAxisInitName, String yAxisInitName, String shapeInitName, String colorInitName) {
+    public DocumentGrid(final DocumentGridTable t, String xAxisInitName, String yAxisInitName, String shapeInitName, String colorInitName) {
         super(new Visualization());
         display = this;
         this.t = t;
@@ -295,6 +295,60 @@ public class DocumentGrid extends Display {
 //                    Object item = itemsInGroup.next();
 //                    System.out.println("debug: \t"+item.toString());
 //                }
+                // update focus text for all items in visualtable, wrt. query?
+                // if no query, just set to all text
+                // TODO
+                // convert predicate to 'and' predicate (quick and dirty method for now)
+                String queryStr = searchQ.getSearchSet().getQuery();
+                Scanner querySplitter = new Scanner(queryStr);
+                List<String> terms = new ArrayList<>();
+                while (querySplitter.hasNext()) {
+                    String term = querySplitter.next();
+                    terms.add(term.trim());
+                }
+                
+                // debug
+                System.out.println("debug: "+this.getClass().getName()+": query string: "+queryStr);
+                int numRows = t.getRowCount();
+                for (int i=0; i<numRows; i++) {
+                    t.setString(i, DocumentGridTable.NODE_FOCUS_TEXT, "");
+                    
+                    String text = t.getString(i, DocumentGridTable.NODE_TEXT).toLowerCase();
+                    boolean containsAllTerms = true;
+                    for (String term : terms) {
+                        if (!text.contains(term)) {
+                            containsAllTerms = false;
+                            break;
+                        }
+                    }
+//                    if (!containsAllTerms) {
+                        // TODO properly remove non-matching items from search set?
+//                        searchQ.getSearchSet().removeTuple(t.getTuple(i));  // throws UnsupportedOperationException
+//                    } else {
+                        // set highlight text
+                        // do very coarse "sentence-splitting", simply on periods
+                        List<String> focusSents = new ArrayList<>();
+                        Scanner sentSplitter = new Scanner(text);
+                        sentSplitter.useDelimiter("[\\.\n]");  // split on period or newline
+                        while (sentSplitter.hasNext()) {
+                            String sent = sentSplitter.next();
+                            for (String term : terms) {
+                                if (sent.contains(term)) {
+                                    focusSents.add(sent);
+                                }
+                            }
+                        }
+                        if (focusSents.size() > 0) {
+                            StringBuilder focusText = new StringBuilder();
+                            focusText.append(" ... ");
+                            for (String focusSent : focusSents) {
+                                focusText.append(focusSent+" ... ");
+                            }
+                            t.setString(i, DocumentGridTable.NODE_FOCUS_TEXT, focusText.toString());
+                        }
+//                    }
+                }
+                
                 m_vis.cancel("update");
                 m_vis.run("update");
             }
@@ -739,7 +793,12 @@ public class DocumentGrid extends Display {
 //                    
 //                    isHover = true;
 //                }
-                    s += "\n" + item.getString(NODE_TEXT);
+                    String focusText = item.getString(DocumentGridTable.NODE_FOCUS_TEXT);
+                    if (focusText != null && !focusText.equals("null") && !focusText.equals("")) {
+                        s += "\n" + focusText;
+                    } else {
+                        s += "\n" + item.getString(NODE_TEXT);
+                    }
 //                double x1 = item.getBounds().getX();
 //                double y1 = item.getBounds().getY();
 //                double w = item.getBounds().getWidth();
@@ -856,7 +915,7 @@ public class DocumentGrid extends Display {
         g.setFont(f);
         
         Scanner lineSplitter = new Scanner(s);
-        // TODO draw as much as can fit in each item
+        // draw as much as can fit in each item
         // read all content from scanner, storing in string lists (where each string == 1 line), each string should be as long as possible without overflowing the space
         int maxRows = (int)height/h;
         List<String> textRows = new ArrayList<>();
@@ -899,7 +958,10 @@ public class DocumentGrid extends Display {
         // write each line to object
         for (int t=0; t<textRows.size(); t++) {
             String line = textRows.get(t);
-            g.drawString(line, (float) (xPos-(width/2.)), (float) (yPos-(height/2.) + h * (t+1)));
+            if (fm.stringWidth(line) <= width) {
+                // ensure that string doesn't overflow the box
+                g.drawString(line, (float) (xPos-(width/2.)), (float) (yPos-(height/2.) + h * (t+1)));
+            }
         }
         
 //        int lineCounter = 1;
@@ -926,46 +988,47 @@ public class DocumentGrid extends Display {
         
         @Override
         public void itemPressed(VisualItem item, MouseEvent e) {
-            // load (or unload) marked-up text into glasspane on rightclick
-            if (SwingUtilities.isRightMouseButton(e) && item.canGetInt(DocumentGridTable.NODE_ID)) {
-                int nodeId = item.getInt(DocumentGridTable.NODE_ID);
-//                String attrIdStr = documentGridLayout.getXAttr();
-                String attrIdStr = shapeAttrName;
-                
-                if (isPopupLoaded) {
-                    // hide glasspane
-                    glassPane.hidePane();
-                } else {
-                    // build text, position text, show glasspane
-                    // TODO generalized highlighting; for now, just highlight doc wrt. X-Axis?
-                    AbstractDocument doc = glassPane.getAbstDoc();
-                    controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
-                    int x = e.getX();
-                    int y = e.getY();
-                    // TODO make sure that pane is within window bounds!
-                    int x2 = x+glassPane.getPopupWidth();
-                    int y2 = y+glassPane.getPopupHeight();
-                    Rectangle glassBounds = glassPane.getBounds();
-                    double boundsWidth = glassBounds.getWidth();
-                    double boundsHeight = glassBounds.getHeight();
-                    if (x2 > boundsWidth) {
-                        x = x - (int)(x2 - boundsWidth);
-                    }
-                    if (y2 > boundsHeight) {
-                        y = y - (int)(y2 - boundsHeight);
-                    }
-                    glassPane.displayPaneAtPoint(x, y);
-                }
-            }
+//            // load (or unload) marked-up text into glasspane on rightclick
+            // glasspane text is now loaded on mouseover instead
+//            if (SwingUtilities.isRightMouseButton(e) && item.canGetInt(DocumentGridTable.NODE_ID)) {
+//                int nodeId = item.getInt(DocumentGridTable.NODE_ID);
+////                String attrIdStr = documentGridLayout.getXAttr();
+//                String attrIdStr = shapeAttrName;
+//                
+//                if (isPopupLoaded) {
+//                    // hide glasspane
+//                    glassPane.hidePane();
+//                } else {
+//                    // build text, position text, show glasspane
+//                    // TODO generalized highlighting; for now, just highlight doc wrt. X-Axis?
+//                    AbstractDocument doc = glassPane.getAbstDoc();
+//                    controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
+//                    int x = e.getX();
+//                    int y = e.getY();
+//                    // TODO make sure that pane is within window bounds!
+//                    int x2 = x+glassPane.getPopupWidth();
+//                    int y2 = y+glassPane.getPopupHeight();
+//                    Rectangle glassBounds = glassPane.getBounds();
+//                    double boundsWidth = glassBounds.getWidth();
+//                    double boundsHeight = glassBounds.getHeight();
+//                    if (x2 > boundsWidth) {
+//                        x = x - (int)(x2 - boundsWidth);
+//                    }
+//                    if (y2 > boundsHeight) {
+//                        y = y - (int)(y2 - boundsHeight);
+//                    }
+//                    glassPane.displayPaneAtPoint(x, y);
+//                }
+//            }
         }
         
         @Override
     public void itemEntered(VisualItem item, MouseEvent e) {
             
-            
-            if (item.canGetInt(DocumentGridTable.NODE_ID)) {
-                // suspend fisheye, run FDL
-                // set the focus to the current node
+            if (!glassPane.wasMouseClicked()) {
+                if (item.canGetInt(DocumentGridTable.NODE_ID)) {
+                    // suspend fisheye, run FDL
+                    // set the focus to the current node
 //            Visualization vis = item.getVisualization();
 //            vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(item);
 //            item.setFixed(true);
@@ -976,8 +1039,8 @@ public class DocumentGrid extends Display {
 //            vis.run("forces");
 
 
-                // freeze the screen?
-                m_vis.cancel("distort");
+                    // freeze the screen?
+                    m_vis.cancel("distort");
 //            display.removeControlListener(anchorUpdateControl);
 //            synchronized (anchorUpdateControl) {
 //                try {
@@ -987,31 +1050,34 @@ public class DocumentGrid extends Display {
 //                    System.out.println("debug: " + this.getClass().getName() + ": anchorUpdateControl.wait() interrupted");
 //                }
 //            }
-                anchorUpdateControl.setEnabled(false);
+                    anchorUpdateControl.setEnabled(false);
 
-                // appear the glasspane at appropriate size & location
-                // get relative location of Visualization
-                int xOffset = 0;
-                int yOffset = 0;
-                JComponent component = display;
-                do {
-                    Point visLocation = component.getLocation();
-                    xOffset += visLocation.x;
-                    yOffset += visLocation.y;
+                    // appear the glasspane at appropriate size & location
+                    // get relative location of Visualization
+                    int xOffset = 0;
+                    int yOffset = 0;
+                    JComponent component = display;
+                    do {
+                        Point visLocation = component.getLocation();
+                        xOffset += visLocation.x;
+                        yOffset += visLocation.y;
 //            } while ((!component.getParent().getClass().equals(MainTabbedView.class)) && (component = (JComponent)component.getParent()) != null); // TODO more general, not just mainTabbedView!
-                } while ((!component.getParent().getClass().equals(JRootPane.class)) && (component = (JComponent) component.getParent()) != null); // TODO more general, not just mainTabbedView!
-                // debug
-                System.out.println("debug: " + this.getClass().getName() + ": offsets: " + xOffset + ", " + yOffset);
+                    } while ((!component.getParent().getClass().equals(JRootPane.class)) && (component = (JComponent) component.getParent()) != null); // TODO more general, not just mainTabbedView!
+                    // debug
+                    System.out.println("debug: " + this.getClass().getName() + ": offsets: " + xOffset + ", " + yOffset);
 
-                int nodeId = item.getInt(DocumentGridTable.NODE_ID);
-                String attrIdStr = colorAttrName;  // TODO make highlighting more general, not just based on color!
-                AbstractDocument doc = glassPane.getAbstDoc();
-                controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
-                double x = item.getX() + xOffset - (nodeRenderer.getShape(item).getBounds2D().getWidth()) / 2;
-                double y = item.getY() + yOffset - (nodeRenderer.getShape(item).getBounds2D().getHeight()) / 2;
-                double w = nodeRenderer.getShape(item).getBounds2D().getWidth();
-                double h = nodeRenderer.getShape(item).getBounds2D().getHeight();
-                glassPane.displaySizedPane((int) x, (int) y, (int) w, (int) h);
+                    int nodeId = item.getInt(DocumentGridTable.NODE_ID);
+                    String attrIdStr = colorAttrName;  // TODO make highlighting more general, not just based on color!
+                    AbstractDocument doc = glassPane.getAbstDoc();
+                    controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
+                    double x = item.getX() + xOffset - (nodeRenderer.getShape(item).getBounds2D().getWidth()) / 2;
+                    double y = item.getY() + yOffset - (nodeRenderer.getShape(item).getBounds2D().getHeight()) / 2;
+                    double w = nodeRenderer.getShape(item).getBounds2D().getWidth();
+                    double h = nodeRenderer.getShape(item).getBounds2D().getHeight();
+                    glassPane.displaySizedPane((int) x, (int) y, (int) w, (int) h, item);
+                }
+            } else {
+                glassPane.setWasMouseClicked(false);
             }
         }
 

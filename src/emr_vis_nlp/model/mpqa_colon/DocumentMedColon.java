@@ -117,7 +117,9 @@ public class DocumentMedColon extends Document {
 
                     Scanner lineSplitter = new Scanner(nextLine);
                     lineSplitter.useDelimiter("\t");
-
+                    
+                    String var = "";
+                    String val = "";
                     try {
 
                         // don't care about first 3 items (for now)
@@ -125,11 +127,8 @@ public class DocumentMedColon extends Document {
                         lineSplitter.next();
                         lineSplitter.next();
                         // read attrs
-                        String var = lineSplitter.next();
-                        String varClean = DatasetTermTranslator.getAttrTranslation(var);
-                        String val = lineSplitter.next();
-                        String valClean = DatasetTermTranslator.getValTranslation(val);
-                        attributes.put(varClean, valClean);
+                        var = lineSplitter.next();
+                        val = lineSplitter.next();
                         
                         // don't worry about handling attrs and vars separately
 //                        Scanner varSplitter = new Scanner(var);
@@ -162,6 +161,12 @@ public class DocumentMedColon extends Document {
                         // will happen if a value is not present; 
 //                        assert false;
 //                        System.err.println("DocumentMedColon: anomalous man_anns line:   "+nextLine);
+                    }
+                    
+                    if (!var.equals("")) {
+                        String varClean = DatasetTermTranslator.getAttrTranslation(var);
+                        String valClean = DatasetTermTranslator.getValTranslation(val);
+                        attributes.put(varClean, valClean);
                     }
 
                 }
@@ -208,23 +213,22 @@ public class DocumentMedColon extends Document {
 
                     Scanner lineSplitter = new Scanner(nextLine);
                     lineSplitter.useDelimiter("\t");
-
+                    
+                    String var = "";
+                    String val = "";
                     try {
 
                         // don't care about first 3 items (for now)
                         lineSplitter.next();
                         lineSplitter.next();
                         lineSplitter.next();
-                        String var = lineSplitter.next();
-                        String varClean = DatasetTermTranslator.getAttrTranslation(var);
-                        String val = lineSplitter.next();
-                        String valClean = DatasetTermTranslator.getValTranslation(val);
+                        var = lineSplitter.next();
+                        val = lineSplitter.next();
 
 //                        Scanner varSplitter = new Scanner(var);
 //                        varSplitter.useDelimiter("_");
 //                        String varType = varSplitter.next().toLowerCase();
 
-                        attributes.put(varClean, valClean);
                         
 //                        if (varType.equals("var")) {
 //                            vars.put(var, val);
@@ -253,6 +257,12 @@ public class DocumentMedColon extends Document {
                         // @TODO how should we handle this? ask harry?
 //                        assert false;
 //                        System.err.println("DocumentMedColon: anomalous man_anns line:   "+nextLine);
+                    }
+
+                    if (!var.equals("")) {
+                        String varClean = DatasetTermTranslator.getAttrTranslation(var);
+                        String valClean = DatasetTermTranslator.getValTranslation(val);
+                        attributes.put(varClean, valClean);
                     }
 
                 }

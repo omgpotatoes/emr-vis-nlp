@@ -17,6 +17,9 @@ import prefuse.visual.VisualItem;
  */
 public class DocGridDragControl extends DragControl {
 
+    // temporary faux-Singleton pattern (probably just for testing)
+    public static DocGridDragControl control;
+    
     /**
      * data group to which this control should apply
      */
@@ -34,6 +37,7 @@ public class DocGridDragControl extends DragControl {
         m_group = group;
         this.docGridLayout = docGridLayout;
         this.controller = controller;
+        control = this;
     }
     
     @Override
@@ -48,14 +52,18 @@ public class DocGridDragControl extends DragControl {
     
     @Override
     public void itemPressed(VisualItem item, MouseEvent e) {
-        if (SwingUtilities.isLeftMouseButton(e)) {
+//        if (SwingUtilities.isLeftMouseButton(e)) {
+        if (SwingUtilities.isRightMouseButton(e)) {
+            // debug
+            System.out.println("debug: "+this.getClass().getName()+": item pressed w/ right mouse");
             // drag
             // set the focus to the current node
             Visualization vis = item.getVisualization();
             vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(item);
             item.setFixed(true);
             dragged = false;
-            Display d = (Display) e.getComponent();
+//            Display d = (Display) e.getComponent();
+            Display d = controller.getDocumentGrid();
             down = d.getAbsoluteCoordinate(e.getPoint(), down);
 //            vis.run("forces");
         }
@@ -63,9 +71,12 @@ public class DocGridDragControl extends DragControl {
 
     @Override
     public void itemReleased(VisualItem item, MouseEvent e) {
-        if (!SwingUtilities.isLeftMouseButton(e)) {
+//        if (!SwingUtilities.isLeftMouseButton(e)) {
+        if (!SwingUtilities.isRightMouseButton(e)) {
             return;
         }
+        // debug
+        System.out.println("debug: " + this.getClass().getName() + ": item released");
         if (dragged) {
             activeItem = null;
             item.setFixed(wasFixed);
@@ -82,12 +93,14 @@ public class DocGridDragControl extends DragControl {
     public void itemDragged(VisualItem item, MouseEvent e) {
 //    @Override
 //    public void itemReleased(VisualItem item, MouseEvent e) {
-        if (!SwingUtilities.isLeftMouseButton(e)) {
+//        if (!SwingUtilities.isLeftMouseButton(e)) {
+        if (!SwingUtilities.isRightMouseButton(e)) {
             return;
         }
         if (item.getGroup().equals(m_group)) {
             dragged = true;
-            Display d = (Display) e.getComponent();
+//            Display d = (Display) e.getComponent();
+            Display d = controller.getDocumentGrid();
             d.getAbsoluteCoordinate(e.getPoint(), temp);
             double dx = temp.getX() - down.getX();
             double dy = temp.getY() - down.getY();

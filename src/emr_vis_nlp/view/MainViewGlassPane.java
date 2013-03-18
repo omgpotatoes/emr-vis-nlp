@@ -2,8 +2,7 @@
 package emr_vis_nlp.view;
 
 import emr_vis_nlp.controller.MainController;
-import java.awt.Insets;
-import java.awt.Rectangle;
+import emr_vis_nlp.view.doc_grid.DocGridDragControl;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.JComponent;
@@ -11,6 +10,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.text.AbstractDocument;
+import prefuse.visual.VisualItem;
 
 /**
  *
@@ -18,6 +18,7 @@ import javax.swing.text.AbstractDocument;
  */
 public class MainViewGlassPane extends JComponent implements MouseListener {
 
+    // TODO this should be a singleton, since we can have only 1 glasspane defined for the jframe at a time?
     private static MainViewGlassPane glassPane;
     
     private JScrollPane jScrollPaneDocText;
@@ -26,26 +27,34 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
     private int height = 400;
     private int xInset = 0;
     private int yInset = 0;
+    
+    private boolean mouseWasClicked = false;
+    private VisualItem currentItem = null;
 
     public MainViewGlassPane() {
         super();
         glassPane = this;
+        // manually position the JScrollPane within the GlassPane
         setLayout(null);
         jScrollPaneDocText = new JScrollPane();
         jScrollPaneDocText.addMouseListener(new MouseListener() {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    // hide glasspane
-                    hidePane();
-                    // debug
-                    System.out.println("debug: " + this.getClass().getName() + ": hiding glasspane, mouse-out");
-                }
             }
 
             @Override
             public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    // set flag (so that glasspane isn't immediately re-triggered)
+                    mouseWasClicked = true;
+                    // hide glasspane
+                    hidePane();
+                    // debug
+                    System.out.println("debug: " + this.getClass().getName() + ": hiding glasspane, mouse-press");
+                    // pass event to DocGridDragControl
+                    DocGridDragControl.control.itemPressed(currentItem, e);
+                }
             }
 
             @Override
@@ -84,9 +93,9 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
         jScrollPaneDocText.getVerticalScrollBar().setValue(0);
     }
     
-    public void displaySizedPane(int x, int y, int w, int h) {
+    public void displaySizedPane(int x, int y, int w, int h, VisualItem item) {
 //        setBounds(x, y, w, h);
-        
+        currentItem = item;
         jScrollPaneDocText.setBounds(x, y, w, h);
         setVisible(true);
         jScrollPaneDocText.repaint();
@@ -120,6 +129,7 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
     @Override
     public void mousePressed(MouseEvent e) {
         // if right-click, hide pane
+        // note: this method should no longer be invoked, the scrollpane should capture mousepress events
         if (isVisible() && SwingUtilities.isRightMouseButton(e)) {
             hidePane();
         }
@@ -155,7 +165,15 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
     }
     
     public void updateVisualizationInset(int x, int y) {
-        
+        // not yet implemented
+    }
+
+    public boolean wasMouseClicked() {
+        return mouseWasClicked;
+    }
+
+    public void setWasMouseClicked(boolean mouseWasClicked) {
+        this.mouseWasClicked = mouseWasClicked;
     }
     
 }

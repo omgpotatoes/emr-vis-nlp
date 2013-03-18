@@ -88,7 +88,7 @@ public class DatasetTermTranslator {
     
     public static String getValTranslation(String val) {
         if (valNameMap == null) buildValNameMap();
-        if (valNameMap.containsKey(val)) return valNameMap.get(val);
+        if (valNameMap.containsKey(val.trim())) return valNameMap.get(val);
         return val;
     }
     
@@ -99,13 +99,13 @@ public class DatasetTermTranslator {
     
     public static String getAttrTranslation(String attrName) {
         if (attrNameMap == null) buildAttrNameMap();
-        if (attrNameMap.containsKey(attrName)) return attrNameMap.get(attrName);
+        if (attrNameMap.containsKey(attrName.trim())) return attrNameMap.get(attrName);
         return attrName;
     }
     
     public static String getRevAttrTranslation(String attrName) {
         if (revAttrNameMap == null) buildRevAttrNameMap();
-        if (revAttrNameMap.containsKey(attrName)) return revAttrNameMap.get(attrName);
+        if (revAttrNameMap.containsKey(attrName.trim())) return revAttrNameMap.get(attrName);
         return attrName;
     }
     

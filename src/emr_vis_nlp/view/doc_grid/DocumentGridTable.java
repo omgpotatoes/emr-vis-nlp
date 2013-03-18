@@ -15,6 +15,7 @@ public class DocumentGridTable extends Table {
     public static final String NODE_ID = "id";
     public static final String NODE_NAME = "name";
     public static final String NODE_TEXT = "text";
+    public static final String NODE_FOCUS_TEXT = "focus_text";
     public static final String NODE_ISACTIVE = "isactive";
     public static final String CONTINUOUS_SUFFIX = "_range";
     
@@ -39,6 +40,7 @@ public class DocumentGridTable extends Table {
         addColumn(NODE_ID, int.class);
         addColumn(NODE_NAME, String.class);
         addColumn(NODE_TEXT, String.class);
+        addColumn(NODE_FOCUS_TEXT, String.class);
         addColumn(NODE_ISACTIVE, boolean.class);
         // ensure that X2, Y2 are enabled
         addColumn(VisualItem.X2, double.class);
@@ -87,6 +89,7 @@ public class DocumentGridTable extends Table {
             set(rowCounter, NODE_ID, rowCounter);
             set(rowCounter, NODE_NAME, name);
             set(rowCounter, NODE_TEXT, text);
+            set(rowCounter, NODE_FOCUS_TEXT, text);
             set(rowCounter, NODE_ISACTIVE, isActive);
             for (String attrName : allAttributes) {
                 String value = "";

@@ -52,10 +52,16 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
         m_distortY = dy > 0;
         
         // for bifocal
+        // defaults
         rx = 0.1;
         mx = 3;
         ry = 0.1;
         my = 3;
+        // experimentals
+        rx = 0.2;
+        mx = 11;
+        ry = 0.2;
+        my = 11;
         
     }
     
@@ -109,6 +115,7 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
         return fisheye(y,anchor.getY(),dy,bounds.getMinY(),bounds.getMaxY());
     }
     
+    @Override
     protected double distortSize(Rectangle2D bbox, double x, double y, Point2D anchor, Rectangle2D bounds) { 
 //        return distortSizeBifocal(bbox, x, y, anchor, bounds);
         return distortSizeFisheye(bbox, x, y, anchor, bounds);
@@ -164,9 +171,9 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
         // take average instead of min?
 //        double sf = (fx+fy)/2.;
         // try harmonic mean?
-//        double sf = (2.*fx*fy)/(fx+fy);
+        double sf = (2.*fx*fy)/(fx+fy);
         // take log of mean?
-        double sf = Math.log((fx+fy)/2.);
+//        double sf = Math.log((fx+fy)/2.);
         if (Double.isInfinite(sf) || Double.isNaN(sf)) {
             return 1.;
         } else {
@@ -200,11 +207,11 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
         double m;
         
         if ( m_distortX ) {
-            double cx = bbox.getCenterX(), ax = anchor.getX();
+            double cx = bbox.getCenterX(), ax = anchor.getX();  // cx == center of box, ax == center of anchor
             double minX = bounds.getMinX(), maxX = bounds.getMaxX();
-            m = (cx<ax ? ax-minX : maxX-ax);
+            m = (cx<ax ? ax-minX : maxX-ax);  // m == distance from anchor to side that's closest to target glyph? 
             if ( m == 0 ) m = maxX-minX;
-            if ( Math.abs(cx-ax) <= rx*m )
+            if ( Math.abs(cx-ax) <= rx*m )  // if anchor is closer to target than to side opposite target * dist fact, magnify
                 xmag = true;
         }
         
@@ -217,14 +224,15 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
                 ymag = true;
         }
         
-        if ( xmag && !m_distortY ) {
+        if ( xmag && !m_distortY ) {  // only x magnified
             return mx;
-        } else if ( ymag && !m_distortX ) {
+        } else if ( ymag && !m_distortX ) {  // only y magnified
             return my;
-        } else if ( xmag && ymag ) {
+        } else if ( xmag && ymag ) {  // both x and y magnified
             return Math.min(mx,my);
-        } else {
-            return Math.min((1-rx*mx)/(1-rx), (1-ry*my)/(1-ry));
+        } else {  // neither magnified ?
+//            return Math.min((1-rx*mx)/(1-rx), (1-ry*my)/(1-ry));
+            return 1.;  // otherwise, do not alter sizes
         }
     }
     
@@ -232,12 +240,19 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
         if ( d != 0 ) {
             boolean left = x<a;  // is item to left of anchor?
             double v, m = (left ? a-min : max-a);  // m == distance from anchor to nearest side
+//            double v, m = (left ? x-min : max-x);  // m == distance from object to nearest side ?  (no, completely destroys positioning)
+//            double v, m = Math.log((left ? a-min : max-a));  // m == distance from anchor to nearest side
+            double dampFact = 2.;
             if ( m == 0 ) m = max-min;  // (if no anchor, m == distance between sides)
             // ignore distance to side?
 //            m = max-min;
+//            m /= dampFact;  // discombobulates positioning
             v = Math.abs(x - a) / m;  // v == (distance between item and anchor) / (distance from anchor to nearest side)
+//            v /= dampFact;  // discombobulates positioning
+//            v = Math.abs(x - a);
+//            v = Math.pow(Math.abs(x - a),2) / m;  // v == (distance between item and anchor) / (distance from anchor to nearest side)
             v = (d+1)/(d+(1/v));  // v == (dist. distort factor + 1) / (dist. distort factor + (1 / ((distance between item and anchor) / (distance from anchor to nearest side))))
-            return (left?-1:1)*m*v + a;  // (if item to left of anchor -1 else 1) * (distance between sides) * v + anhcor position)
+            return (left?-1:1)*m*v + a;  // (if item to left of anchor -1 else 1) * (distance between anchor and nearest side) * v + anhcor position)
         } else {
             return x;
         }
@@ -250,8 +265,9 @@ public class FisheyeDistortionDocGrid extends FisheyeDistortion {
             double v, m = (left ? a-min : max-a);  // m == distance from anchor to nearest side
             if ( m == 0 ) m = max-min;  // (if no anchor, m == distance between sides)
             // ignore distance to side?
-//            m = max-min;
-            m=1.1;
+            m = max-min;  // everything too big; but, can't decrease m below max dist between items and anchors else strange things happen (theory: see below)
+//            m = (max-min)/2;  // sizes strange: grow, then shrink, then grow on anchor approach
+//            m=50;  // sizes shrink on approach?
             v = Math.abs(x - a) / m;  // v == (distance between item and anchor) / (distance from anchor to nearest side)
             v = (d+1)/(d+(1/v));  // v == (dist. distort factor + 1) / (dist. distort factor + (1 / ((distance between item and anchor) / (distance from anchor to nearest side))))
             return (left?-1:1)*m*v + a;  // (if item to left of anchor -1 else 1) * (distance between sides) * v + anhcor position)
