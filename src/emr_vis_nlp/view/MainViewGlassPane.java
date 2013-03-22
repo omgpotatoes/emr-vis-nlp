@@ -2,7 +2,6 @@
 package emr_vis_nlp.view;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.view.doc_grid.DocGridDragControl;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.JComponent;
@@ -53,7 +52,8 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
                     // debug
                     System.out.println("debug: " + this.getClass().getName() + ": hiding glasspane, mouse-press");
                     // pass event to DocGridDragControl
-                    DocGridDragControl.control.itemPressed(currentItem, e);
+//                    DocGridDragControl.control.itemPressed(currentItem, e);
+                    MainController.getMainController().getDocDragControl().itemPressed(currentItem, e);
                 }
             }
 

@@ -140,6 +140,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jButtonSelectNoneDocGrid = new javax.swing.JButton();
         jButtonReset = new javax.swing.JButton();
         jPanelSearchContainer = new javax.swing.JPanel();
+        jToggleButtonFisheye = new javax.swing.JToggleButton();
         jPanel3 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
@@ -352,7 +353,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             }
         });
 
-        jSplitPaneDocGrid.setDividerLocation(200);
+        jSplitPaneDocGrid.setDividerLocation(300);
         jSplitPaneDocGrid.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 jSplitPaneDocGridPropertyChange(evt);
@@ -363,7 +364,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jPanelDocGridDummy.setLayout(jPanelDocGridDummyLayout);
         jPanelDocGridDummyLayout.setHorizontalGroup(
             jPanelDocGridDummyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 589, Short.MAX_VALUE)
+            .addGap(0, 489, Short.MAX_VALUE)
         );
         jPanelDocGridDummyLayout.setVerticalGroup(
             jPanelDocGridDummyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -433,6 +434,14 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             .addGap(0, 32, Short.MAX_VALUE)
         );
 
+        jToggleButtonFisheye.setSelected(true);
+        jToggleButtonFisheye.setText("Toggle Fisheye Distortion");
+        jToggleButtonFisheye.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jToggleButtonFisheyeActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -442,9 +451,10 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanelSearchContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonSelectNoneDocGrid, javax.swing.GroupLayout.DEFAULT_SIZE, 175, Short.MAX_VALUE)
                     .addComponent(jButtonSelectAllDocGrid, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonReset, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jButtonReset, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jToggleButtonFisheye, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButtonSelectNoneDocGrid, javax.swing.GroupLayout.DEFAULT_SIZE, 275, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -453,11 +463,13 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
                 .addContainerGap()
                 .addComponent(jPanelSearchContainer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 348, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButtonSelectAllDocGrid)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButtonSelectNoneDocGrid)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jToggleButtonFisheye)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButtonReset)
                 .addContainerGap())
@@ -632,6 +644,11 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         
     }//GEN-LAST:event_jTabbedPane1StateChanged
 
+    private void jToggleButtonFisheyeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButtonFisheyeActionPerformed
+        boolean enableFisheye = jToggleButtonFisheye.isSelected();
+        controller.setFisheyeEnabled(enableFisheye);
+    }//GEN-LAST:event_jToggleButtonFisheyeActionPerformed
+
     public void updateDocTreemapSize() {
         // update size of treemap
         if (docTreeMapViewComponent != null) {
@@ -706,6 +723,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
     public void rebuildDocumentGridView() {
         documentGrid = controller.buildDocumentGrid();
+        boolean enableFisheye = jToggleButtonFisheye.isSelected();
+        controller.setFisheyeEnabled(enableFisheye);
         jSplitPaneDocGrid.setBottomComponent(documentGrid);
         updateDocumentGridSize();
 //        controller.updateDocumentGrid();
@@ -929,5 +948,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JTable jTableAttrSelection3;
     private javax.swing.JTable jTableSimpleDocs;
     private javax.swing.JTextField jTextFieldSearch1;
+    private javax.swing.JToggleButton jToggleButtonFisheye;
     // End of variables declaration//GEN-END:variables
 }

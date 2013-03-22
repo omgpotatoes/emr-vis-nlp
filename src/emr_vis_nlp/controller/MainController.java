@@ -10,6 +10,7 @@ import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.model.*;
 import emr_vis_nlp.view.*;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
+import emr_vis_nlp.view.doc_grid.DocumentGrid.DocGridDragControl;
 import emr_vis_nlp.view.doc_grid.DocumentGridTable;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import java.io.File;
@@ -508,8 +509,8 @@ public class MainController {
      */
     public void updateDocumentGrid() {
 
-        String xAxisAttrName = "Indicator_9";
-        String yAxisAttrName = "Indicator_21";
+        String xAxisAttrName = "";
+        String yAxisAttrName = "";
         String shapeAttrName = "";
         String colorAttrName = "";
         if (docGridSelectionModel != null) {
@@ -693,6 +694,17 @@ public class MainController {
     
     public String getSearchText() {
         return searchText;
+    }
+    
+    public DocGridDragControl getDocDragControl() {
+        if (documentGrid != null)
+            return documentGrid.getDragControl();
+        return null;
+    }
+    
+    public void setFisheyeEnabled(boolean enableFisheye) {
+        if (documentGrid != null)
+            documentGrid.setFisheyeEnabled(enableFisheye);
     }
     
 }

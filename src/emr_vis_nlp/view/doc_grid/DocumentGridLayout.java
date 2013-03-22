@@ -88,8 +88,6 @@ public class DocumentGridLayout extends Layout {
         
     }
     
-    
-    
     @Override
     public void run(double d) {
 //        TupleSet ts = m_vis.getGroup(m_group);
@@ -102,7 +100,6 @@ public class DocumentGridLayout extends Layout {
      * Set the minimum and maximum pixel values.
      */
     private void setMinMax() {
-        // TODO perform buffering based on % of cell, not on fixed pixel counts!
         int xBufferMin = 30;
         int yBufferMin = 5;
         int xBufferMax = 5;
@@ -116,6 +113,13 @@ public class DocumentGridLayout extends Layout {
         y_range = y_max - y_min;
     }
     
+    /**
+     * This method performs the bulk of the layout-related work. Two types of layouts are computed here:
+     * 1. a row-based layout, where glyphs are arranged adjacently to each other in order to make most-efficient use of the space
+     *  (NOTE: layout 1 is currently incompatible with the current state of the DocumentGrid Visualization; in particular, size handling needs to be brought up-to-date)
+     * 2. a scatterplot-based layout, where each cell in the DocumentGrid is treated as a scatterplot based on the certainty of each document's predictions.
+     * 
+     */
     protected void categoricalLayout() {
         
         Iterator iter = m_vis.items(m_group);  // optionally, can add predicatefilter as second argument, if needed
@@ -162,12 +166,9 @@ public class DocumentGridLayout extends Layout {
         
         // get height, width vals for items based on # per row, # possible rows, size of bounds
         setMinMax();
-//        double frameBufferX = 25;  // to ensure that we stay within the bounds of the frame
-//        double frameBufferY = 50;
-//        double generalCellWidth = (x_range-frameBufferX) / xCats.size();
-//        double generalCellHeight = (y_range-frameBufferY) / yCats.size();
-        // size of item: (assume most-efficient square layout) ((x_range - buffer * numCats) / (sqrt[#items] + buffer))
+        // size of item: (for most-efficient square layout) ((x_range - buffer * numCats) / (sqrt[#items] + buffer))
         //  for now, artificially shrink item size (till we can fix issue concerning region overrun)
+        // TODO: size is now configured by SizeAction in DocumentGrid; we should be getting sizing info from there!
         double itemSizeMult = 1.6;
 //        double itemWidth = (x_range - buffer * xCats.size()) / ((Math.sqrt(numItems) + xCats.size())*itemSizeMult) - buffer;
 //        double itemHeight = (y_range - buffer * yCats.size()) / ((Math.sqrt(numItems) + yCats.size())*itemSizeMult) - buffer;
@@ -211,7 +212,6 @@ public class DocumentGridLayout extends Layout {
         
         // given number of items, compute # per row in cell
         // assume worst-case of all docs going to single cell
-        // TODO go beyond square, adapt to # of categories, # of items per categories, bounds sizes, etc.
         List<Integer> itemsPerCellRowPerCol = new ArrayList<>();
         // for each col, compute as (max # items in single full-view row) * (fraction of fullview occupied by this col)
         //  idea: even if all items in smallest col, make sure they can fit!
@@ -243,6 +243,7 @@ public class DocumentGridLayout extends Layout {
             VisualItem item = (VisualItem)iter.next();
             // get category values for the target attributes for item
             // note: fields should always be populated; we shouldn't have to check whether they're available 1st (but safest to do it anyway)
+            // TODO: first, use annotated value (if present); else, use predicted value! (TODO!)
             String xAttrVal = "";
             if (item.canGetString(xAttr)) xAttrVal = item.getString(xAttr);
             String yAttrVal = "";
@@ -274,19 +275,12 @@ public class DocumentGridLayout extends Layout {
                 // dynamically buffer: 20% of cell?
 //                double bufferPerc = 0.2;
                 if (controller.hasPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr)) {
-//                    withinCellOffsetX = xCatRegionSizes.get(xAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert();
-//                    withinCellOffsetX = (xCatRegionSizes.get(xAttrPos)*bufferPerc) + (xCatRegionSizes.get(xAttrPos) - (xCatRegionSizes.get(xAttrPos)*2*bufferPerc)) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert();
-//                    withinCellOffsetX = cellBufferX + xCatRegionSizes.get(xAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert() * (1 - (2*regionBuff));
                     // invert, to place most-certain in the top-left!
                     double activeRange = xCatRegionSizes.get(xAttrPos) - 2*cellBufferX;
                     withinCellOffsetX = cellBufferX + activeRange * (1. - controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),xAttr).getCert());
                 }
                 if (controller.hasPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr)) {
-//                    withinCellOffsetY = yCatRegionSizes.get(yAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert();
-//                    withinCellOffsetY = (yCatRegionSizes.get(yAttrPos)*bufferPerc) + (yCatRegionSizes.get(yAttrPos) - (yCatRegionSizes.get(yAttrPos)*2*bufferPerc)) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert();
-//                    withinCellOffsetY = cellBufferY + yCatRegionSizes.get(yAttrPos) * controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert() * (1 - (2*regionBuff));
-                    // invert, to place most-certain in the top-left!
-                    
+                    // invert, to place most-certain in the top-left!    
                     double activeRange = yCatRegionSizes.get(yAttrPos) - 2*cellBufferY;
                     withinCellOffsetY = cellBufferY + activeRange * (1. - controller.getPrediction(item.getInt(DocumentGridTable.NODE_ID),yAttr).getCert());
                 }
@@ -296,23 +290,17 @@ public class DocumentGridLayout extends Layout {
                 double positionY = cellStartY+withinCellOffsetY;
                 
                 // set actual item position properties
-//                item.setX(positionX);
-//                item.setY(positionY);
-//                item.setSize(itemWidth * itemHeight);
-//                setX(item, null, positionX);
-//                setY(item, null, positionY);
-//                item.setShape(Constants.SHAPE_RECTANGLE);
-//                item.setSize(10);
-//                item.setBounds(positionX, positionY, positionX+itemWidth, positionY+itemHeight);
+                // item bounds should cover whole region since position, size will be distorted by fisheye without automatically distorting bounds (?)
                 item.setBounds(Double.MIN_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
 //                item.setBounds(positionX, positionY, itemWidth, itemHeight);
                 item.set(VisualItem.X, (double)(positionX));
                 item.setEndX(positionX);
                 item.set(VisualItem.Y, (double)(positionY));
                 item.setEndY(positionY);
-                 // TODO replace X2, Y2 with proper action-based size handling?
-                item.set(VisualItem.X2, (double)(positionX+itemWidth));
-                item.set(VisualItem.Y2, (double)(positionY+itemHeight));
+                
+                // x2, y2 no longer needed
+//                item.set(VisualItem.X2, (double)(positionX+itemWidth));
+//                item.set(VisualItem.Y2, (double)(positionY+itemHeight));
                 
             } else {
                 // cell undefined for x or y; shouldn't happen

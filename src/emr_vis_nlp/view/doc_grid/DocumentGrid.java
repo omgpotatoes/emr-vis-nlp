@@ -28,6 +28,7 @@ import prefuse.activity.ActivityAdapter;
 import prefuse.activity.ActivityListener;
 import prefuse.controls.AnchorUpdateControl;
 import prefuse.controls.ControlAdapter;
+import prefuse.controls.DragControl;
 import prefuse.data.Schema;
 import prefuse.data.Tuple;
 import prefuse.data.expression.AndPredicate;
@@ -113,6 +114,8 @@ public class DocumentGrid extends Display {
 //    private Distortion bifocal;
     private Rectangle2D feyeBoundingBox;
     private AnchorUpdateControl anchorUpdateControl;
+    private DocGridDragControl docDragControl;
+    private boolean fisheyeEnabled = true;
     
     // predicate controlling which document glyphs will be rendered
     private Predicate docGlyphVisiblePredicate;
@@ -121,6 +124,7 @@ public class DocumentGrid extends Display {
     // binding for string searching
     private SearchQueryBinding searchQ;
     
+    // 
     private Display display;
     
     public DocumentGrid(final DocumentGridTable t, String xAxisInitName, String yAxisInitName, String shapeInitName, String colorInitName) {
@@ -132,7 +136,7 @@ public class DocumentGrid extends Display {
         VisualTable vt = m_vis.addTable(DATA_GROUP, t);
         colorAttrName = colorInitName;
 
-        // init actionlist: performs initial document layout
+        // init actionlist: performs initial positioning of the glyphs, axes
         ActionList init = new ActionList();
         // add document layout action
         List<String> xAxisInitCategories = t.getValueListForAttribute(xAxisInitName);
@@ -142,13 +146,6 @@ public class DocumentGrid extends Display {
         // add axes layout action
         docGridAxisLayout = new DocumentGridAxisLayout(ALL_LABEL, documentGridLayout);
         init.add(docGridAxisLayout);
-        // set glyph shapes
-//        docShapeAction = new DocShapeAction(DATA_GROUP, Constants.SHAPE_RECTANGLE);
-//        docShapeAction = new DocumentShapeAction(DATA_GROUP, Constants.SHAPE_DIAMOND);
-//        init.add(docShapeAction);
-        // encode size
-//        docSizeAction = new DocumentSizeAction(DATA_GROUP);
-//        init.add(docSizeAction);
         // add init actionlist to vis
         m_vis.putAction("init", init);
         
@@ -157,8 +154,8 @@ public class DocumentGrid extends Display {
         // perform additional optional renderer setup here
         // add primary renderer to visualization
         DefaultRendererFactory rf = new DefaultRendererFactory();
-//        rf.setDefaultRenderer(new NullRenderer());
         rf.setDefaultRenderer(nodeRenderer);
+        // add predicate to control visibility of documents? (note: document visibility is now being handled by a VisibilityFilter rather than as a predicate on the renderer)
 //        docGlyphVisiblePredicate = new InGroupPredicate(DATA_GROUP);
 //        docGlyphVisiblePredicate = new InGroupPredicate(ALL_LABEL);
 //        docGlyphVisiblePredicate = new AndPredicate(new InGroupPredicate(DATA_GROUP), ExpressionParser.predicate("[24.1 Rate of procedures where prep adequate] != \"Pass\""));
@@ -175,20 +172,17 @@ public class DocumentGrid extends Display {
         // ActionList for initially stabilizing the forces
         ActionList preforce = new ActionList(1000);
 //        preforce.add(new DataMountainForceLayout(true));
-        preforce.add(new DataMountainForceLayout(false));
+        preforce.add(new DocGlyphForceLayout(false));
         m_vis.putAction("preforce", preforce);
         
         // update actionlist: performs coloration, sizing
-        // TODO: merge update and init?
-//        ActionList update = new ActionList();
-        ActionList update = new ActionList(Activity.INFINITY);
+//        ActionList update = new ActionList(Activity.INFINITY);
         ActionList updateOnce = new ActionList();
-        // actionlist for only updating colors, sizes; not positionings
-        ActionList updateColorOnly = new ActionList();
         // size action
+        // note: dynamic sizing is now controlled by the fisheye distortion
 //        SizeAction sizeActionUpdate = new DocGlyphSizeAction(DATA_GROUP);
 //        update.add(sizeActionUpdate);
-        // TODO set size to roughly be a function of ## items in display?
+        // IDEA: set initial sizing to roughly be a function of ## items in display, rather than as fixed coefficient?
         docSizeAction = new DocumentSizeAction(DATA_GROUP, 1.5);
 //        update.add(docSizeAction);
         updateOnce.add(docSizeAction);
@@ -196,62 +190,57 @@ public class DocumentGrid extends Display {
         // get current attrs from table
         shapeAttrName = shapeInitName;
         List<String> shapeInitCategories = t.getValueListForAttribute(shapeInitName);
-//        docShapeAction = new DocumentShapeAction(DATA_GROUP, Constants.SHAPE_DIAMOND, shapeInitName, shapeInitCategories);
-        docShapeAction = new DocumentShapeAction(DATA_GROUP, shapeInitName, shapeInitCategories);
+//        docShapeAction = new DocumentShapeAction(DATA_GROUP, shapeInitName, shapeInitCategories);
 //        update.add(docShapeAction);
-        updateOnce.add(docShapeAction);
+//        updateOnce.add(docShapeAction);
+        // for now, disable shape selection; simply use square glyphs to facilitate ease of text presentation
+        ShapeAction squareShapeAction = new SquareShapeAction();
+//        update.add(squareShapeAction);
+        updateOnce.add(squareShapeAction);
         // color action(s)
         List<String> colorInitCategories = t.getValueListForAttribute(colorInitName);
         docColorAction = new DocumentColorAction(DATA_GROUP, colorInitName, colorInitCategories);
-        update.add(docColorAction);
+//        update.add(docColorAction);
         updateOnce.add(docColorAction);
         docBorderColorAction = new DocumentBorderColorAction(DATA_GROUP);
-        update.add(docBorderColorAction);
+//        update.add(docBorderColorAction);
         updateOnce.add(docBorderColorAction);
-        // TODO add axes color actions?
-//        ColorAction labelColorActionUpdate = new LabelColorAction(ALL_LABEL);
-//        update.add(labelColorActionUpdate);
         // visibility filter
         docGlyphVisiblePredicate = new InGroupPredicate(DATA_GROUP);
         docGlyphVisibleFilter = new GlyphVisibilityFilter(DATA_GROUP, docGlyphVisiblePredicate);
-        update.add(docGlyphVisibleFilter);
+//        update.add(docGlyphVisibleFilter);
         updateOnce.add(docGlyphVisibleFilter);
         // repaint action
-        update.add(new RepaintAction());
+//        update.add(new RepaintAction());
         updateOnce.add(new RepaintAction());
         // add update actionlist to vis
-        m_vis.putAction("update", update);
+//        m_vis.putAction("update", update);
         m_vis.putAction("updateOnce", updateOnce);
 
-        // force stabilizing action? (borrowed from datamountain)
-//        ActionList preforce = new ActionList(1000);
-//        preforce.add(new DataMountainForceLayout(true));
-//        m_vis.putAction("preforce", preforce);
 //
         // force action, to move docs out of the way when dragging (borrowed from datamountain)
-        final ForceDirectedLayout fl = new DataMountainForceLayout(false);
+        final ForceDirectedLayout fl = new DocGlyphForceLayout(false);
         ActivityListener fReset = new ActivityAdapter() {
+            @Override
             public void activityCancelled(Activity a) {
                 fl.reset(); 
              } 
         };
         ActionList forces = new ActionList(Activity.INFINITY);
         forces.add(fl);
-//        forces.add(update);
         forces.addActivityListener(fReset);
         m_vis.putAction("forces", forces);
         
-        
         // ActionList for interspersed FDL iterations with fisheye
-        ActionList fishForce = new ActionList();
-//        preforce.add(new DataMountainForceLayout(true));
-        fishForce.add(new DataMountainForceLayout(false, -0.4f, 30f, 0f, false));
-        m_vis.putAction("fishforce", fishForce);
+        // WARNING: force-directed layout and fisheye distortion do not play nicely with each other! both should NOT be simultaneously active, only one at a time at most!
+//        ActionList fishForce = new ActionList();
+////        preforce.add(new DataMountainForceLayout(true));
+//        fishForce.add(new DataMountainForceLayout(false, -0.4f, 30f, 0f, false));
+//        m_vis.putAction("fishforce", fishForce);
         
         // ActionList for performing fisheye distortion
-        // TODO merge with update ActionList?
         ActionList distort = new ActionList();
-//        ActionList distort = new ActionList(Activity.INFINITY);
+//        ActionList distort = new ActionList(Activity.INFINITY);  // high resource overhead in having this always run; should only run actionlist in response to anchor (mouse pointer) adjustment
         // manually define boundingbox for fisheye as width, height of view
         feyeBoundingBox = new Rectangle(0, 0, initWidth, initHeight);
         feye = new FisheyeDistortionDocGrid(fisheyeDistortScale, fisheyeDistortSize, feyeBoundingBox);
@@ -260,12 +249,8 @@ public class DocumentGrid extends Display {
         distort.add(feye);
 //        bifocal = new BifocalDistortionDocGrid(0.2,4.5,feyeBoundingBox);
 //        distort.add(bifocal);
-//        distort.add(docSizeAction);
-        distort.add(docColorAction);
-        distort.add(docBorderColorAction);
 //        distort.add(fishForce);
 //        distort.add(forces);
-//        distort.add(update);
         distort.add(new RepaintAction());
         m_vis.putAction("distort", distort);
         
@@ -283,11 +268,6 @@ public class DocumentGrid extends Display {
         searchQ.getPredicate().addExpressionListener(new UpdateListener() {
             @Override
             public void update(Object src) {
-                // run repaint actions
-//                m_vis.cancel("animatePaint");
-//                m_vis.run("fullPaint");
-//                m_vis.run("animatePaint");
-//                m_vis.run("update");
 //                // debug
 //                System.out.println("\n\ndebug: "+this.getClass().getName()+": in SEARCH_ITEMS group: ");
 //                Iterator itemsInGroup = m_vis.getGroup(Visualization.SEARCH_ITEMS).tuples();
@@ -326,10 +306,11 @@ public class DocumentGrid extends Display {
 //                        searchQ.getSearchSet().removeTuple(t.getTuple(i));  // throws UnsupportedOperationException
 //                    } else {
                         // set highlight text
-                        // do very coarse "sentence-splitting", simply on periods
+                        // do very coarse "sentence-splitting"
                         List<String> focusSents = new ArrayList<>();
                         Scanner sentSplitter = new Scanner(text);
-                        sentSplitter.useDelimiter("[\\.\n]");  // split on period or newline
+//                        sentSplitter.useDelimiter("[\\.\n]");  // split on period or newline
+                        sentSplitter.useDelimiter("[\\.]");  // split on period only
                         while (sentSplitter.hasNext()) {
                             String sent = sentSplitter.next();
                             for (String term : terms) {
@@ -342,15 +323,20 @@ public class DocumentGrid extends Display {
                             StringBuilder focusText = new StringBuilder();
                             focusText.append(" ... ");
                             for (String focusSent : focusSents) {
-                                focusText.append(focusSent+" ... ");
+                                focusText.append(focusSent);
+                                focusText.append(" ... \n");
                             }
                             t.setString(i, DocumentGridTable.NODE_FOCUS_TEXT, focusText.toString());
                         }
 //                    }
                 }
                 
-                m_vis.cancel("update");
-                m_vis.run("update");
+                // run repaint actions
+                // TODO add animation, incorporate paint animation here
+//                m_vis.cancel("animatePaint");
+//                m_vis.run("fullPaint");
+//                m_vis.run("animatePaint");
+                m_vis.run("updateOnce");
             }
         });
         
@@ -362,30 +348,24 @@ public class DocumentGrid extends Display {
         // pan with background left-drag
 //        addControlListener(new PanControl(Control.RIGHT_MOUSE_BUTTON));
         // drag control for moving items to new cells
-//        addControlListener(new DragControl());
-        addControlListener(new DocGridDragControl(DATA_GROUP, documentGridLayout, controller));
+        docDragControl = new DocGridDragControl(DATA_GROUP, documentGridLayout, controller);
+        addControlListener(docDragControl);
         // control for loading document details in glasspane
         addControlListener(new DocumentSelectControl(glassPane));
         // control for performing fisheye distortion
         anchorUpdateControl = new AnchorUpdateControl(feye, "distort");
         addControlListener(anchorUpdateControl);
-//        addControlListener(new AnchorUpdateControl(bifocal, "distort"));
         
         // run actionlists
-//        m_vis.run("init");
-//        m_vis.runAfter("preforce", "update");  // temporarily (?) disable for testing
-//        m_vis.run("preforce");
-//        m_vis.run("update");  // remove if forces ("runAfter") are reenabled
         
-        // first pass: before layout, do updateOnce to set sizes
-//        m_vis.alwaysRunAfter("init", "preforce");
-//        m_vis.alwaysRunAfter("preforce", "update");
-        m_vis.alwaysRunAfter("init", "update");
+//        m_vis.alwaysRunAfter("init", "updateOnce");
+        m_vis.alwaysRunAfter("init", "preforce");
+        m_vis.alwaysRunAfter("preforce", "updateOnce");
         
-        m_vis.runAfter("updateOnce", "init");
-        m_vis.run("updateOnce");
+//        m_vis.runAfter("updateOnce", "init");
+//        m_vis.run("updateOnce");
         
-//        m_vis.run("forces");
+        m_vis.run("init");
         
     }
     
@@ -406,11 +386,16 @@ public class DocumentGrid extends Display {
 //        m_vis.run("preforce");
 //        m_vis.run("update");  // remove if forces ("runAfter") are reenabled
 //        m_vis.runAfter("init", "preforce");  // temporarily (?) disable for testing
-        m_vis.run("updateOnce");
+//        m_vis.run("updateOnce");
         m_vis.run("init");
-        m_vis.run("preforce");
+//        m_vis.run("preforce");
     }
     
+    /**
+     * To be called when the visibility filtering predicate changes.
+     * 
+     * @param predStr string representation of the predicate on which to filter document visibility, or "" if no filtering should be applied
+     */
     public void resetDocsVisiblePredicate(String predStr) {
         
         if (!predStr.equals("")) {
@@ -419,41 +404,38 @@ public class DocumentGrid extends Display {
             docGlyphVisiblePredicate = new InGroupPredicate(DATA_GROUP);
         }
         
-//        DefaultRendererFactory rf = new DefaultRendererFactory();
-////        rf.setDefaultRenderer(nodeRenderer);
-//        rf.add(docGlyphVisiblePredicate, nodeRenderer);
-//        // add auxiliary renderer for axes
-//        rf.add(new InGroupPredicate(ALL_LABEL), new DocumentGridAxisRenderer(documentGridLayout));
-//        m_vis.setRendererFactory(rf);
-        
         if (docGlyphVisibleFilter != null) {
             docGlyphVisibleFilter.updatePredicate(docGlyphVisiblePredicate);
         }
         
+//        m_vis.run("repaint");
+        m_vis.run("updateOnce");
     }
     
     public SearchQueryBinding getSearchQuery() {
         return searchQ;
     }
     
+    /**
+     * Re-runs the initial layout actions for this Display's Visualization.
+     * 
+     */
     public void resetView() {
-//        m_vis.runAfter("init", "preforce");  // temporarily (?) disable for testing
-//        m_vis.run("init");
-        m_vis.run("updateOnce");
         m_vis.run("init");
-        m_vis.run("preforce");
     }
     
     public void updateXAxis(String xAxisAttrName) {
         List<String> xAxisCategories = t.getValueListForAttribute(xAxisAttrName);
 //        docGridAxisLayout.updateXAxis
         documentGridLayout.updateXAxis(xAxisAttrName, xAxisCategories);
+        m_vis.run("repaint");
     }
     
     public void updateYAxis(String yAxisAttrName) {
         List<String> yAxisCategories = t.getValueListForAttribute(yAxisAttrName);
 //        docGridAxisLayout.updateXAxis
         documentGridLayout.updateYAxis(yAxisAttrName, yAxisCategories);
+        m_vis.run("repaint");
     }
     
     public void updateColorAttr(String colorAttrName) {
@@ -461,13 +443,17 @@ public class DocumentGrid extends Display {
         // update colorAction
         this.colorAttrName = colorAttrName;
         docColorAction.updateColorAttr(colorAttrName, colorCategories);
+        m_vis.run("repaint");
     }
     
     public void updateShapeAttr(String shapeAttrName) {
-        this.shapeAttrName = shapeAttrName;
-        List<String> shapeCategories = t.getValueListForAttribute(shapeAttrName);
-        // update shapeAction
-        docShapeAction.updateShapeAttr(shapeAttrName, shapeCategories);
+        if (docShapeAction != null) {
+            this.shapeAttrName = shapeAttrName;
+            List<String> shapeCategories = t.getValueListForAttribute(shapeAttrName);
+            // update shapeAction
+            docShapeAction.updateShapeAttr(shapeAttrName, shapeCategories);
+            m_vis.run("repaint");
+        }
     }
 
     public void resetHighlightPredicate() {
@@ -486,6 +472,21 @@ public class DocumentGrid extends Display {
         anchorUpdateControl.setEnabled(true);
     }
     
+    public void setFisheyeEnabled(boolean fisheyeEnabled) {
+        this.fisheyeEnabled = fisheyeEnabled;
+        if (fisheyeEnabled) {
+            // enable the fisheye distortion
+            m_vis.run("distort");
+            anchorUpdateControl.setEnabled(true);
+        } else {
+            // freeze the fisheye distortion
+            m_vis.cancel("distort");
+            anchorUpdateControl.setEnabled(false);
+        }
+    }
+    
+    
+    
     /**
      * ColorAction for assigning border colors to document glyphs.
      */
@@ -499,9 +500,10 @@ public class DocumentGrid extends Display {
         public int getColor(VisualItem item) {
             
             // highlight border of glyphs for which search is true
+            // TODO: thicker borders? more outstanding highlighting?
 //            if ( m_vis.isInGroup(item, Visualization.SEARCH_ITEMS) )
 //                return ColorLib.rgb(191,99,130);
-            // do (inefficient) manual comparison?
+            // do (inefficient) manual comparison (for now)
             Iterator itemsInGroup = m_vis.getGroup(Visualization.SEARCH_ITEMS).tuples();
             while (itemsInGroup.hasNext()) {
                 Tuple itemInGroup = (Tuple)itemsInGroup.next();
@@ -512,20 +514,11 @@ public class DocumentGrid extends Display {
                 }
             }
             
-            // TODO set color based panel controls, certainty, selected attrs / values
-//            NodeItem nitem = (NodeItem) item;
             if (item.isHover()) {
-//                return ColorLib.rgb(99, 130, 191);
                 return Color.LIGHT_GRAY.getRGB();
             }
-            
-//            if (highlightPredicate != null && highlightPredicate.getBoolean(item)) {
-            if (highlightPredicate != null && item.canGetString(highlightAttr) && item.getString(highlightAttr).equals(highlightVal)) {
-                // is in the hover predicate
-//                return Color.CYAN.getRGB();
-                return Color.RED.getRGB();
-            }
-            
+
+            // default border color
 //            return ColorLib.gray(50);
             return Color.DARK_GRAY.getRGB();
         }
@@ -540,6 +533,7 @@ public class DocumentGrid extends Display {
 //                ColorLib.getInterpolatedPalette(10,
 //                ColorLib.rgb(85, 85, 85), ColorLib.rgb(0, 0, 0)), 0, 9);
         
+        // TODO: assign color based on other properties, such as whether or not a manual annotation is present?
         public static final Color[] GLYPH_COLOR_PALETTE = {
             new Color(191, 48, 48), new Color(18, 178, 37), new Color(176, 95, 220), 
             new Color(160, 82, 45), new Color(91, 229, 108),  new Color(99, 148, 220)
@@ -564,22 +558,7 @@ public class DocumentGrid extends Display {
 
         @Override
         public int getColor(VisualItem item) {
-            
-//            if ( m_vis.isInGroup(item, Visualization.SEARCH_ITEMS) )
-//                return ColorLib.rgb(191,99,130);
-//            
-//            // do (inefficient) manual comparison?
-//            Iterator itemsInGroup = m_vis.getGroup(Visualization.SEARCH_ITEMS).tuples();
-//            
-//            while (itemsInGroup.hasNext()) {
-//                Tuple itemInGroup = (Tuple)itemsInGroup.next();
-//                if (item.getString(DocumentGridTable.NODE_NAME).equals(itemInGroup.getString(DocumentGridTable.NODE_NAME))) {
-//                    // debug
-//                    System.out.println("debug: "+this.getClass().getName()+": item in group! "+item.toString());
-//                    return ColorLib.rgb(191,99,130);
-//                }
-//            }
-            
+                       
             // get value for target attr in item
             if (item.canGetString(colorAttrName)) {
                 String attrVal = item.getString(colorAttrName);
@@ -592,6 +571,12 @@ public class DocumentGrid extends Display {
             
         }
         
+        /**
+         * Update which attribute is currently being used for color assignment.
+         * 
+         * @param colorAttrName
+         * @param colorAttrCategories 
+         */
         public void updateColorAttr(String colorAttrName, List<String> colorAttrCategories) {
             this.colorAttrName = colorAttrName;
             this.colorAttrCategories = colorAttrCategories;
@@ -650,12 +635,12 @@ public class DocumentGrid extends Display {
         }
         
         // size should blow up on hover / click
+        // NOTE: dynamic sizing is now being handled by the FisheyeDistortion
         @Override
         public double getSize(VisualItem item) {
-//            NodeItem nitem = (NodeItem) item;
-            if (item.isHover()) {
-                return super.getSize(item) * HOVER_SIZE_MULT;
-            }
+//            if (item.isHover()) {
+//                return super.getSize(item) * HOVER_SIZE_MULT;
+//            }
             return super.getSize(item);
         }
         
@@ -703,7 +688,7 @@ public class DocumentGrid extends Display {
                 return shape;
             }
             
-            return(Constants.SHAPE_TRIANGLE_DOWN);
+            return(Constants.SHAPE_RECTANGLE);
             //return super.getShape(item);
         }
         
@@ -716,43 +701,58 @@ public class DocumentGrid extends Display {
                 String category = shapeAttrCategories.get(i);
                 catToShapeMap.put(category, GLYPH_SHAPE_PALETTE[paletteIndex]);
             }
-            // refresh?
         }
         
     }
     
-    
-    public static class NullRenderer implements prefuse.render.Renderer {
-
-        public NullRenderer() {}
-
-        @Override
-        public void render(Graphics2D gd, VisualItem vi) {
-//            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public boolean locatePoint(Point2D pd, VisualItem vi) {
-//            throw new UnsupportedOperationException("Not supported yet.");
-            return false;
-        }
-
-        @Override
-        public void setBounds(VisualItem vi) {
-//            throw new UnsupportedOperationException("Not supported yet.");
+    /*
+     * Simply assigns a rectangle shape to each glyph, to facilitate ease of text drawing.
+     */
+    public static class SquareShapeAction extends ShapeAction {
+        
+        public SquareShapeAction() {
+            super();
         }
         
-        
+        @Override
+        public int getShape(VisualItem item) {
+            // disable shape selection, since shapes beyond rectangles pose additional challenges for drawing text (which are of relatively low priority for now)
+            return(Constants.SHAPE_RECTANGLE);
+        }
         
     }
+    
+//    // "renderer" which does not actually render anything; 
+//    public static class NullRenderer implements prefuse.render.Renderer {
+//
+//        public NullRenderer() {}
+//
+//        @Override
+//        public void render(Graphics2D gd, VisualItem vi) {
+////            throw new UnsupportedOperationException("Not supported yet.");
+//        }
+//
+//        @Override
+//        public boolean locatePoint(Point2D pd, VisualItem vi) {
+////            throw new UnsupportedOperationException("Not supported yet.");
+//            return false;
+//        }
+//
+//        @Override
+//        public void setBounds(VisualItem vi) {
+////            throw new UnsupportedOperationException("Not supported yet.");
+//        }
+//        
+//    }
 
     /*
      * Handles rendering of document glyphs and drawing of document text (for
-     * selected document[s]). Should also handle drawing of axes. 
+     * selected document[s]). 
      */
     public class DocGlyphRenderer extends ShapeRenderer {
         
         // base size for visualitems (in pixels)
+        // sizing is now handled in the SizeAction
 //        public static final int BASE_SIZE = 10;
         
         public DocGlyphRenderer() {
@@ -764,108 +764,40 @@ public class DocumentGrid extends Display {
         @Override
         public void render(Graphics2D g, VisualItem item) {
             
-            // execute doc visible predicate on item, to determine whether to render
-            // do this in VisibilityFilter instance instead
-//            boolean shouldBeVisible = item. ; docGlyphVisiblePredicate.
-            
             if (item.isVisible()) {
 
                 // draw basic glyph
                 super.render(g, item);
 
-                // idea: rather than rendering fixed-size, can we first compute size of text, then set size of item equal to size of text?
-
+                // draw string on-top of glyph, filling the glyph's area
                 Shape shape = getShape(item);
-//            item.setBounds(shape.getBounds2D().getMinX(), shape.getBounds2D().getMinY(), shape.getBounds2D().getWidth(), shape.getBounds2D().getHeight());
                 if (shape != null) {
-
-//                System.out.println("debug: "+item.getString("24.1 Rate of procedures where prep adequate"));
-//                double xPos = shape.getBounds().getX();
-//                double yPos = shape.getBounds().getY();
-//            double xPos = item.getX();
-//            double yPos = item.getY();
+                    
                     String s = "doc=" + item.getString(NODE_NAME);
-//                boolean isHover = false;
-//                if (item.isHover()) {
-//                    // no longer displaying doc text on hover; instead, display details on rightclick
-////                    s = item.getString(NODE_TEXT);
-//                    s += " (right-click for highlighted text)";
-//                    
-//                    isHover = true;
-//                }
+                    
                     String focusText = item.getString(DocumentGridTable.NODE_FOCUS_TEXT);
                     if (focusText != null && !focusText.equals("null") && !focusText.equals("")) {
                         s += "\n" + focusText;
                     } else {
                         s += "\n" + item.getString(NODE_TEXT);
                     }
-//                double x1 = item.getBounds().getX();
-//                double y1 = item.getBounds().getY();
-//                double w = item.getBounds().getWidth();
-//                double h = item.getBounds().getHeight();
+                    
                     double x1 = (double) item.get(VisualItem.X);
                     double y1 = (double) item.get(VisualItem.Y);
                     double w = (double) this.getShape(item).getBounds2D().getWidth();
                     double h = (double) this.getShape(item).getBounds2D().getHeight();
-//                shape.getBounds().setBounds((int)x1, (int)y1, (int)w, (int)h);
 
-                    // TODO set font size based on number of active nodes? based on size of rect?
-
-//            int fontSize = Math.min((int)width, (int) height);
+                    // IDEA: set font size based on number of active nodes? based on size of rect?
                     int fontSize = 10;
-//            item.setFont(FontLib.getFont("Tahoma", Font.PLAIN, maxFontSize));
+                    
                     item.setFont(FontLib.getFont("Tahoma", Font.PLAIN, fontSize));
-
-                    // note: this does not draw newlines! we will need to handle this ourselves
+                    
                     Font f = item.getFont();
-//            FontMetrics fm = g.getFontMetrics(f);
-//            int w = fm.stringWidth(s);
-//            int h = fm.getAscent();
-//            //g.setColor(Color.LIGHT_GRAY);
-//            g.setColor(Color.BLACK);
-//            g.setFont(f);
-//            g.drawString(s, (float) (xPos),
-//                    (float) (yPos + h));
-//            }
-
+                    
                     // compute width, height for the given text
-                    int[] textDims = getTextDims(g, f, s);
-                    int textWidth = textDims[0];
-                    int textHeight = textDims[1];
-//                if ( shape instanceof RectangularShape ) {
-//                    RectangularShape r = (RectangularShape) shape;
-//                    double x = r.getX();
-//                    double y = r.getY();
-//                    double x = x1;
-//                    double y = y1;
-
-                    // use our own painting code, for fine-grained control of size
-                    // TODO move this into separate method, add code for more robust glyph vis.? see prefuse.util.GraphicsLib.paint()
-                    Color strokeColor = ColorLib.getColor(item.getStrokeColor());
-//                    Color fillColor = ColorLib.getColor(item.getFillColor());
-                    Color fillColor = Color.WHITE;
-
-//                    if (isHover) {
-//                        item.setBounds(x1, y1, x1+textWidth, y1+textHeight);
-//                        g.setPaint(fillColor);
-////                        g.fillRect((int)x, (int)y, textWidth, textHeight);
-//                        g.fillRect((int)x1, (int)y1, textWidth, textHeight);
-//                        g.setPaint(strokeColor);
-////                        g.drawRect((int)x, (int)y, textWidth, textHeight);
-//                        g.drawRect((int)x1, (int)y1, textWidth, textHeight);
-//                    } else {
-////                        item.setBounds(x1, y1, x1+w, y1+h);
-//                        g.setPaint(fillColor);
-//                        g.fillRect((int)x1, (int)y1, (int)(w), (int)(h));
-//                        g.setPaint(strokeColor);
-//                        g.drawRect((int)x1, (int)y1, (int)(w), (int)(h));
-//                    }
-
-//                }
-
-//            super.render(g, item);
-
-//                drawStringMultiline(g, f, s, xPos, yPos);
+                    // NOTE: this logic has been moved into drawStringMultiline
+//                    int[] textDims = getTextDims(g, f, s);
+                    
                     // debug
 //                    System.out.println("debug: "+this.getClass().getName()+": drawStringMultiline at x="+x1+", y="+y1+", w="+w+", h="+h);
                     drawStringMultiline(g, f, s, x1, y1, w, h);
@@ -964,16 +896,11 @@ public class DocumentGrid extends Display {
             }
         }
         
-//        int lineCounter = 1;
-//        while (lineSplitter.hasNextLine()) {
-//            String line = lineSplitter.nextLine();
-//            g.drawString(line, (float) (xPos-(width/2.)), (float) (yPos-(height/2.) + h * lineCounter));
-//            lineCounter++;
-//        }
     }
     
     /**
-     * This control is responsible for drawing document details information onto the glasspane when appropriate.
+     * This control is responsible for drawing document details information onto
+     * the glasspane when appropriate.
      */
     public class DocumentSelectControl extends ControlAdapter {
         
@@ -988,68 +915,20 @@ public class DocumentGrid extends Display {
         
         @Override
         public void itemPressed(VisualItem item, MouseEvent e) {
-//            // load (or unload) marked-up text into glasspane on rightclick
+            // load (or unload) marked-up text into glasspane on rightclick
             // glasspane text is now loaded on mouseover instead
-//            if (SwingUtilities.isRightMouseButton(e) && item.canGetInt(DocumentGridTable.NODE_ID)) {
-//                int nodeId = item.getInt(DocumentGridTable.NODE_ID);
-////                String attrIdStr = documentGridLayout.getXAttr();
-//                String attrIdStr = shapeAttrName;
-//                
-//                if (isPopupLoaded) {
-//                    // hide glasspane
-//                    glassPane.hidePane();
-//                } else {
-//                    // build text, position text, show glasspane
-//                    // TODO generalized highlighting; for now, just highlight doc wrt. X-Axis?
-//                    AbstractDocument doc = glassPane.getAbstDoc();
-//                    controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
-//                    int x = e.getX();
-//                    int y = e.getY();
-//                    // TODO make sure that pane is within window bounds!
-//                    int x2 = x+glassPane.getPopupWidth();
-//                    int y2 = y+glassPane.getPopupHeight();
-//                    Rectangle glassBounds = glassPane.getBounds();
-//                    double boundsWidth = glassBounds.getWidth();
-//                    double boundsHeight = glassBounds.getHeight();
-//                    if (x2 > boundsWidth) {
-//                        x = x - (int)(x2 - boundsWidth);
-//                    }
-//                    if (y2 > boundsHeight) {
-//                        y = y - (int)(y2 - boundsHeight);
-//                    }
-//                    glassPane.displayPaneAtPoint(x, y);
-//                }
-//            }
         }
-        
+
         @Override
-    public void itemEntered(VisualItem item, MouseEvent e) {
-            
-            if (!glassPane.wasMouseClicked()) {
+        public void itemEntered(VisualItem item, MouseEvent e) {
+
+            if (!glassPane.wasMouseClicked() && fisheyeEnabled) {  // check to see whether this entering is due to a glasspane hiding-click; if so, don't immediately re-load glasspane!
                 if (item.canGetInt(DocumentGridTable.NODE_ID)) {
                     // suspend fisheye, run FDL
                     // set the focus to the current node
-//            Visualization vis = item.getVisualization();
-//            vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(item);
-//            item.setFixed(true);
-//            dragged = false;
-//            Display d = (Display) e.getComponent();
-//            down = d.getAbsoluteCoordinate(e.getPoint(), down);
-//            vis.cancel("distort");
-//            vis.run("forces");
-
-
-                    // freeze the screen?
+                    
+                    // freeze the fisheye distortion
                     m_vis.cancel("distort");
-//            display.removeControlListener(anchorUpdateControl);
-//            synchronized (anchorUpdateControl) {
-//                try {
-//                    anchorUpdateControl.wait();
-//                } catch (InterruptedException ex) {
-//                    // debug
-//                    System.out.println("debug: " + this.getClass().getName() + ": anchorUpdateControl.wait() interrupted");
-//                }
-//            }
                     anchorUpdateControl.setEnabled(false);
 
                     // appear the glasspane at appropriate size & location
@@ -1057,14 +936,14 @@ public class DocumentGrid extends Display {
                     int xOffset = 0;
                     int yOffset = 0;
                     JComponent component = display;
+                    // recursively go through this Component's ancestors, summing offset information in order to get the absolute position relative to window
                     do {
                         Point visLocation = component.getLocation();
                         xOffset += visLocation.x;
                         yOffset += visLocation.y;
-//            } while ((!component.getParent().getClass().equals(MainTabbedView.class)) && (component = (JComponent)component.getParent()) != null); // TODO more general, not just mainTabbedView!
-                    } while ((!component.getParent().getClass().equals(JRootPane.class)) && (component = (JComponent) component.getParent()) != null); // TODO more general, not just mainTabbedView!
+                    } while ((!component.getParent().getClass().equals(JRootPane.class)) && (component = (JComponent) component.getParent()) != null);
                     // debug
-                    System.out.println("debug: " + this.getClass().getName() + ": offsets: " + xOffset + ", " + yOffset);
+//                    System.out.println("debug: " + this.getClass().getName() + ": offsets: " + xOffset + ", " + yOffset);
 
                     int nodeId = item.getInt(DocumentGridTable.NODE_ID);
                     String attrIdStr = colorAttrName;  // TODO make highlighting more general, not just based on color!
@@ -1084,28 +963,246 @@ public class DocumentGrid extends Display {
         @Override
         public void itemExited(VisualItem item, MouseEvent e) {
             // resume the fisheye distortions
-//            display.addControlListener(anchorUpdateControl);
-//            synchronized (anchorUpdateControl) {
-//                anchorUpdateControl.notify();
-//            }
-//            anchorUpdateControl.setEnabled(true);
+            //  NOTE: this functionality (resuming the distortions) is now handled by the glasspane, since the mouse 
+
         }
  
     }
     
+    /**
+     * Provides access to the DragControl, so that glasspane can pass mouse
+     * events directly to it. TODO: refactor this clunky way of passing around
+     * mouse events.
+     *
+     * @return 
+     */
+    public DocGridDragControl getDragControl() {
+        if (docDragControl != null)
+            return docDragControl;
+        return null;
+    }
+
+    /**
+     * Provides mouse interaction controls for doc grid view. Partially adopted
+     * from DataMountain$DataMountainControl example in Prefuse gallery.
+     *
+     */
+    public class DocGridDragControl extends DragControl {
+
+        /**
+         * data group to which this control should apply
+         */
+        private String m_group;
+        private VisualItem activeItem;
+        /**
+         * pointer to DocumentGridLayout for which this instance is controlling
+         * dragging of items
+         */
+        private DocumentGridLayout docGridLayout;
+        private MainController controller;
+
+        public DocGridDragControl(String group, DocumentGridLayout docGridLayout, MainController controller) {
+            super();
+            m_group = group;
+            this.docGridLayout = docGridLayout;
+            this.controller = controller;
+        }
+
+        @Override
+        public void itemClicked(VisualItem item, MouseEvent e) {
+            // on left-mouse click, open the old-school document details popup
+            if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() >= 2) {
+                if (item.getGroup().equals(m_group) && item.canGetInt(DocumentGridTable.NODE_ID)) {
+                    int docID = item.getInt(DocumentGridTable.NODE_ID);
+                    controller.displayDocDetailsWindow(docID);
+                }
+            }
+        }
+
+        @Override
+        public void itemPressed(VisualItem item, MouseEvent e) {
+            // on right-mouse press, start dragging the document
+            // TODO: fisheye distortion and document dragging don't play nicely together; region boundaries are not recomputed! perhaps we should disable this dragging, only enabling it when the fisheye isn't active? Or, dynamically recomputing region boundaries?
+            // current: dragging only functions if fisheye is currently disabled
+//        if (SwingUtilities.isLeftMouseButton(e)) {
+            if (SwingUtilities.isRightMouseButton(e) && !fisheyeEnabled) {
+                // debug
+                System.out.println("debug: " + this.getClass().getName() + ": item pressed w/ right mouse");
+                // drag
+                // set the focus to the current node
+                Visualization vis = item.getVisualization();
+                vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(item);
+                item.setFixed(true);
+                dragged = false;
+                Display d = controller.getDocumentGrid();
+                down = d.getAbsoluteCoordinate(e.getPoint(), down);
+                // FDL forces prevent minor occlusion while dragging. However, we don't want to run FDL if the fisheye is active!
+//                vis.run("forces");
+            }
+        }
+
+        @Override
+        public void itemReleased(VisualItem item, MouseEvent e) {
+            // when right-mouse released, release the dragged document glyph
+            if (!SwingUtilities.isRightMouseButton(e) || fisheyeEnabled) {
+                return;
+            }
+            // debug
+            System.out.println("debug: " + this.getClass().getName() + ": item released");
+            if (dragged) {
+                activeItem = null;
+                item.setFixed(wasFixed);
+                dragged = false;
+            }
+            // clear the focus
+            Visualization vis = item.getVisualization();
+            vis.getFocusGroup(Visualization.FOCUS_ITEMS).clear();
+
+            vis.cancel("forces");
+        }
+
+        @Override
+        public void itemDragged(VisualItem item, MouseEvent e) {
+            // listen during dragging via right-mouse, adjust glyph positions and monitor for crossing of boundary regions
+            if (!SwingUtilities.isRightMouseButton(e) || fisheyeEnabled) {
+                return;
+            }
+            if (item.getGroup().equals(m_group)) {
+                dragged = true;
+//            Display d = (Display) e.getComponent();
+                Display d = controller.getDocumentGrid();
+                d.getAbsoluteCoordinate(e.getPoint(), temp);
+                double dx = temp.getX() - down.getX();
+                double dy = temp.getY() - down.getY();
+                double x = item.getX();
+                double y = item.getY();
+                
+                // x2, y2 no longer needed, since size and positioning is now handled in a more standard manner
+//                double x2 = (double) item.get(VisualItem.X2);
+//                double y2 = (double) item.get(VisualItem.Y2);
+
+                item.setStartX(x);
+                item.setStartY(y);
+                item.setX(x + dx);
+                item.setY(y + dy);
+                item.setEndX(x + dx);
+                item.setEndY(y + dy);
+
+//                item.set(VisualItem.X2, x2 + dx);
+//                item.set(VisualItem.Y2, y2 + dy);
+
+//            item.setBounds(x + dx, y + dy, x2 + dx, y2 + dy);
+
+                if (repaint) {
+                    item.getVisualization().repaint();
+                }
+
+                down.setLocation(temp);
+                if (action != null) {
+                    d.getVisualization().run(action);
+                }
+
+                // determine whether item is in same region or new region;
+                //  if new region, call controller to update attr vals
+                // TODO: compute boundaries with respect to fisheye distortion, not absolute positioning!
+                int origRegionX = -1;
+                int origRegionY = -1;
+                int newRegionX = -1;
+                int newRegionY = -1;
+                String xAttrName = docGridLayout.getXAttr();
+                String yAttrName = docGridLayout.getYAttr();
+                List<String> xCats = docGridLayout.getXCats();
+                List<String> yCats = docGridLayout.getYCats();
+                List<Integer> xCatRegionSizes = docGridLayout.getXCatRegionSizes();
+                List<Integer> yCatRegionSizes = docGridLayout.getYCatRegionSizes();
+                List<Integer> xCatPositions = docGridLayout.getXCatPositions();
+                List<Integer> yCatPositions = docGridLayout.getYCatPositions();
+                // for each region, get start and range;
+                for (int i = 0; i < xCats.size(); i++) {
+                    int xRegionStart = xCatPositions.get(i);
+                    int xRegionEnd = xRegionStart + xCatRegionSizes.get(i);
+                    if (xRegionStart < x && x < xRegionEnd) {
+                        origRegionX = i;
+                    }
+                    if (xRegionStart < x + dx && x + dx < xRegionEnd) {
+                        newRegionX = i;
+                    }
+                }
+                for (int i = 0; i < yCats.size(); i++) {
+                    int yRegionStart = yCatPositions.get(i);
+                    int yRegionEnd = yRegionStart + yCatRegionSizes.get(i);
+                    if (yRegionStart < y && y < yRegionEnd) {
+                        origRegionY = i;
+                    }
+                    if (yRegionStart < y + dy && y + dy < yRegionEnd) {
+                        newRegionY = i;
+                    }
+                }
+
+                // if both regions are same, do nothing
+                int docID = item.getInt(DocumentGridTable.NODE_ID);
+
+                // debug
+//            System.out.println("debug: item moved: docID="+docID+"xOrig="+xCats.get(origRegionX)+", xNew="+xCats.get(newRegionX)+", yOrig="+yCats.get(origRegionY)+", yNew="+yCats.get(newRegionY));
+
+                // else, invoke controller to adjust document attributes
+                // update for x and y separately
+                if (origRegionX != newRegionX && newRegionX != -1) {
+                    String newCat = xCats.get(newRegionX);
+                    controller.updateDocumentAttr(docID, xAttrName, newCat);
+                    controller.documentAttributesUpdated(docID);
+                }
+                if (origRegionY != newRegionY && newRegionY != -1) {
+                    String newCat = yCats.get(newRegionY);
+                    controller.updateDocumentAttr(docID, yAttrName, newCat);
+                    controller.documentAttributesUpdated(docID);
+                }
+
+
+            }
+        }
+
+        @Override
+        public void itemEntered(VisualItem item, MouseEvent e) {
+            // suspend fisheye, run FDL
+            // set the focus to the current node
+            // NOTE: because of interference from the glasspane, this doesn't currently work
+//            Visualization vis = item.getVisualization();
+//            vis.getFocusGroup(Visualization.FOCUS_ITEMS).setTuple(item);
+//            item.setFixed(true);
+//            dragged = false;
+//            Display d = (Display) e.getComponent();
+//            down = d.getAbsoluteCoordinate(e.getPoint(), down);
+//            vis.cancel("distort");
+////            vis.run("forces");
+        }
+
+        @Override
+        public void itemExited(VisualItem item, MouseEvent e) {
+            // suspend FDL, run fisheye
+            // NOTE: because of interference from the glasspane, this doesn't currently work
+//            Visualization vis = item.getVisualization();
+////            vis.cancel("forces");
+//            vis.run("distort");
+        }
+    }
+    
+    
     /*
-     * datamountain force controllers, temporarily (?) adopted for this graph layout
+     * Force controllers adpoted (and expanded) from the DataMountain example, in order to prevent / reduce initial occlusion on layout, and to reduce occlusion on dogument glyph dragging (when distortions are not active)
      */
     private static final String ANCHORITEM = "_anchorItem";
     private static final Schema ANCHORITEM_SCHEMA = new Schema();
+
     static {
         ANCHORITEM_SCHEMA.addColumn(ANCHORITEM, ForceItem.class);
     }
-    public class DataMountainForceLayout extends ForceDirectedLayout {
-        
-        public DataMountainForceLayout(boolean enforceBounds) {
-            super("data",enforceBounds,false);
-            
+
+    public class DocGlyphForceLayout extends ForceDirectedLayout {
+
+        public DocGlyphForceLayout(boolean enforceBounds) {
+            super("data", enforceBounds, false);
+
             ForceSimulator fsim = new ForceSimulator();
             // (gravConstant, minDistance, theta)
             fsim.addForce(new NBodyForce(-0.6f, 40f, NBodyForce.DEFAULT_THETA));
@@ -1117,7 +1214,7 @@ public class DocumentGrid extends Display {
             m_edgeGroup = null;
         }
         
-        public DataMountainForceLayout(boolean enforceBounds, float gravConstant, float minDistance, float dragCoeff, boolean runOnce) {
+        public DocGlyphForceLayout(boolean enforceBounds, float gravConstant, float minDistance, float dragCoeff, boolean runOnce) {
             super("data",enforceBounds,runOnce);
             
             ForceSimulator fsim = new ForceSimulator();
@@ -1131,10 +1228,12 @@ public class DocumentGrid extends Display {
             m_edgeGroup = null;
         }
         
+        @Override
         protected float getMassValue(VisualItem n) {
             return n.isHover() ? 5f : 1f;
         }
 
+        @Override
         public void reset() {
             Iterator iter = m_vis.visibleItems(m_nodeGroup);
             while ( iter.hasNext() ) {
@@ -1147,6 +1246,8 @@ public class DocumentGrid extends Display {
             }
             super.reset();
         }
+        
+        @Override
         protected void initSimulator(ForceSimulator fsim) {
             // make sure we have force items to work with
             TupleSet t = (TupleSet)m_vis.getGroup(m_group);
@@ -1252,8 +1353,10 @@ public class DocumentGrid extends Display {
         
     }
     
-    public class GlyphVisibilityFilter extends VisibilityFilter {
-        
+    /**
+     * Simple VisibilityFilter to control which documents are currently visible. Extended to support dynamic predicate updating.
+     */
+    public class GlyphVisibilityFilter extends VisibilityFilter {        
         
         public GlyphVisibilityFilter(String group, Predicate p) {
             super(group, p);

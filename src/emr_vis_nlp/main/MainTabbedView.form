@@ -331,7 +331,7 @@
           <SubComponents>
             <Container class="javax.swing.JSplitPane" name="jSplitPaneDocGrid">
               <Properties>
-                <Property name="dividerLocation" type="int" value="200"/>
+                <Property name="dividerLocation" type="int" value="300"/>
               </Properties>
               <Events>
                 <EventHandler event="propertyChange" listener="java.beans.PropertyChangeListener" parameters="java.beans.PropertyChangeEvent" handler="jSplitPaneDocGridPropertyChange"/>
@@ -349,7 +349,7 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <EmptySpace min="0" pref="589" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="489" max="32767" attributes="0"/>
                       </Group>
                     </DimensionLayout>
                     <DimensionLayout dim="1">
@@ -370,13 +370,14 @@
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jScrollPane4" alignment="0" pref="0" max="32767" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
+                          <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jPanelSearchContainer" max="32767" attributes="0"/>
-                                  <Component id="jButtonSelectNoneDocGrid" pref="175" max="32767" attributes="0"/>
                                   <Component id="jButtonSelectAllDocGrid" max="32767" attributes="0"/>
                                   <Component id="jButtonReset" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="jToggleButtonFisheye" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="jButtonSelectNoneDocGrid" alignment="0" pref="275" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
@@ -388,11 +389,13 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jPanelSearchContainer" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane4" pref="380" max="32767" attributes="0"/>
+                              <Component id="jScrollPane4" pref="348" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jButtonSelectAllDocGrid" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jButtonSelectNoneDocGrid" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jToggleButtonFisheye" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jButtonReset" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -466,6 +469,15 @@
                         </DimensionLayout>
                       </Layout>
                     </Container>
+                    <Component class="javax.swing.JToggleButton" name="jToggleButtonFisheye">
+                      <Properties>
+                        <Property name="selected" type="boolean" value="true"/>
+                        <Property name="text" type="java.lang.String" value="Toggle Fisheye Distortion"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jToggleButtonFisheyeActionPerformed"/>
+                      </Events>
+                    </Component>
                   </SubComponents>
                 </Container>
               </SubComponents>
