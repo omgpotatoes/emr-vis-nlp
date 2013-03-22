@@ -401,7 +401,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jScrollPane4.setViewportView(jTableAttrSelection3);
 
         jButtonSelectAllDocGrid.setText("Select All");
-        jButtonSelectAllDocGrid.setEnabled(false);
         jButtonSelectAllDocGrid.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonSelectAllDocGridActionPerformed(evt);
@@ -612,7 +611,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     }//GEN-LAST:event_jSplitPaneDocGridPropertyChange
 
     private void jButtonSelectAllDocGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectAllDocGridActionPerformed
-        // TODO add your handling code here:
+        controller.enableAllDocs();
     }//GEN-LAST:event_jButtonSelectAllDocGridActionPerformed
 
     private void jButtonSelectNoneDocGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectNoneDocGridActionPerformed

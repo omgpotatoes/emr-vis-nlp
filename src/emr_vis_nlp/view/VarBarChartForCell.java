@@ -331,6 +331,15 @@ public class VarBarChartForCell extends JPanel {
         }
     }
     
+    /**
+     * Resets the enabled state on all cells in this VarBarChart.
+     */
+    public void enableAllCells() {
+        for (int c=0; c<allCols.size(); c++) {
+            allCols.get(c).setIsEnabled(true);
+        }
+    }
+    
     @Override
     public String toString() {
         return toolTipText;

@@ -643,6 +643,10 @@ public class MainController {
     public void enableAllDocs() {
         disabledAttrValsMap.clear();
         attrValPairsUpdated();
+        if (docGridSelectionModel != null) {
+            docGridSelectionModel.resetVarBarCharts();
+        }
+        docGridSelectionModel.
     }
     
     private void attrValPairsUpdated() {
@@ -706,5 +710,7 @@ public class MainController {
         if (documentGrid != null)
             documentGrid.setFisheyeEnabled(enableFisheye);
     }
+    
+    
     
 }
