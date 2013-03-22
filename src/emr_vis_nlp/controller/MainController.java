@@ -646,7 +646,6 @@ public class MainController {
         if (docGridSelectionModel != null) {
             docGridSelectionModel.resetVarBarCharts();
         }
-        docGridSelectionModel.
     }
     
     private void attrValPairsUpdated() {
