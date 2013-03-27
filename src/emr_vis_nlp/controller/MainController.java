@@ -184,7 +184,7 @@ public class MainController {
      */
     public DocTableModel buildSimpleDocTableModel() {
         if (model != null) {
-            DocTableModel docTableModel = new DocTableModel(model.getAllDocuments(), model.getAllSelectedDocuments(), model.getAllAttributes(), model.getAllSelectedAttributes());
+            DocTableModel docTableModel = new DocTableModel(model.getAllDocuments(), model.getIsDocumentEnabledList(), model.getAllAttributes(), model.getIsAttributeEnabledList());
             return docTableModel;
         }
         return null;
@@ -197,7 +197,7 @@ public class MainController {
      */
     public AttrTableModel buildSimpleAttrSelectionTableModel() {
         if (model != null) {
-            AttrTableModel attrTableModel = new AttrTableModel(model.getAllAttributes(), model.getAllSelectedAttributes(), this);
+            AttrTableModel attrTableModel = new AttrTableModel(model.getAllAttributes(), model.getIsAttributeEnabledList(), this);
             return attrTableModel;
         }
         return null;
@@ -218,7 +218,7 @@ public class MainController {
         
         // update selection in model
         // TODO eliminate this? backing model should not be changed in response to selection actions on the front-end?
-        model.setSelectedAttributes(newSelectedAttributes);
+        model.setEnabledAttributes(newSelectedAttributes);
 
         // indicate to main view that all relevant displays should be redrawn / rebuilt
         view.attributeSelectionChanged();
@@ -249,7 +249,7 @@ public class MainController {
 //            selectedAttrsForTree.add("Indicator_21");
 //            selectedAttrsForTree.add("Indicator_19");
             }
-            JComponent newDocTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapOnly(this, model.getAllDocuments(), model.getAllSelectedDocuments(), selectedAttrsForTree);
+            JComponent newDocTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapOnly(this, model.getAllDocuments(), model.getIsDocumentEnabledList(), selectedAttrsForTree);
             docTreeMapViewComponent = newDocTreeMapViewComponent;
             return docTreeMapViewComponent;
         }
@@ -280,7 +280,7 @@ public class MainController {
         if (model != null && predictor != null) {
             Document doc = model.getAllDocuments().get(docGlobalId);
             List<String> allAttributes = model.getAllAttributes();
-            List<Boolean> allAttributesEnabled = model.getAllSelectedAttributes();
+            List<Boolean> allAttributesEnabled = model.getIsAttributeEnabledList();
 
 //            Map<String, PredictionCertaintyTuple> attrPredictionMap = model.getPredictionsForDoc(docGlobalId);
             Map<String, PredictionCertaintyTuple> attrPredictionMap = predictor.getPredictionsForDoc(docGlobalId);
@@ -494,7 +494,7 @@ public class MainController {
         }
 
         // build table for grid
-        documentGridTable = new DocumentGridTable(model.getAllAttributes(), model.getAllDocuments(), model.getAllSelectedDocuments());
+        documentGridTable = new DocumentGridTable(model.getAllAttributes(), model.getAllDocuments(), model.getIsDocumentEnabledList());
         // build, return grid (while maintaining reference)
         documentGrid = new DocumentGrid(documentGridTable, xAxisAttrName, yAxisAttrName, shapeAttrName, colorAttrName);
         return documentGrid;

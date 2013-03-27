@@ -27,12 +27,15 @@ import javax.swing.text.StyleConstants;
  */
 public class DeprecatedMLPredictor extends MLPredictor {
     
+    
     public DeprecatedMLPredictor(MainModel model) {
         super(model);
+    }
+    
+    @Override
+    public void loadPredictions() {
         
         // load predictions for all docs
-        documentList = model.getAllDocuments();
-        attributeList = model.getAllAttributes();
         List<String> defaultValList = DatasetTermTranslator.getDefaultValList();
         for (int d=0; d<documentList.size(); d++) {
             Map<String, PredictionCertaintyTuple> predictionMap = new HashMap<>();
@@ -75,25 +78,26 @@ public class DeprecatedMLPredictor extends MLPredictor {
         }
     }
     
-    @Override
-    public List<Feature> getFeatureListForAttribute(String attributeName) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+//    @Override
+//    public List<Feature> getFeatureListForAttribute(String attributeName) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
 
-    @Override
-    public List<Feature> getFeatureListForAttribute(String attributeName, String attributeValue) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+//    @Override
+//    public List<Feature> getFeatureListForAttribute(String attributeName, String attributeValue) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
 
 //    @Override
 //    public Prediction getPredictionForAttributeInDoc(String docText, String attributeName) {
 //        throw new UnsupportedOperationException("Not supported yet.");
 //    }
 
-    @Override
-    public PredictorStatistics getQualityAssessmentOfPredictor(MainModel model, String attributeName) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+//    @Override
+//    public PredictorStatistics getQualityAssessmentOfPredictor(MainModel model, String attributeName) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
+    
 //    // old code used to update text region:
 //    
 //        // get top-ranked terms for selected indicator
@@ -322,30 +326,7 @@ public class DeprecatedMLPredictor extends MLPredictor {
 //
 //            }
 //        }
-
-    @Override
-    public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId) {
-        return predictionMapList.get(globalDocId);
-    }
-
-    @Override
-    public boolean hasPrediction(int globalDocId, String attrName) {
-        Map<String, PredictionCertaintyTuple> docPredMap = predictionMapList.get(globalDocId);
-        if (docPredMap.containsKey(attrName)) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName) {
-        Map<String, PredictionCertaintyTuple> docPredMap = predictionMapList.get(globalDocId);
-        if (docPredMap.containsKey(attrName)) {
-            return docPredMap.get(attrName);
-        }
-        return null;
-    }
-
+    
     @Override
     public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId) {
         // if we have a predictor for the doc, return true else false

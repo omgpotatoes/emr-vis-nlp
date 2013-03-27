@@ -3,7 +3,7 @@ package emr_vis_nlp.ml;
 
 import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.model.PredictionCertaintyTuple;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import javax.swing.text.AbstractDocument;
 
@@ -18,44 +18,49 @@ public class NullPredictor extends MLPredictor {
         super(model);
     }
     
-    @Override
-    public List<Feature> getFeatureListForAttribute(String attributeName) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public List<Feature> getFeatureListForAttribute(String attributeName, String attributeValue) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public PredictorStatistics getQualityAssessmentOfPredictor(MainModel model, String attributeName) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+//    @Override
+//    public List<Feature> getFeatureListForAttribute(String attributeName) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
+//
+//    @Override
+//    public List<Feature> getFeatureListForAttribute(String attributeName, String attributeValue) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
+//
+//    @Override
+//    public PredictorStatistics getQualityAssessmentOfPredictor(MainModel model, String attributeName) {
+//        throw new UnsupportedOperationException("Not supported yet.");
+//    }
 
     @Override
     public Map<String, PredictionCertaintyTuple> getPredictionsForDoc(int globalDocId) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return new HashMap<>();
     }
 
     @Override
     public boolean hasPrediction(int globalDocId, String attrName) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return false;
     }
 
     @Override
     public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return null;
     }
 
     @Override
     public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return false;
     }
 
     @Override
     public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        ;
+    }
+
+    @Override
+    public void loadPredictions() {
+        ;
     }
     
 }

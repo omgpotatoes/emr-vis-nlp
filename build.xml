@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:ivy="antlib:org.apache.ivy.ant" name="emr-vis-nlp" default="run" basedir=".">
 	<description>Builds and runs the project emr-vis-nlp.</description>
-    <import file="nbproject/build-impl.xml"/>
+    <!-- <import file="nbproject/build-impl.xml"/> -->
 	
 	<!-- set global properties for this build -->
 	<property name="lib.dir" value="lib" />
@@ -21,6 +21,8 @@
 	<target name="compile" description="--> compile the source" >
 		<!-- Create timestamp -->
 		<tstamp/>
+		<!-- check for depencies via ivy -->
+		<ivy:retrieve />
 		<!-- Compile the java code from ${src.dir} into ${build.dir} -->
 		<mkdir dir="${build.dir}" />
 		<javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="lib.path.id" includeAntRuntime="false" />

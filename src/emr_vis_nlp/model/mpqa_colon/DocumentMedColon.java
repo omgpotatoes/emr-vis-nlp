@@ -1,5 +1,6 @@
 package emr_vis_nlp.model.mpqa_colon;
 
+import emr_vis_nlp.model.TextInstance;
 import emr_vis_nlp.model.Document;
 import java.io.*;
 import java.util.*;

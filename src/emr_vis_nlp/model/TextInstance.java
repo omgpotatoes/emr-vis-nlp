@@ -1,4 +1,4 @@
-package emr_vis_nlp.model.mpqa_colon;
+package emr_vis_nlp.model;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -200,7 +200,7 @@ public class MpqaColonMainModel implements MainModel {
 //    }
     
     @Override
-    public void setSelectedAttributes(List<Boolean> selectedAttributes) {
+    public void setEnabledAttributes(List<Boolean> selectedAttributes) {
         // copy values from old list to new list
         // ensure same length
         if (attributeEnabledList.size() != selectedAttributes.size()) {
@@ -265,7 +265,7 @@ public class MpqaColonMainModel implements MainModel {
     }
 
     @Override
-    public List<Boolean> getAllSelectedDocuments() {
+    public List<Boolean> getIsDocumentEnabledList() {
         return documentEnabledList;
     }
     
@@ -275,7 +275,7 @@ public class MpqaColonMainModel implements MainModel {
     }
 
     @Override
-    public List<Boolean> getAllSelectedAttributes() {
+    public List<Boolean> getIsAttributeEnabledList() {
         return attributeEnabledList;
     }
     
@@ -698,5 +698,21 @@ public class MpqaColonMainModel implements MainModel {
 //        
 //        
 //    }
+
+    @Override
+    public void setIsAttributeEnabled(int globalAttrID, boolean isEnabled) {
+        attributeEnabledList.remove(globalAttrID);
+        attributeEnabledList.add(globalAttrID, isEnabled);
+    }
+
+    @Override
+    public void setIsAttributeEnabled(String attrName, boolean isEnabled) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setIsDocumentEnabled(int globalDocID, boolean isEnabled) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
     
 }

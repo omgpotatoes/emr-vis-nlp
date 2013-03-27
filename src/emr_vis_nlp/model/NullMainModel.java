@@ -1,11 +1,9 @@
 package emr_vis_nlp.model;
 
 import emr_vis_nlp.controller.MainController;
-import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.swing.table.TableModel;
-import javax.swing.text.AbstractDocument;
 
 /**
  * Empty model for use when no dataset is loaded.
@@ -54,28 +52,28 @@ public class NullMainModel implements MainModel {
 //    }
     
     @Override
-    public void setSelectedAttributes(List<Boolean> selectedAttributes) {
-        throw new UnsupportedOperationException();
+    public void setEnabledAttributes(List<Boolean> selectedAttributes) {
+        ;
     }
 
     @Override
     public List<Document> getAllDocuments() {
-        throw new UnsupportedOperationException();
+        return new ArrayList<Document>();
     }
 
     @Override
-    public List<Boolean> getAllSelectedDocuments() {
-        throw new UnsupportedOperationException();
+    public List<Boolean> getIsDocumentEnabledList() {
+        return new ArrayList<Boolean>();
     }
     
     @Override
     public List<String> getAllAttributes() {
-        throw new UnsupportedOperationException();
+        return new ArrayList<String>();
     }
 
     @Override
-    public List<Boolean> getAllSelectedAttributes() {
-        throw new UnsupportedOperationException();
+    public List<Boolean> getIsAttributeEnabledList() {
+        return new ArrayList<Boolean>();
     }
 
 //    @Override
@@ -132,5 +130,20 @@ public class NullMainModel implements MainModel {
 //    public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId) {
 //        throw new UnsupportedOperationException("Not supported yet.");
 //    }
+
+    @Override
+    public void setIsAttributeEnabled(int globalAttrID, boolean isEnabled) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setIsAttributeEnabled(String attrName, boolean isEnabled) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void setIsDocumentEnabled(int globalDocID, boolean isEnabled) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
     
 }
