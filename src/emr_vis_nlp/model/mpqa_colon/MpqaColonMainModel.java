@@ -1,9 +1,11 @@
-package emr_vis_nlp.model;
+package emr_vis_nlp.model.mpqa_colon;
 
 import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.ml.MLPredictor;
 import emr_vis_nlp.ml.deprecated.RuntimeIndicatorPrediction;
 import emr_vis_nlp.ml.deprecated.SimpleSQMatcher;
+import emr_vis_nlp.model.Document;
+import emr_vis_nlp.model.MainModel;
 import emr_vis_nlp.model.mpqa_colon.Dataset;
 import emr_vis_nlp.model.mpqa_colon.DatasetTermTranslator;
 import java.awt.Color;

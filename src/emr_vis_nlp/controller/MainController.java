@@ -1,5 +1,6 @@
 package emr_vis_nlp.controller;
 
+import emr_vis_nlp.model.mpqa_colon.MpqaColonMainModel;
 import emr_vis_nlp.ml.MLPredictor;
 import emr_vis_nlp.ml.deprecated.DeprecatedMLPredictor;
 import emr_vis_nlp.view.DocDetailsTableModel;
