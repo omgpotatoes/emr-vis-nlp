@@ -1,5 +1,6 @@
 package emr_vis_nlp.controller;
 
+import emr_vis_nlp.ml.PredictionCertaintyTuple;
 import emr_vis_nlp.model.mpqa_colon.MpqaColonMainModel;
 import emr_vis_nlp.ml.MLPredictor;
 import emr_vis_nlp.ml.deprecated.DeprecatedMLPredictor;
@@ -14,6 +15,7 @@ import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import emr_vis_nlp.view.doc_grid.DocumentGrid.DocGridDragControl;
 import emr_vis_nlp.view.doc_grid.DocumentGridTable;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
+import emr_vis_nlp.view.nested_grid.NestedFisheyeGrid;
 import java.io.File;
 import java.util.*;
 import javax.swing.JComponent;
@@ -76,6 +78,10 @@ public class MainController {
      * current document grid component (if any)
      */
     private DocumentGrid documentGrid = null;
+    /**
+     * piccolo2d-based interactive nested grid layout
+     */
+    private NestedFisheyeGrid nestedFisheyeGrid = null;
     /**
      * backing table for current document grid (if any)
      */
@@ -482,10 +488,10 @@ public class MainController {
     public DocumentGrid buildDocumentGrid() {
 
         // default values for axes; these should be eliminated and overridden
-        String xAxisAttrName = "Indicator_9";
-        String yAxisAttrName = "Indicator_21";
+        String xAxisAttrName = "Indicator_26";
+        String yAxisAttrName = "Indicator_4";
         String shapeAttrName = "";
-        String colorAttrName = "";
+        String colorAttrName = "INDICATOR_19B";
         if (docGridSelectionModel != null) {
             // if docGridSelectionModel == null, something probably wasn't initialized correctly in the mainview?
             xAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getXAxisAttribute();
@@ -528,6 +534,14 @@ public class MainController {
             documentGrid.updateShapeAttr(shapeAttrName);
             documentGrid.updateColorAttr(colorAttrName);
         }
+        
+        // update nested grid
+        if (nestedFisheyeGrid != null) {
+            nestedFisheyeGrid.setAttrNameX(xAxisAttrName);
+            nestedFisheyeGrid.setAttrNameY(yAxisAttrName);
+            nestedFisheyeGrid.setAttrNameColor(colorAttrName);
+        }
+        
     }
 
     /**
@@ -577,6 +591,9 @@ public class MainController {
     public void resetDocGridView() {
         if (documentGrid != null) {
             documentGrid.resetView();
+        }
+        if (nestedFisheyeGrid != null) {
+            nestedFisheyeGrid.refreshView();
         }
     }
     
@@ -711,6 +728,20 @@ public class MainController {
             documentGrid.setFisheyeEnabled(enableFisheye);
     }
     
-    
+    public NestedFisheyeGrid buildNestedGrid() {
+        // default values for axes; these should be eliminated and overridden
+        String xAxisAttrName = "Indicator_26";
+        String yAxisAttrName = "Indicator_4";
+        String colorAttrName = "INDICATOR_19B";
+        if (docGridSelectionModel != null) {
+            // if docGridSelectionModel == null, something probably wasn't initialized correctly in the mainview?
+            xAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getXAxisAttribute();
+            yAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getYAxisAttribute();
+            colorAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getColorAttribute();
+        }
+
+        nestedFisheyeGrid = new NestedFisheyeGrid(model.getAllAttributes(), model.getAllDocuments(), model.getIsDocumentEnabledList(), xAxisAttrName, yAxisAttrName, colorAttrName);
+        return nestedFisheyeGrid;
+    }
     
 }

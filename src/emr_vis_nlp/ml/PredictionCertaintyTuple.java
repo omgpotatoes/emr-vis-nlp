@@ -1,5 +1,5 @@
 
-package emr_vis_nlp.model;
+package emr_vis_nlp.ml;
 
 /**
  * Tuple representing back-end prediction and associated certainty for a given attribute.

@@ -13,6 +13,7 @@ import emr_vis_nlp.view.MainViewGlassPane;
 import emr_vis_nlp.view.VarDatasetRatioRenderer;
 import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
+import emr_vis_nlp.view.nested_grid.NestedFisheyeGrid;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -72,6 +73,10 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
      * object for document-grid layout
      */
     private DocumentGrid documentGrid;
+    /*
+     * object for nested grid layout
+     */
+    private NestedFisheyeGrid nestedGrid;
     /*
      * panel for supplying a search query
      */
@@ -664,6 +669,12 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             int newHeight = documentGrid.getHeight();
             documentGrid.resetSize(newWidth, newHeight);
         }
+        // update size of nested grid
+        if (nestedGrid != null) {
+            int newWidth = nestedGrid.getWidth();
+            int newHeight = nestedGrid.getHeight();
+            nestedGrid.updateSize(newWidth, newHeight);
+        }
         // also, update the selection table (will need to redraw VarBarChartForCells)
         if (docGridSelectionTableModel != null) {
             docGridSelectionTableModel.resetVarBarCharts();
@@ -721,38 +732,43 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     }
 
     public void rebuildDocumentGridView() {
-        documentGrid = controller.buildDocumentGrid();
+//        documentGrid = controller.buildDocumentGrid();
+        nestedGrid = controller.buildNestedGrid();
         boolean enableFisheye = jToggleButtonFisheye.isSelected();
         controller.setFisheyeEnabled(enableFisheye);
-        jSplitPaneDocGrid.setBottomComponent(documentGrid);
+//        jSplitPaneDocGrid.setBottomComponent(documentGrid);
+        jSplitPaneDocGrid.setBottomComponent(nestedGrid);
         updateDocumentGridSize();
 //        controller.updateDocumentGrid();
 //        updateDocumentGridSize();
+        
         // rebuild the JSearchPanel
         // adopted from TreeMap.java demo
-        search = controller.getDocumentGrid().getSearchQuery().createSearchPanel();
-        search.setShowResultCount(true);
-        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
-        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
-        final JFastLabel title = new JFastLabel("");
-        title.setVerticalAlignment(SwingConstants.BOTTOM);
+        if (documentGrid != null) {
+            search = controller.getDocumentGrid().getSearchQuery().createSearchPanel();
+            search.setShowResultCount(true);
+            search.setBorder(BorderFactory.createEmptyBorder(5, 5, 4, 0));
+            search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+            final JFastLabel title = new JFastLabel("");
+            title.setVerticalAlignment(SwingConstants.BOTTOM);
 //        final JFastLabel title = new JFastLabel("                 ");
 //        title.setPreferredSize(new Dimension(350, 20));
 //        title.setVerticalAlignment(SwingConstants.BOTTOM);
 //        title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
 //        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
 //        Box box = UILib.getBox(new Component[]{title,search}, true, 10, 3, 0);
-        Box box = UILib.getBox(new Component[]{search}, true, 0, 0, 0);
-        // TODO fix visibility!!
-        jPanelSearchContainer.removeAll();
-        jPanelSearchContainer.invalidate();
-        jPanelSearchContainer.setLayout(new FlowLayout());
-        jPanelSearchContainer.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-        jPanelSearchContainer.add(box);
+            Box box = UILib.getBox(new Component[]{search}, true, 0, 0, 0);
+            // TODO fix visibility!!
+            jPanelSearchContainer.removeAll();
+            jPanelSearchContainer.invalidate();
+            jPanelSearchContainer.setLayout(new FlowLayout());
+            jPanelSearchContainer.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+            jPanelSearchContainer.add(box);
 //        jPanelSearchContainer.add(new JButton("testbutton")); // for testing only
-        jPanelSearchContainer.revalidate();
-        UILib.setColor(jPanelSearchContainer, this.getBackground(), Color.black);
+            jPanelSearchContainer.revalidate();
+            UILib.setColor(jPanelSearchContainer, this.getBackground(), Color.black);
 //        repaint();
+        }
     }
     
     @Override

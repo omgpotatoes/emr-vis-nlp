@@ -5,7 +5,7 @@ import emr_vis_nlp.ml.MLPredictor;
 import emr_vis_nlp.ml.Prediction;
 import emr_vis_nlp.ml.PredictorStatistics;
 import emr_vis_nlp.model.MainModel;
-import emr_vis_nlp.model.PredictionCertaintyTuple;
+import emr_vis_nlp.ml.PredictionCertaintyTuple;
 import emr_vis_nlp.model.mpqa_colon.DatasetTermTranslator;
 import java.awt.Color;
 import java.util.*;

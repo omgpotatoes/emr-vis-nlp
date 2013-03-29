@@ -2,7 +2,6 @@ package emr_vis_nlp.ml;
 
 import emr_vis_nlp.model.Document;
 import emr_vis_nlp.model.MainModel;
-import emr_vis_nlp.model.PredictionCertaintyTuple;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
