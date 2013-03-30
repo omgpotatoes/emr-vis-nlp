@@ -540,6 +540,7 @@ public class MainController {
             nestedFisheyeGrid.setAttrNameX(xAxisAttrName);
             nestedFisheyeGrid.setAttrNameY(yAxisAttrName);
             nestedFisheyeGrid.setAttrNameColor(colorAttrName);
+            nestedFisheyeGrid.refreshView();
         }
         
     }

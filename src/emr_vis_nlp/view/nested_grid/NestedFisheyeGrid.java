@@ -112,16 +112,17 @@ public class NestedFisheyeGrid extends PCanvas {
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent arg0) {
-                resetBounds();
+                refreshVisualization(false);
             }
         });
-
-
+        
     }
     
-    public void resetBounds() {
+    public void refreshVisualization(boolean doAnimate) {
         glyphNode.setBounds(getX(), getY(), getWidth() - 1, getHeight() - 1);
-        glyphNode.layoutChildren(false);
+        glyphNode.layoutChildren(doAnimate);
+//        invalidate();
+        repaint();
     }
 
     /* getters and setters */
@@ -132,6 +133,7 @@ public class NestedFisheyeGrid extends PCanvas {
 
     public void setAttrNameColor(String attrNameColor) {
         this.attrNameColor = attrNameColor;
+//        refreshVisualization(animate);
     }
 
     public String getAttrNameX() {
@@ -140,8 +142,7 @@ public class NestedFisheyeGrid extends PCanvas {
 
     public void setAttrNameX(String attrNameX) {
         this.attrNameX = attrNameX;
-        glyphNode.layoutChildren(animate);
-        resetBounds();
+//        refreshVisualization(animate);
     }
 
     public String getAttrNameY() {
@@ -150,8 +151,7 @@ public class NestedFisheyeGrid extends PCanvas {
 
     public void setAttrNameY(String attrNameY) {
         this.attrNameY = attrNameY;
-        glyphNode.layoutChildren(animate);
-        resetBounds();
+//        refreshVisualization(animate);
     }
 
     public List<String> getAttrColorVals() {
@@ -160,8 +160,6 @@ public class NestedFisheyeGrid extends PCanvas {
 
     public void setAttrColorVals(List<String> attrColorVals) {
         this.attrValsColor = attrColorVals;
-        glyphNode.layoutChildren(animate);
-        resetBounds();
     }
 
     public List<String> getAttrXVals() {
@@ -183,11 +181,11 @@ public class NestedFisheyeGrid extends PCanvas {
     public void updateSize(int widthPx, int heightPx) {
         this.widthPx = widthPx;
         this.heightPx = heightPx;
-        resetBounds();
+        refreshVisualization(animate);
     }
     
     public void refreshView() {
-        glyphNode.layoutChildren(animate);
+        refreshVisualization(animate);
     }
     
     public void updateAttrVals() {
@@ -257,6 +255,7 @@ public class NestedFisheyeGrid extends PCanvas {
                 DocGridNode docGridNode = docGridNodes.get(d);
                 docGridNode.setValIndexX(-1);
                 docGridNode.setValIndexY(-1);
+                docGridNode.setValIndexColor(-1);
                 docGridNode.setGlobalX(-1);
                 docGridNode.setGlobalY(-1);
             }
@@ -393,10 +392,10 @@ public class NestedFisheyeGrid extends PCanvas {
             // pre-compute item counts at which we should switch to next cell
             // make sure to account for blank glyph space between cats!
             int numGaps = attrValsX.size()-1;
-            int[] gridEndingGlyphCountsX = new int[attrValsY.size()];
+            int[] gridEndingGlyphCountsX = new int[attrValsX.size()];
             int counter = 0;
-            for (int y=0; y<attrValsY.size(); y++) {
-                int pxInRegion = (int)((widthPx-numGaps*glyphWidthPx) * regionPercsY[y]);
+            for (int x=0; x<attrValsX.size(); x++) {
+                int pxInRegion = (int)((widthPx-numGaps*glyphWidthPx) * regionPercsX[x]);
                 int glyphsPerRowWithinCol = pxInRegion / glyphWidthPx;
                 // reduce # of glyphs by 1, to ensure a buffer?
                 if (glyphsPerRowWithinCol > 1) {
@@ -405,13 +404,13 @@ public class NestedFisheyeGrid extends PCanvas {
                     glyphsPerRowWithinCol = 1;
                 }
                 counter += glyphsPerRowWithinCol;
-                gridEndingGlyphCountsX[y] = counter;
+                gridEndingGlyphCountsX[x] = counter;
             }
             numGaps = attrValsY.size()-1;
-            int[] gridEndingGlyphCountsY = new int[attrValsX.size()];
+            int[] gridEndingGlyphCountsY = new int[attrValsY.size()];
             counter = 0;
-            for (int x=0; x<attrValsX.size(); x++) {
-                int pxInRegion = (int)((heightPx-numGaps*glyphHeightPx) * regionPercsX[x]);
+            for (int y=0; y<attrValsY.size(); y++) {
+                int pxInRegion = (int)((heightPx-numGaps*glyphHeightPx) * regionPercsY[y]);
                 int glyphsPerColWithinRow = pxInRegion / glyphHeightPx;
                 // reduce # of glyphs by 1, to ensure a buffer?
                 if (glyphsPerColWithinRow > 1) {
@@ -420,7 +419,7 @@ public class NestedFisheyeGrid extends PCanvas {
                     glyphsPerColWithinRow = 1;
                 }
                 counter += glyphsPerColWithinRow;
-                gridEndingGlyphCountsY[x] = counter;
+                gridEndingGlyphCountsY[y] = counter;
             }
             
             // keep track of how far along we are for each of the meta-grids
@@ -797,8 +796,10 @@ public class NestedFisheyeGrid extends PCanvas {
 
 //                float y = (float) getY() + TEXT_Y_OFFSET;
 //                float x = (float) getX() + TEXT_X_OFFSET;
-                float y = (float) adjustedBounds.getMinY() + TEXT_Y_OFFSET;
-                float x = (float) adjustedBounds.getMinX() + TEXT_X_OFFSET;
+//                float y = (float) adjustedBounds.getMinY() + TEXT_Y_OFFSET;
+//                float x = (float) adjustedBounds.getMinX() + TEXT_X_OFFSET;
+                float y = (float) getY()+bufferPx + TEXT_Y_OFFSET;
+                float x = (float) getX()+bufferPx + TEXT_X_OFFSET;
                 g2.drawString(document.getName(), x, y);
                 if (hasWidthFocus && hasHeightFocus) {
                     // draw full text of document
@@ -809,10 +810,10 @@ public class NestedFisheyeGrid extends PCanvas {
 //                    g2.drawString((String) lines.get(i), (float) getX() + CalendarNode.TEXT_X_OFFSET, y);
 //                }
 //                paintContext.popClip(getBoundsReference());
-//                    paintContext.pushClip(getBoundsReference());
+                    paintContext.pushClip(getBoundsReference());
 //                    g2.drawString(document.getText(), x, y);
                     drawStringMultiline(g2, DEFAULT_FONT, document.getText(), xPos, yPos, width, height);
-//                    paintContext.popClip(getBoundsReference());
+                    paintContext.popClip(getBoundsReference());
                 }
             }
         }

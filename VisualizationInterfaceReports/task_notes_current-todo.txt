@@ -1,22 +1,20 @@
 
 Alex's emr-vis-nlp to-do list
-(last update: mar 22)
+(last update: mar 29)
 (FYI: code available at https://github.com/omgpotatoes/emr-vis-nlp)
 (FYI: open issues being tracked at https://github.com/omgpotatoes/emr-vis-nlp/issues?state=open)
 
-document-grid view:
-- (top priority) revisit layout: implement sorted-grid-within-grid layout, in place of the current scatterplot-within-grid layout
--- grid-aware distortion, to control/eliminate occlusion and disorientation
--- incorporate lightweight animation, if possible
--- keep all document text in thumbnails w/ highlights, as opposed to only including highlights
-- (secondary priority) enhance interactive histograms: update histograms to indicate % included for active search query
-- (secondary priority) enhance term highlighting: 
--- for active query, pulling out text snippets in which query occurs?
+primary focus:
+- continue to implement nested grid view:
+-- incorporate old features: drag-to-reassign, interactive highlighted text, labels for grid units
+- assign glyph sizes to optimally use space
+- full document summarization (ie, full contents of old popup) within zoomed glyph
+-- document "summarization" with respect to given attribute: build summary based on portions of documents containing highest-rated features for target attribute (for particular attribute)
 
-misc:
-- (top priority) discuss interface between back-and-front-ends; refactor my ML/NLP interface, and discuss the feasibility of its implementation with Phuong
-- (secondary priority) continuing to work on documentation, general refactoring
--- ensure that we have some high-level, big-picture documentation!
+secondary foci:
+- rough implementation of document-by-variable feature table, with top-rated features (for highest-probability class?) given within cell
+- second refactoring of data model, ml predictor interfaces
+- continuing to work on general documentation (especially high-level, big-picture!), general refactoring
 
 other low-priority items:
 - rename "skew" column; possibly reorganize attribute selection table as a tree?
