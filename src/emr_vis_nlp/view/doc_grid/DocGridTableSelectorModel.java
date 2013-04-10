@@ -205,7 +205,7 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
                 // inform controller of change
                 controller.updateDocumentGrid();
                 // reset view
-                controller.resetDocGridView();
+//                controller.resetDocGridView();
                 fireTableDataChanged();
             }
         }

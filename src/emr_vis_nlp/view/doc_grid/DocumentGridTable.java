@@ -19,6 +19,19 @@ public class DocumentGridTable extends Table {
     public static final String NODE_ISACTIVE = "isactive";
     public static final String CONTINUOUS_SUFFIX = "_range";
     
+    public static final String HEIGHT_FOCUS = "heightfocus";
+    public static final String WIDTH_FOCUS = "widthfocus";
+    public static final String SELECT_FOCUS = "selectfocus";
+    public static final String GLOBAL_ROW = "globalrow";
+    public static final String GLOBAL_COL = "globalcol";
+    
+    public static final String WIDTH = "width";
+    public static final String HEIGHT = "height";
+    public static final String WIDTH_START = "widthstart";
+    public static final String HEIGHT_START = "heightstart";
+    public static final String WIDTH_END = "widthend";
+    public static final String HEIGHT_END = "heightend";
+    
     private Map<String, Map<String, Integer>> attrToValueToIntMap;
     
     /**
@@ -45,6 +58,18 @@ public class DocumentGridTable extends Table {
         // ensure that X2, Y2 are enabled
         addColumn(VisualItem.X2, double.class);
         addColumn(VisualItem.Y2, double.class);
+        addColumn(WIDTH, double.class);  // width, height, etc should really be ints, but using double here to maintain consistence with default x, y columns
+        addColumn(HEIGHT, double.class);
+        addColumn(WIDTH_START, double.class);
+        addColumn(HEIGHT_START, double.class);
+        addColumn(WIDTH_END, double.class);
+        addColumn(HEIGHT_END, double.class);
+        addColumn(HEIGHT_FOCUS, boolean.class);
+        addColumn(WIDTH_FOCUS, boolean.class);
+        addColumn(SELECT_FOCUS, boolean.class);
+        addColumn(GLOBAL_ROW, int.class);
+        addColumn(GLOBAL_COL, int.class);
+        
         for (String attrName : allAttributes) {
             if (!hasColumn(attrName)) {
                 addColumn(attrName, String.class);
@@ -100,6 +125,17 @@ public class DocumentGridTable extends Table {
                 set(rowCounter, attrName, value);
                 set(rowCounter, attrName+CONTINUOUS_SUFFIX, valueInt);
             }
+            set(rowCounter, HEIGHT_FOCUS, false);
+            set(rowCounter, WIDTH_FOCUS, false);
+            set(rowCounter, SELECT_FOCUS, false);
+            set(rowCounter, GLOBAL_ROW, -1);
+            set(rowCounter, GLOBAL_COL, -1);
+            set(rowCounter, WIDTH, 0);
+            set(rowCounter, HEIGHT, 0);
+            set(rowCounter, WIDTH_START, 0);
+            set(rowCounter, HEIGHT_START, 0);
+            set(rowCounter, WIDTH_START, 0);
+            set(rowCounter, HEIGHT_START, 0);
             
             rowCounter++;
         }

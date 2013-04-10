@@ -18,11 +18,15 @@
 	</path>
   
 	
+        <target name="ivy_retrieve" description="--> retrieves dependencies via ivy" >
+		<!-- check for depencies via ivy -->
+		<ivy:retrieve />
+        </target>
+        
+        
 	<target name="compile" description="--> compile the source" >
 		<!-- Create timestamp -->
 		<tstamp/>
-		<!-- check for depencies via ivy -->
-		<ivy:retrieve />
 		<!-- Compile the java code from ${src.dir} into ${build.dir} -->
 		<mkdir dir="${build.dir}" />
 		<javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="lib.path.id" includeAntRuntime="false" />
@@ -37,7 +41,7 @@
 		</java>
 	</target>
 	
-	<target name="run" depends="compile,runonly" description="--> compiles project, then executes the default main class" >
+	<target name="run" depends="ivy_retrieve,compile,runonly" description="--> retrieves libraries, compiles project, then executes the default main class" >
 	</target>
 	
 	<target name="clean" description="--> cleans up the junk we've created here" >

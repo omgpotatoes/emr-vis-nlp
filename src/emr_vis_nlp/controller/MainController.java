@@ -533,6 +533,7 @@ public class MainController {
             documentGrid.updateYAxis(yAxisAttrName);
             documentGrid.updateShapeAttr(shapeAttrName);
             documentGrid.updateColorAttr(colorAttrName);
+            documentGrid.updateView(false);
         }
         
         // update nested grid
@@ -743,6 +744,19 @@ public class MainController {
 
         nestedFisheyeGrid = new NestedFisheyeGrid(model.getAllAttributes(), model.getAllDocuments(), model.getIsDocumentEnabledList(), xAxisAttrName, yAxisAttrName, colorAttrName);
         return nestedFisheyeGrid;
+    }
+    
+    public String getDocumentSummary(int globalDocId, String globalAttrName) {
+        if (model != null) {
+            // convert name to id
+            // TODO : this is super-clunky! refactor to use a single class for attribute encapsulation!
+            List<String> allAttrs = model.getAllAttributes();
+            int globalAttrId = allAttrs.indexOf(globalAttrName);
+            if (predictor != null) {
+                return predictor.buildSummary(globalDocId, globalAttrId);
+            }
+        }
+        return "";
     }
     
 }

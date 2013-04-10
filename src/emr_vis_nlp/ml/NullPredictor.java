@@ -61,5 +61,15 @@ public class NullPredictor extends MLPredictor {
     public void loadPredictions() {
         ;
     }
+
+    @Override
+    public Map<String, Double> getTermWeightsForDocForAttr(int globalDocId, int globalAttrId) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Map<String, Double> getTermWeightsForDocForAttr(int globalDocId, String globalAttrName) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
     
 }

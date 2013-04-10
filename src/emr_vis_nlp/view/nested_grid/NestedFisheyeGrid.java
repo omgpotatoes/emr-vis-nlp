@@ -6,7 +6,9 @@ import edu.umd.cs.piccolo.event.PBasicInputEventHandler;
 import edu.umd.cs.piccolo.event.PInputEvent;
 import edu.umd.cs.piccolo.util.PBounds;
 import edu.umd.cs.piccolo.util.PPaintContext;
+import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.model.Document;
+import emr_vis_nlp.view.MainViewGlassPane;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -16,6 +18,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import javax.swing.text.AbstractDocument;
 
 /**
  * piccolo2d-based grid-within-grid layout for document glyphs.
@@ -30,17 +33,27 @@ public class NestedFisheyeGrid extends PCanvas {
     static int TEXT_X_OFFSET = 1;
     static int TEXT_Y_OFFSET = 10;
     static int DEFAULT_ANIMATION_MILLIS = 250;
-    static float FOCUS_SIZE_PERCENT = 0.65f;
+    static float FOCUS_SIZE_PERCENT = 0.35f;
     static Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
     
+//    public static final Color[] GLYPH_COLOR_PALETTE = {
+//        new Color(176, 95, 220),
+//        new Color(91, 229, 108), 
+//        new Color(99, 148, 220),
+//        new Color(191, 48, 48), 
+//        new Color(18, 178, 37), 
+//        new Color(160, 82, 45), 
+//    };
     public static final Color[] GLYPH_COLOR_PALETTE = {
-        new Color(176, 95, 220),
-        new Color(91, 229, 108), 
-        new Color(99, 148, 220),
-        new Color(191, 48, 48), 
-        new Color(18, 178, 37), 
-        new Color(160, 82, 45), 
+        new Color(196, 115, 240),  //purple (255=white)
+        new Color(111, 249, 128),  //green 
+        new Color(119, 168, 240),  //blue
+        new Color(211, 88, 88),   //red
+        new Color(38, 198, 57),  // lime? green
+        new Color(180, 102, 65), // brown
     };
+    
+    private static MainController controller = MainController.getMainController();
     
     /**
      * all Documents to be displayed in this View
@@ -92,9 +105,17 @@ public class NestedFisheyeGrid extends PCanvas {
      * height for view, in pixels
      */
     private int heightPx = 400;
-    
+    /**
+     * use animation?
+     */
     private boolean animate = true;
-    
+    /**
+     * interactive glasspane for interacting with documents.
+     */
+    private MainViewGlassPane glassPane;
+    // tracks the last assigned max zoom size, so we can know when the zooming operation is complete
+    private int lastZoomWidth = -1;
+    private int lastZoomHeight = -1;
     
     public NestedFisheyeGrid(List<String> attributeNames, List<Document> documents, List<Boolean> documentEnabledFlags, String xAxisInitName, String yAxisInitName, String colorInitName) {
         this.documents = documents;
@@ -116,6 +137,8 @@ public class NestedFisheyeGrid extends PCanvas {
             }
         });
         
+        glassPane = MainViewGlassPane.getGlassPane();
+        glassPane.setFisheyeGrid(this);
     }
     
     public void refreshVisualization(boolean doAnimate) {
@@ -211,6 +234,10 @@ public class NestedFisheyeGrid extends PCanvas {
     public class GlyphNode extends PNode {
         
         private List<DocGridNode> docGridNodes;
+        
+        // for tracking boundary locations
+        private List<Double> xBoundaryCoords;
+        private List<Double> yBoundaryCoords;
         
         public GlyphNode() {
             
@@ -337,7 +364,9 @@ public class NestedFisheyeGrid extends PCanvas {
             double[] regionCountsY = new double[attrValsY.size()];
             double[] regionPercsX = new double[attrValsX.size()];
             double[] regionPercsY = new double[attrValsY.size()];
-
+            
+            double regionSmoothingPerc = 0.05;  // give each region's axis 10% of the space by default
+            
             for (int x = 0; x < attrValsX.size(); x++) {
                 int valCounter = 0;
                 for (int y = 0; y < attrValsY.size(); y++) {
@@ -347,7 +376,7 @@ public class NestedFisheyeGrid extends PCanvas {
                 }
                 regionCountsX[x] = valCounter;
                 // NOTE: regionPercs considers all documents, not just enabled; is this what we want?
-                regionPercsX[x] = (double) valCounter / (double) documents.size();
+                regionPercsX[x] = ((double) valCounter / (double) documents.size()) * (1. - (regionSmoothingPerc*attrValsX.size())) + regionSmoothingPerc;
             }
             
             for (int y = 0; y < attrValsY.size(); y++) {
@@ -359,15 +388,63 @@ public class NestedFisheyeGrid extends PCanvas {
                 }
                 regionCountsY[y] = valCounter;
                 // NOTE: regionPercs considers all documents, not just enabled; is this what we want?
-                regionPercsY[y] = (double) valCounter / (double) documents.size();
+                regionPercsY[y] = ((double) valCounter / (double) documents.size()) * (1. - (regionSmoothingPerc*attrValsY.size())) + regionSmoothingPerc;
             }
 
             // TODO: compute height, width for each GridNode such that size is used as efficiently as possible!
             //  idea: could we frame this as a linear programming optimization problem?
+            
+            // problem: when dividing up space by % glyphs, some regions will always remain too small to accomodate glyphs
+            // idea: initialize each region with a fixed % of space, distribute remainder according to % glyphs
+            
+            // find total area, initialize glyph size by dividing up area evenly
+            double totalArea = widthPx * heightPx;
+            double glyphArea = totalArea / (double)docGridNodes.size();
+            int glyphWidthPx = (int)Math.sqrt(glyphArea);
+            int glyphHeightPx = (int)Math.sqrt(glyphArea);
+            
+            // iteratively shirink glyph area until glyphs fit in all nested grids
+            int glyphWidthShrinkIncrement = 1;
+            int glyphHeightShrinkIncrement = 1;
+            boolean doAllGlyphsFit;
+            int numGaps = attrValsX.size() - 1;
+            if (glyphWidthPx != 0 && glyphHeightPx != 0) {
+            do {
+                doAllGlyphsFit = true;
+                for (int x = 0; x < attrValsX.size(); x++) {
+                    int pxInColRegion = (int) ((widthPx - numGaps * glyphWidthPx) * regionPercsX[x]);
+                    int glyphsPerRowWithinColRegion = pxInColRegion / glyphWidthPx;
 
+                    for (int y = 0; y < attrValsY.size(); y++) {
+                        int pxInRowRegion = (int) ((heightPx - numGaps * glyphHeightPx) * regionPercsY[y]);
+                        int glyphsPerColWithinRow = pxInRowRegion / glyphHeightPx;
+                        int numRowsInNestedGrid = glyphsPerColWithinRow;
+
+                        // see if this cell can fit all its glyphs; if not, shrink glyphs
+                        int maxNumGlyphsInCell = glyphsPerRowWithinColRegion * numRowsInNestedGrid;
+                        if (documentGlyphGrid[x][y] != null) {
+                            int numGlyphsInCell = documentGlyphGrid[x][y].size();
+                            if (numGlyphsInCell > maxNumGlyphsInCell) {
+                                glyphWidthPx -= glyphWidthShrinkIncrement;
+                                glyphHeightPx -= glyphHeightShrinkIncrement;
+                                doAllGlyphsFit = false;
+                                break;
+                            }
+                        }
+
+                    }
+                }
+            } while (!doAllGlyphsFit);
+            } else {
+                // this display has zero size; use default widths and heights to avoid exceptions (since nothing will be displayed, view isn't active)
+                glyphWidthPx = 60;
+                glyphHeightPx = 60;
+            }
+            
+            
             // for now, simply use fixed-size glyphs, set number per row based on 
-            int glyphWidthPx = 40;
-            int glyphHeightPx = 40;
+//            int glyphWidthPx = 60;
+//            int glyphHeightPx = 60;
             // for each column, determine # of items allowed
             int[] glyphsPerInnerRowInCol = new int[attrValsY.size()];
             for (int y=0; y<attrValsY.size(); y++) {
@@ -391,16 +468,17 @@ public class NestedFisheyeGrid extends PCanvas {
             
             // pre-compute item counts at which we should switch to next cell
             // make sure to account for blank glyph space between cats!
-            int numGaps = attrValsX.size()-1;
+//            int numGaps = attrValsX.size()-1;
             int[] gridEndingGlyphCountsX = new int[attrValsX.size()];
             int counter = 0;
             for (int x=0; x<attrValsX.size(); x++) {
                 int pxInRegion = (int)((widthPx-numGaps*glyphWidthPx) * regionPercsX[x]);
                 int glyphsPerRowWithinCol = pxInRegion / glyphWidthPx;
                 // reduce # of glyphs by 1, to ensure a buffer?
-                if (glyphsPerRowWithinCol > 1) {
-                    glyphsPerRowWithinCol--;
-                } else if (glyphsPerRowWithinCol == 0) {
+//                if (glyphsPerRowWithinCol > 1) {
+//                    glyphsPerRowWithinCol--;
+//                } 
+                if (glyphsPerRowWithinCol == 0) {
                     glyphsPerRowWithinCol = 1;
                 }
                 counter += glyphsPerRowWithinCol;
@@ -413,9 +491,10 @@ public class NestedFisheyeGrid extends PCanvas {
                 int pxInRegion = (int)((heightPx-numGaps*glyphHeightPx) * regionPercsY[y]);
                 int glyphsPerColWithinRow = pxInRegion / glyphHeightPx;
                 // reduce # of glyphs by 1, to ensure a buffer?
-                if (glyphsPerColWithinRow > 1) {
-                    glyphsPerColWithinRow--;
-                } else if (glyphsPerColWithinRow == 0) {
+//                if (glyphsPerColWithinRow > 1) {
+//                    glyphsPerColWithinRow--;
+//                } 
+                if (glyphsPerColWithinRow == 0) {
                     glyphsPerColWithinRow = 1;
                 }
                 counter += glyphsPerColWithinRow;
@@ -495,10 +574,14 @@ public class NestedFisheyeGrid extends PCanvas {
             // perform the actual node placement
             // pre-compute widths for when there's a focus
             double focusHeight = heightPx * FOCUS_SIZE_PERCENT;
+            lastZoomHeight = (int)focusHeight;
             double focusWidth = widthPx * FOCUS_SIZE_PERCENT;
-            double collapsedHeight = (heightPx - focusHeight) / (documents.size());
-            double collapsedWidth = (widthPx - focusWidth) / (documents.size());
-            
+            lastZoomWidth = (int)focusWidth;
+            // divide by number of global rows/cols
+            double collapsedHeight = (heightPx - focusHeight) / (globalRowCount+regionPercsY.length-1);
+//            double collapsedWidth = (widthPx - focusWidth) / (documents.size());
+            double collapsedWidth = (widthPx - focusWidth) / (globalColCount+regionPercsX.length-1);
+
             // reset counters
             documentGlyphGridCounter = new int[attrValsX.size()][attrValsY.size()];
             metaGridY = 0;
@@ -506,6 +589,9 @@ public class NestedFisheyeGrid extends PCanvas {
             metaGridX = 0;
             metaGridXThresh = gridEndingGlyphCountsX[metaGridX];
             
+            // trak coordinates where we should draw boundaries
+            xBoundaryCoords = new ArrayList<>();
+            yBoundaryCoords = new ArrayList<>();
             // track our current x, y positions
             double xOffset = 0;
             double yOffset = 0;
@@ -517,6 +603,7 @@ public class NestedFisheyeGrid extends PCanvas {
                     // add a buffer, to ensure gap between groups
 //                    currentRow++;
                     yOffset += glyphHeightPx;
+                    yBoundaryCoords.add(yOffset-(glyphHeightPx/2.));
                     if (metaGridY < gridEndingGlyphCountsY.length) {
                         metaGridYThresh = gridEndingGlyphCountsY[metaGridY];
                     } else {
@@ -544,6 +631,8 @@ public class NestedFisheyeGrid extends PCanvas {
                         // add a buffer, to ensure gap between groups
 //                        currentCol++;
                         xOffset += glyphWidthPx;
+                        // take note of position, for boundary-drawing later
+                        xBoundaryCoords.add(xOffset-(glyphWidthPx/2.));
                         if (metaGridX < gridEndingGlyphCountsX.length) {
                             metaGridXThresh = gridEndingGlyphCountsX[metaGridX];
                         } else {
@@ -631,24 +720,38 @@ public class NestedFisheyeGrid extends PCanvas {
         }
         
         
-        
-//        @Override
-//        protected void paint(PPaintContext paintContext) {
-//            Graphics2D g2 = paintContext.getGraphics();
-//            setPaint(Color.BLACK);
+        // paint's only responsibility (right now) is to draw the boundaries
+        @Override
+        protected void paint(PPaintContext paintContext) {
+//            super.paint(paintContext);
+            Graphics2D g2 = paintContext.getGraphics();
+            setPaint(Color.BLACK);
 //            g2.setPaint(getPaint());
-//            PBounds bounds = getBoundsReference();
+            PBounds bounds = getBoundsReference();
+            Point2D origin = bounds.getOrigin();
+            Dimension2D size = bounds.getSize();
+            int xPos = (int)origin.getX();
+            int yPos = (int)origin.getY();
+            int width = (int)size.getWidth();
+            int height = (int)size.getHeight();
 //            g2.fill(bounds);
-//            
-//        }
+            for (int x = 0; x < xBoundaryCoords.size() - 1; x++) {
+                int xCoord = xPos + xBoundaryCoords.get(x).intValue();
+                g2.drawLine(xCoord, yPos, xCoord, height);
+            }
+            for (int y = 0; y < yBoundaryCoords.size() - 1; y++) {
+                int yCoord = yPos + yBoundaryCoords.get(y).intValue();
+                g2.drawLine(yPos, yCoord, width, yCoord);
+            }
+        }
         
     }
 
 
-    public static class GridNode extends PNode {
+    public class GridNode extends PNode {
         
-        public static int BUFFER_WIDTH_PX = 5;
-        public static int BUFFER_HEIGHT_PX = 5;
+        public int BUFFER_WIDTH_PX = 5;
+        public int BUFFER_HEIGHT_PX = 5;
         
         protected boolean hasWidthFocus;
         protected boolean hasHeightFocus;
@@ -726,7 +829,11 @@ public class NestedFisheyeGrid extends PCanvas {
          * 
          */
         private int bufferPx = 2;
-
+        /**
+         * 
+         */
+        private boolean hasGlasspaneBeenTriggered = false;
+        
         public DocGridNode(int index, Document document, int valIndexX, int valIndexY) {
             this.index = index;
             this.document = document;
@@ -767,8 +874,6 @@ public class NestedFisheyeGrid extends PCanvas {
             this.valIndexColor = valIndexColor;
         }
         
-        
-        
         /**
          * Draw glyph along with currently-relevant text.
          * 
@@ -800,7 +905,7 @@ public class NestedFisheyeGrid extends PCanvas {
 //                float x = (float) adjustedBounds.getMinX() + TEXT_X_OFFSET;
                 float y = (float) getY()+bufferPx + TEXT_Y_OFFSET;
                 float x = (float) getX()+bufferPx + TEXT_X_OFFSET;
-                g2.drawString(document.getName(), x, y);
+//                g2.drawString(document.getName(), x, y);
                 if (hasWidthFocus && hasHeightFocus) {
                     // draw full text of document
                     // TODO : properly wrap text
@@ -812,7 +917,24 @@ public class NestedFisheyeGrid extends PCanvas {
 //                paintContext.popClip(getBoundsReference());
                     paintContext.pushClip(getBoundsReference());
 //                    g2.drawString(document.getText(), x, y);
-                    drawStringMultiline(g2, DEFAULT_FONT, document.getText(), xPos, yPos, width, height);
+                    drawStringMultiline(g2, DEFAULT_FONT, document.getName()+"   \n"+document.getText(), xPos, yPos, width, height);
+                    paintContext.popClip(getBoundsReference());
+                    // if we're done zooming in, load the glasspane
+                    if (!hasGlasspaneBeenTriggered) {
+                        hasGlasspaneBeenTriggered = true;
+                        AbstractDocument doc = glassPane.getAbstDoc();
+                        controller.writeDocTextWithHighlights(doc, index, attrNameColor);
+                        glassPane.setBackgroundColor(GLYPH_COLOR_PALETTE[valIndexColor]);
+                        glassPane.displaySizedPaneTimer((int)xPos, (int)yPos, (int)width, (int)height, DEFAULT_ANIMATION_MILLIS);
+                    } else {
+                        // just update glasspane's position
+                        glassPane.updateSizedPanePosition((int)xPos, (int)yPos, (int)width, (int)height);
+                    }
+                } else {
+                    hasGlasspaneBeenTriggered = false;
+                    // just draw the summary instead
+                    paintContext.pushClip(getBoundsReference());
+                    drawStringMultiline(g2, DEFAULT_FONT, controller.getDocumentSummary(index, attrNameColor), xPos, yPos, width, height);
                     paintContext.popClip(getBoundsReference());
                 }
             }
@@ -879,14 +1001,14 @@ public class NestedFisheyeGrid extends PCanvas {
         }
     }
 
-    /**
-     * PNode serving as a gap-filler between different groups of DocGridNodes,
-     * or for filling in non-full grid regions.
-     */
-    public static class NullGridNode extends GridNode {
-
-        @Override
-        protected void paint(PPaintContext paintContext) {
-        }
-    }
+//    /**
+//     * PNode serving as a gap-filler between different groups of DocGridNodes,
+//     * or for filling in non-full grid regions.
+//     */
+//    public static class NullGridNode extends GridNode {
+//
+//        @Override
+//        protected void paint(PPaintContext paintContext) {
+//        }
+//    }
 }

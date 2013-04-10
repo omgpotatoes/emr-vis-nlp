@@ -97,7 +97,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         initListeners();
         
         // init glasspane
-        glassPane = new MainViewGlassPane();
+//        glassPane = new MainViewGlassPane();
+        glassPane = MainViewGlassPane.getGlassPane();
         glassPane.addMouseListener(glassPane);
         setGlassPane(glassPane);
 
@@ -732,12 +733,12 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     }
 
     public void rebuildDocumentGridView() {
-//        documentGrid = controller.buildDocumentGrid();
-        nestedGrid = controller.buildNestedGrid();
+        documentGrid = controller.buildDocumentGrid();
+//        nestedGrid = controller.buildNestedGrid();
         boolean enableFisheye = jToggleButtonFisheye.isSelected();
         controller.setFisheyeEnabled(enableFisheye);
-//        jSplitPaneDocGrid.setBottomComponent(documentGrid);
-        jSplitPaneDocGrid.setBottomComponent(nestedGrid);
+        jSplitPaneDocGrid.setBottomComponent(documentGrid);
+//        jSplitPaneDocGrid.setBottomComponent(nestedGrid);
         updateDocumentGridSize();
 //        controller.updateDocumentGrid();
 //        updateDocumentGridSize();
