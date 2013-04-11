@@ -152,6 +152,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenuFile = new javax.swing.JMenu();
         jMenuItemLoadDataset = new javax.swing.JMenuItem();
+        jMenuML = new javax.swing.JMenu();
+        jMenuItemLoadPredictor = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("emr-vis-nlp");
@@ -529,6 +531,18 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         jMenuBar1.add(jMenuFile);
 
+        jMenuML.setText("ML");
+
+        jMenuItemLoadPredictor.setText("Load Prediction Model From File...");
+        jMenuItemLoadPredictor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemLoadPredictorActionPerformed(evt);
+            }
+        });
+        jMenuML.add(jMenuItemLoadPredictor);
+
+        jMenuBar1.add(jMenuML);
+
         setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -654,6 +668,25 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         controller.setFisheyeEnabled(enableFisheye);
     }//GEN-LAST:event_jToggleButtonFisheyeActionPerformed
 
+    private void jMenuItemLoadPredictorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemLoadPredictorActionPerformed
+        
+        // load a new MLPredictor from file
+        int returnVal = jFileChooser1.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = jFileChooser1.getSelectedFile();
+
+            // send doclist file to controller, instruct it to load new model
+            controller.setPredictor(file);
+
+        } else {
+            System.out.println("debug: \"Load Predictor\" action cancelled by user");
+        }
+        
+        
+        
+        
+    }//GEN-LAST:event_jMenuItemLoadPredictorActionPerformed
+
     public void updateDocTreemapSize() {
         // update size of treemap
         if (docTreeMapViewComponent != null) {
@@ -733,12 +766,13 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     }
 
     public void rebuildDocumentGridView() {
-        documentGrid = controller.buildDocumentGrid();
-//        nestedGrid = controller.buildNestedGrid();
+//        documentGrid = controller.buildDocumentGrid();
+//        jSplitPaneDocGrid.setBottomComponent(documentGrid);
+        nestedGrid = controller.buildNestedGrid();
+        jSplitPaneDocGrid.setBottomComponent(nestedGrid);
+        
         boolean enableFisheye = jToggleButtonFisheye.isSelected();
         controller.setFisheyeEnabled(enableFisheye);
-        jSplitPaneDocGrid.setBottomComponent(documentGrid);
-//        jSplitPaneDocGrid.setBottomComponent(nestedGrid);
         updateDocumentGridSize();
 //        controller.updateDocumentGrid();
 //        updateDocumentGridSize();
@@ -905,7 +939,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         MainModel model = new NullMainModel();
         controller.setModel(model);
         
-        MLPredictor predictor = new NullPredictor(model);
+        MLPredictor predictor = new NullPredictor();
         controller.setPredictor(predictor);
 
         // setup view
@@ -943,6 +977,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenu jMenuFile;
     private javax.swing.JMenuItem jMenuItemLoadDataset;
+    private javax.swing.JMenuItem jMenuItemLoadPredictor;
+    private javax.swing.JMenu jMenuML;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel5;

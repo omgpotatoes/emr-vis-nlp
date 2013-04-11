@@ -13,8 +13,7 @@ import javax.swing.text.AbstractDocument;
  */
 public class NullPredictor extends MLPredictor {
 
-    public NullPredictor(MainModel model) {
-        super(model);
+    public NullPredictor() {
     }
     
 //    @Override

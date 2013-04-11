@@ -67,7 +67,7 @@ public class NullMainModel implements MainModel {
     }
     
     @Override
-    public List<String> getAllAttributes() {
+    public List<String> getAllAttributeNames() {
         return new ArrayList<String>();
     }
 

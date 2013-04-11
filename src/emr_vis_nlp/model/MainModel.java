@@ -42,7 +42,7 @@ public interface MainModel {
      * 
      * @return List of names for all attributes in model
      */
-    public List<String> getAllAttributes();
+    public List<String> getAllAttributeNames();
     
     /** 
      * 

@@ -1,11 +1,15 @@
 package emr_vis_nlp.ml;
 
+import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.ml.deprecated.RuntimeIndicatorPrediction;
 import emr_vis_nlp.ml.deprecated.SimpleSQMatcher;
 import emr_vis_nlp.model.Document;
 import emr_vis_nlp.model.MainModel;
+import emr_vis_nlp.model.mpqa_colon.DatasetMedColonDoclist;
 import emr_vis_nlp.model.mpqa_colon.DatasetTermTranslator;
 import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -17,7 +21,11 @@ import javax.swing.text.AbstractDocument;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 /**
  * Abstract class for machine learning prediction models for use with the
@@ -38,33 +46,13 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
  */
 public abstract class MLPredictor {
     
-    /**
-     * Backing data source for which to build predictions
-     */
-    protected MainModel model;
+    
+    protected List<Attribute> attributeList;
     
     /*
      * For each Document, map from each attribute name to prediction
      */
     protected List<Map<String, PredictionCertaintyTuple>> predictionMapList;
-    
-    /**
-     * List of all attributes in dataset
-     */
-    protected List<String> attributeList;
-    
-    /**
-     * List of all documents in dataset
-     */
-    protected List<Document> documentList;
-    
-    public MLPredictor(MainModel model) {
-        this.model = model;
-        attributeList = model.getAllAttributes();
-        documentList = model.getAllDocuments();
-        predictionMapList = new ArrayList<>();
-        loadPredictions();
-    }
     
     public boolean hasPrediction(int globalDocId, String attrName) {
         Map<String, PredictionCertaintyTuple> docPredMap = predictionMapList.get(globalDocId);
@@ -86,6 +74,22 @@ public abstract class MLPredictor {
         return predictionMapList.get(globalDocId);
     }
     
+    public List<Attribute> getAttributes() {
+        return attributeList;
+    }
+    
+    public List<String> getAttributeNames() {
+        if (attributeList == null || attributeList.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        List<String> attrNames = new ArrayList<>();
+        for (Attribute attribute : attributeList) {
+            attrNames.add(attribute.getName());
+        }
+        return attrNames;
+        
+    }
     
     /**
      * Loads and/or generates appropriate attribute predictions for the model
@@ -109,7 +113,7 @@ public abstract class MLPredictor {
      */
     public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId) {
         // if we have a predictor for the doc, return true else false
-        String selectedAttr = attributeList.get(globalAttrId);
+        String selectedAttr = attributeList.get(globalAttrId).getName();
         // translate old raw name from backend (ie, Indicator_25) into its more-useful extended form
         // TODO : this is colonoscopy-specific; ideally, we should move the entire translation proceedure into the model-specific code, to isolate the front-end from this!
         selectedAttr = DatasetTermTranslator.getRevAttrTranslation(selectedAttr);
@@ -124,6 +128,7 @@ public abstract class MLPredictor {
     
     /**
      * Given a document ID and attribute ID, builds a highlighted version of that document's text. This highlighted text is written into abstDoc.
+     * TODO : move this out of MLPredictor?
      * 
      * @param abstDoc AbstractDocument whose content is to be replaced with that of the highlighted document text
      * @param globalDocId global int identifier for Document; serves as index into documentList
@@ -143,7 +148,7 @@ public abstract class MLPredictor {
             System.out.println("err: could not reset doc text for doc " + globalDocId + " focus window");
         }
 
-        String docText = documentList.get(globalDocId).getText();
+        String docText = MainController.getMainController().getDocument(globalDocId).getText();
         int minFontSize = 12;
         int maxFontSize = 32;
         
@@ -160,7 +165,7 @@ public abstract class MLPredictor {
 
         // TODO make sure it's an indicator for which we're doing prediction! else we get an exception here
         // translate selected attr into its deprecated form
-        String selectedAttr = attributeList.get(globalAttrId);
+        String selectedAttr = attributeList.get(globalAttrId).getName();
         selectedAttr = DatasetTermTranslator.getRevAttrTranslation(selectedAttr);
 //        Map<String, Boolean> abnormalNameMap = DatasetVarsTableModel.getAbnormalNameMap();
         Map<String, Boolean> predictionNameMap = RuntimeIndicatorPrediction.getPredictionNameMap();
@@ -213,7 +218,7 @@ public abstract class MLPredictor {
                     String matchedSubstring = varRegExpMatcher.group();
 
                     // debug
-                    System.out.println("debug: found match in doc " + documentList.get(globalDocId).getName() + " for attr " + selectedAttr + ": \"" + matchedSubstring + "\"");
+                    System.out.println("debug: found match in doc " + MainController.getMainController().getDocument(globalDocId).getName() + " for attr " + selectedAttr + ": \"" + matchedSubstring + "\"");
 
                     startIndices.add(start);
                     endIndices.add(end);
@@ -381,7 +386,7 @@ public abstract class MLPredictor {
         List<WeightedSentence> wSents = new ArrayList<>();
         
         // TODO : parse document into sentences (for now, just use the natural newlines in the text)
-        String docText = documentList.get(globalDocId).getText();
+        String docText = MainController.getMainController().getDocument(globalDocId).getText();
         Scanner docSplitter = new Scanner(docText);
         while (docSplitter.hasNextLine()) {
             // find sum of weights of features in the sentences
@@ -454,17 +459,57 @@ public abstract class MLPredictor {
         }
         
         
-        
     }
     
     
-    /** optional methods **/
+    //// static methods for loading in predictors from file
+    public static enum MLPredictorType {
+        mlpredictor_colonoscopy_deprecated,
+        mlpredictor_colonoscopy_vars
+    }
     
-//    public abstract List<Feature> getFeatureListForAttribute(String attributeName);
-    
-//    public abstract List<Feature> getFeatureListForAttribute(String attributeName, String attributeValue);
-    
-//    public abstract PredictorStatistics getQualityAssessmentOfPredictor(MainModel model, String attributeName);
-    
+    public static MLPredictor buildPredictorFromXMLModelList(File predictorFile) {
+        
+        MLPredictor predictor = null;
+        
+        String modellistRootPath = predictorFile.getParent() +"/";
+        // debug
+        System.out.println("debug: modellist directory is \""+modellistRootPath+"\"");
+        
+        // load modellist file for reading
+        org.w3c.dom.Document dom = null;
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        try {
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            dom = db.parse(predictorFile);
+        } catch (ParserConfigurationException | SAXException | IOException pce) {
+            pce.printStackTrace();
+        }
+
+        // document root
+        Element modellistRoot = dom.getDocumentElement();
+        String modellistTypeName = modellistRoot.getAttribute("type").trim().toLowerCase();
+        if (modellistTypeName.equals(MLPredictorType.mlpredictor_colonoscopy_deprecated.toString())) {
+            // type is deprecated colonosopy from summer 2012
+            // debug
+            System.out.println("debug: modellist type is \"" + MLPredictorType.mlpredictor_colonoscopy_deprecated + "\"");
+            // build the appropriate MLPredictor
+            throw new UnsupportedOperationException();  // todo : implement this?
+            
+        } else if (modellistTypeName.equals(MLPredictorType.mlpredictor_colonoscopy_vars.toString())) {
+            // type is variable-based, from spring 2013
+            // debug
+            System.out.println("debug: modellist type is \"" + MLPredictorType.mlpredictor_colonoscopy_vars + "\"");
+            // build the appropriate MLPredictor
+            
+            
+        } else {
+            // type is not recognized
+            System.err.println("modellist type \"" + modellistTypeName + "\" not recognized");
+
+        }
+        
+        return predictor;
+    }
     
 }

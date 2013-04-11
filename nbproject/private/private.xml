@@ -2,20 +2,20 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/1">
         <file>
+            <url>src/emr_vis_nlp/ml/MLPredictor.java</url>
+            <line>30</line>
+        </file>
+        <file>
             <url>src/emr_vis_nlp/view/doc_grid/DocumentGrid.java</url>
-            <line>245</line>
+            <line>257</line>
         </file>
         <file>
             <url>src/emr_vis_nlp/view/doc_grid/DocumentGridTable.java</url>
-            <line>73</line>
+            <line>85</line>
         </file>
         <file>
             <url>src/emr_vis_nlp/model/DocDetailsTableModel.java</url>
             <line>26</line>
-        </file>
-        <file>
-            <url>src/emr_vis_nlp/ml/MLPredictor.java</url>
-            <line>19</line>
         </file>
     </editor-bookmarks>
 </project-private>

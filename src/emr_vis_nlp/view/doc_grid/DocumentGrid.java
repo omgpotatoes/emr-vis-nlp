@@ -454,7 +454,8 @@ public class DocumentGrid extends Display {
         if (doAnimate)
             m_vis.run("animate");
         else 
-            m_vis.run("repaint");
+//            m_vis.run("repaint");
+            m_vis.run("updateOnce");
     }
     
     public void updateXAxis(String xAxisAttrName) {

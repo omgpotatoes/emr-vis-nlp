@@ -272,7 +272,7 @@ public class MpqaColonMainModel implements MainModel {
     }
     
     @Override
-    public List<String> getAllAttributes() {
+    public List<String> getAllAttributeNames() {
         return attributeList;
     }
 
