@@ -205,7 +205,8 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
                 // inform controller of change
                 controller.updateDocumentGrid();
                 // reset view
-                controller.resetDocGridView();
+//                controller.resetDocGridView();
+                fireTableDataChanged();
             }
         }
 
@@ -275,6 +276,15 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         
     }
     
+    public void resetVarBarCharts() {
+        // reset all VarBarCharts by enabling all cells
+        for (JPanel chart : distribDisplays) {
+            ((VarBarChartForCell)chart).enableAllCells();
+        }
+        fireTableDataChanged();
+    }
+    
+    
     /**
      * Builds map of abnormal var names (for which we shouldn't expect to have 3 nice categories)
      * 
@@ -333,13 +343,6 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         abnormalNamesMap = abnormalVarNames;
         return abnormalVarNames;
 
-    }
-
-    public void resetVarBarCharts() {
-        // reset all VarBarCharts
-//        for (JPanel chart : distribDisplays) {
-//            ((VarBarChartForCell)chart).rebuildComponents();
-//        }
     }
     
     // extention to JComboBox to support sortability within JTable

@@ -1,5 +1,7 @@
 package emr_vis_nlp.controller;
 
+import emr_vis_nlp.ml.PredictionCertaintyTuple;
+import emr_vis_nlp.model.mpqa_colon.MpqaColonMainModel;
 import emr_vis_nlp.ml.MLPredictor;
 import emr_vis_nlp.ml.deprecated.DeprecatedMLPredictor;
 import emr_vis_nlp.view.DocDetailsTableModel;
@@ -13,6 +15,7 @@ import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import emr_vis_nlp.view.doc_grid.DocumentGrid.DocGridDragControl;
 import emr_vis_nlp.view.doc_grid.DocumentGridTable;
 import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
+import emr_vis_nlp.view.nested_grid.NestedFisheyeGrid;
 import java.io.File;
 import java.util.*;
 import javax.swing.JComponent;
@@ -76,6 +79,10 @@ public class MainController {
      */
     private DocumentGrid documentGrid = null;
     /**
+     * piccolo2d-based interactive nested grid layout
+     */
+    private NestedFisheyeGrid nestedFisheyeGrid = null;
+    /**
      * backing table for current document grid (if any)
      */
     DocumentGridTable documentGridTable = null;
@@ -132,6 +139,21 @@ public class MainController {
         
         if (view != null) view.resetAllViews();
     }
+    
+    /**
+     * Associates the controller with a back-end NLP prediction module.
+     * 
+     * @param predictorFile file serving as a list of all individual Weka models and related meta information to include in this MLPredictor
+     */
+    public void setPredictor(File predictorFile) {
+        
+        // begin to parse predictorFile, 
+        
+        
+        
+    }
+    
+    
 
     /**
      * Associates the controller with a front-end MainView to which view events should be pushed.
@@ -183,8 +205,8 @@ public class MainController {
      * @return backing DocTableModel, or null if no model is currently loaded.
      */
     public DocTableModel buildSimpleDocTableModel() {
-        if (model != null) {
-            DocTableModel docTableModel = new DocTableModel(model.getAllDocuments(), model.getAllSelectedDocuments(), model.getAllAttributes(), model.getAllSelectedAttributes());
+        if (model != null && predictor != null) {
+            DocTableModel docTableModel = new DocTableModel(model.getAllDocuments(), model.getIsDocumentEnabledList(), predictor.getAttributeNames(), model.getIsAttributeEnabledList());
             return docTableModel;
         }
         return null;
@@ -196,8 +218,8 @@ public class MainController {
      * @return backing AttrTableModel, or null if not model is currently loaded.
      */
     public AttrTableModel buildSimpleAttrSelectionTableModel() {
-        if (model != null) {
-            AttrTableModel attrTableModel = new AttrTableModel(model.getAllAttributes(), model.getAllSelectedAttributes(), this);
+        if (model != null && predictor != null) {
+            AttrTableModel attrTableModel = new AttrTableModel(predictor.getAttributeNames(), model.getIsAttributeEnabledList(), this);
             return attrTableModel;
         }
         return null;
@@ -218,7 +240,7 @@ public class MainController {
         
         // update selection in model
         // TODO eliminate this? backing model should not be changed in response to selection actions on the front-end?
-        model.setSelectedAttributes(newSelectedAttributes);
+        model.setEnabledAttributes(newSelectedAttributes);
 
         // indicate to main view that all relevant displays should be redrawn / rebuilt
         view.attributeSelectionChanged();
@@ -236,7 +258,7 @@ public class MainController {
      * @return treemap-like interactive visualization for exploring the dataset
      */
     public JComponent buildDocTreeMapViewComponent() {
-        if (model != null) {
+        if (model != null && predictor != null) {
             // get selected attributes from interface
             List<String> selectedAttrsForTree = new ArrayList<>();
             if (docTreeMapSelectionModel != null) {
@@ -249,7 +271,7 @@ public class MainController {
 //            selectedAttrsForTree.add("Indicator_21");
 //            selectedAttrsForTree.add("Indicator_19");
             }
-            JComponent newDocTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapOnly(this, model.getAllDocuments(), model.getAllSelectedDocuments(), selectedAttrsForTree);
+            JComponent newDocTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapOnly(this, model.getAllDocuments(), model.getIsDocumentEnabledList(), selectedAttrsForTree);
             docTreeMapViewComponent = newDocTreeMapViewComponent;
             return docTreeMapViewComponent;
         }
@@ -262,8 +284,8 @@ public class MainController {
      * @return backing model for categorical attribute selection, else null if no model is loaded.
      */
     public TreeMapSelectorTableModel buildSimpleTreeMapSelectionTableModel() {
-        if (model != null) {
-            TreeMapSelectorTableModel newDocTreeMapSelectionTableModel = new TreeMapSelectorTableModel(model.getAllAttributes(), this);
+        if (model != null && predictor != null) {
+            TreeMapSelectorTableModel newDocTreeMapSelectionTableModel = new TreeMapSelectorTableModel(predictor.getAttributeNames(), this);
             docTreeMapSelectionModel = newDocTreeMapSelectionTableModel;
             return docTreeMapSelectionModel;
         } return null;
@@ -279,8 +301,8 @@ public class MainController {
         
         if (model != null && predictor != null) {
             Document doc = model.getAllDocuments().get(docGlobalId);
-            List<String> allAttributes = model.getAllAttributes();
-            List<Boolean> allAttributesEnabled = model.getAllSelectedAttributes();
+            List<String> allAttributes = predictor.getAttributeNames();
+            List<Boolean> allAttributesEnabled = model.getIsAttributeEnabledList();
 
 //            Map<String, PredictionCertaintyTuple> attrPredictionMap = model.getPredictionsForDoc(docGlobalId);
             Map<String, PredictionCertaintyTuple> attrPredictionMap = predictor.getPredictionsForDoc(docGlobalId);
@@ -305,8 +327,8 @@ public class MainController {
     public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, String attrName) {
         
         // map attrName to int
-        if (model != null) {
-            List<String> attrs = model.getAllAttributes();
+        if (model != null && predictor != null) {
+            List<String> attrs = predictor.getAttributeNames();
             int attrIndex = -1;
             for (int a=0; a<attrs.size(); a++) {
                 if (attrs.get(a).equals(attrName)) {
@@ -394,7 +416,7 @@ public class MainController {
      * @return new top-level container for target doc, or null if there's no mainmodel
      */
     private JFrame buildDocDetailsWindow(int docGlobalID) {
-        if (model != null) {
+        if (model != null && predictor != null) {
         Document doc = model.getAllDocuments().get(docGlobalID);
         JFrame popup = new DocFocusPopup(doc, docGlobalID);
         activePopups.add(popup);
@@ -481,10 +503,10 @@ public class MainController {
     public DocumentGrid buildDocumentGrid() {
 
         // default values for axes; these should be eliminated and overridden
-        String xAxisAttrName = "Indicator_9";
-        String yAxisAttrName = "Indicator_21";
+        String xAxisAttrName = "Indicator_26";
+        String yAxisAttrName = "Indicator_4";
         String shapeAttrName = "";
-        String colorAttrName = "";
+        String colorAttrName = "INDICATOR_19B";
         if (docGridSelectionModel != null) {
             // if docGridSelectionModel == null, something probably wasn't initialized correctly in the mainview?
             xAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getXAxisAttribute();
@@ -494,7 +516,7 @@ public class MainController {
         }
 
         // build table for grid
-        documentGridTable = new DocumentGridTable(model.getAllAttributes(), model.getAllDocuments(), model.getAllSelectedDocuments());
+        documentGridTable = new DocumentGridTable(predictor.getAttributeNames(), model.getAllDocuments(), model.getIsDocumentEnabledList());
         // build, return grid (while maintaining reference)
         documentGrid = new DocumentGrid(documentGridTable, xAxisAttrName, yAxisAttrName, shapeAttrName, colorAttrName);
         return documentGrid;
@@ -526,7 +548,17 @@ public class MainController {
             documentGrid.updateYAxis(yAxisAttrName);
             documentGrid.updateShapeAttr(shapeAttrName);
             documentGrid.updateColorAttr(colorAttrName);
+            documentGrid.updateView(false);
         }
+        
+        // update nested grid
+        if (nestedFisheyeGrid != null) {
+            nestedFisheyeGrid.setAttrNameX(xAxisAttrName);
+            nestedFisheyeGrid.setAttrNameY(yAxisAttrName);
+            nestedFisheyeGrid.setAttrNameColor(colorAttrName);
+            nestedFisheyeGrid.refreshView();
+        }
+        
     }
 
     /**
@@ -535,7 +567,7 @@ public class MainController {
      * @return backing DocGridTableSelectorModel
      */
     public DocGridTableSelectorModel buildSimpleDocGridSelectionTableModel() {
-        DocGridTableSelectorModel newDocGridTableModel = new DocGridTableSelectorModel(model.getAllAttributes());
+        DocGridTableSelectorModel newDocGridTableModel = new DocGridTableSelectorModel(predictor.getAttributeNames());
 //        TableModel newDocGridSelectionTableModel = model.buildSimpleDocGridSelectionTableModel();
         docGridSelectionModel = newDocGridTableModel;
         return docGridSelectionModel;
@@ -576,6 +608,9 @@ public class MainController {
     public void resetDocGridView() {
         if (documentGrid != null) {
             documentGrid.resetView();
+        }
+        if (nestedFisheyeGrid != null) {
+            nestedFisheyeGrid.refreshView();
         }
     }
     
@@ -643,6 +678,9 @@ public class MainController {
     public void enableAllDocs() {
         disabledAttrValsMap.clear();
         attrValPairsUpdated();
+        if (docGridSelectionModel != null) {
+            docGridSelectionModel.resetVarBarCharts();
+        }
     }
     
     private void attrValPairsUpdated() {
@@ -705,6 +743,42 @@ public class MainController {
     public void setFisheyeEnabled(boolean enableFisheye) {
         if (documentGrid != null)
             documentGrid.setFisheyeEnabled(enableFisheye);
+    }
+    
+    public NestedFisheyeGrid buildNestedGrid() {
+        // default values for axes; these should be eliminated and overridden
+        String xAxisAttrName = "Indicator_26";
+        String yAxisAttrName = "Indicator_4";
+        String colorAttrName = "INDICATOR_19B";
+        if (docGridSelectionModel != null) {
+            // if docGridSelectionModel == null, something probably wasn't initialized correctly in the mainview?
+            xAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getXAxisAttribute();
+            yAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getYAxisAttribute();
+            colorAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getColorAttribute();
+        }
+
+        nestedFisheyeGrid = new NestedFisheyeGrid(predictor.getAttributeNames(), model.getAllDocuments(), model.getIsDocumentEnabledList(), xAxisAttrName, yAxisAttrName, colorAttrName);
+        return nestedFisheyeGrid;
+    }
+    
+    public String getDocumentSummary(int globalDocId, String globalAttrName) {
+        if (model != null && predictor != null) {
+            // convert name to id
+            // TODO : this is super-clunky! refactor to use a single class for attribute encapsulation!
+            List<String> allAttrs = predictor.getAttributeNames();
+            int globalAttrId = allAttrs.indexOf(globalAttrName);
+            if (predictor != null) {
+                return predictor.buildSummary(globalDocId, globalAttrId);
+            }
+        }
+        return "";
+    }
+    
+    public Document getDocument(int globalDocId) {
+        if (model != null) {
+            return model.getAllDocuments().get(globalDocId);
+        }
+        return null;
     }
     
 }

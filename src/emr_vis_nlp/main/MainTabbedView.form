@@ -21,6 +21,21 @@
             </MenuItem>
           </SubComponents>
         </Menu>
+        <Menu class="javax.swing.JMenu" name="jMenuML">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="ML"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="jMenuItemLoadPredictor">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Load Prediction Model From File..."/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuItemLoadPredictorActionPerformed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
       </SubComponents>
     </Menu>
   </NonVisualComponents>
@@ -431,7 +446,6 @@
                     <Component class="javax.swing.JButton" name="jButtonSelectAllDocGrid">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Select All"/>
-                        <Property name="enabled" type="boolean" value="false"/>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButtonSelectAllDocGridActionPerformed"/>

@@ -1,6 +1,5 @@
 package emr_vis_nlp.model;
 
-import emr_vis_nlp.model.mpqa_colon.TextInstance;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +87,4 @@ public abstract class Document {
 
     }
     
-    // parsing is no longer a concern of this class; see previous prototype for parsing code
-
 }

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>emr-vis-nlp overview</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+        <h1>emr-vis-nlp</h1>
+
+        <p>This project is an effort to incorporate NLP and visualization techniques into a single system for viewing, annotating, and revising electronic health records (EHRs). The system is designed to support the needs of three primary use-cases: retrospective EHR analysis for quality assessment or cohort inclusion, NLP annotation, and NLP scheme revision. This code is made available under the New BSD License.</p>
+
+
+        <h2>Requirements</h2>
+        
+        <ul>
+            <li>JDK 1.7 (or newer)</li>
+            <li>Apache Ant 1.8.3</li>
+            <li>Apache Ivy 2.3.0</li>
+        </ul>
+
+        
+        <h2>Running the System</h2>
+
+        <p>First, ensure that your system meets the requirements listed above. If you already have Ant installed, Ivy can be installed by simply unpacking the latest Ivy jar from http://ant.apache.org/ivy/ into your Ant installation's lib/ directory.</p>
+
+        <p>Second, before running the system, you will need to acquire the EHR documents for the interface to process. Because of the sensitive nature of these documents they cannot be kept in public version control. Contact alexander.p.conrad@gmail.com for a version of the dataset which is interpretable by this beta version of the tool.</p>
+
+        <p>Optionally, the line:
+        
+        	<!--<arg value="path_to_ehr_doclist"/>-->
+                
+        in build.xml can be uncommented and edited to point to the doclist file accompanying the dataset, to load the dataset immediately upon launch.</p>
+
+        <p>Once your system is appropriately configured, navigate to this directory in a terminal and execute:</p>
+
+        <ul>
+            <li>ant compile</li>
+            <li>ant run</li>
+        </ul>
+
+        <p>"compile" will invoke Ivy and Ant to download the required third-party libraries and compile the system, respectively. "run" will launch the default tab-based interface.</p>
+
+    
+        <h3>Architecture</h3>
+        
+        <p>Overall design of the front-end has attempted to roughly follow the <i>model-view-controller</i> design pattern. The primary reason for utilizing this pattern has been to maintain a logical separation of concerns. As such, the system consists of a number of front-end <i>views</i>, a back-end data <i>model</i>, and a main <i>controller</i> which coordinates between the various components. In addition to the data model, the system also utilizes a separate NLP module for deriving predictions.</p>
+        
+        <p>The main controller class is <i>emr_vis_nlp.controller.MainController</i>. This monolithic class handles communication back and forth between the interactive data-presenting <i>views</i>, the data <i>model</i>, and the NLP <i>predictor</i>, as well as among multiple coordinated <i>views</i> themselves. All purely controller-specific classes, such as auxiliary controllers, data structures, etc. should be stored alongside <i>MainController</i> in the package <i>emr_vis_nlp.controller</i>.</p>
+        
+        
+        <h3>Views</h3>
+        
+        <p>Code relating to a <i>view</i> should be stored in <i>emr_vis_nlp.view</i>, with classes specific to a particular <i>view</i> stored in a subpackage for that <i>view</i> ...   </p>
+        
+        <p>The only exception to this rule is <i>emr_vis_nlp.main.MainTabbedView</i>; this is the main class which should be executed to launch the application. This subclass of <i>JFrame</i> contains the overall structural framework for the interface as a whole. Since this class primarily deals with layout of standard <i>Swing</i> components, it has been designed using the Netbeans GUI Swing builder. Ideally, changes to this class should be done through this same Netbeans GUI Builder rather than direct editing of the code, to allow the project to be cleanly imported into Netbeans again in the future.</p>
+        
+        
+        <h3>Models</h3>
+        
+        <p>Code relating to a back-end data <i>model</i> should be stored in <i>emr_vis_nlp.model</i>. To implement a new <i>model</i>, develop a new class which implements the <i>emr_vis_nlp.model.MainModel</i> interface. Ideally, each new <i>MainModel</i>-implementing class should be given its own subpackage inside of <i>emr_vis_nlp.model</i>, to store any model-specific classes that are needed. When implementing a new doclist-based <i>MainModel</i>, the method <i>MainController.setModelFromDoclist</i> will need to be updated as well, in order to detect and load the appropriate model type. For more complex kinds of <i>MainModel</i>s, such as JDBC-based models, <i>MainTabbedView</i> may also need to be modified, in order to provide the additional buttons, menu options, and/or command-line argument parsing functionality. </p>
+        
+        <p>Currently, the only <i>MainModel</i> implemented so far is <i>emr_vis_nlp.model.mpqa_colon.MpqaColonMainModel</i>. This <i>MainModel</i> is designed to read from an XML-style doclist file in order to load a MPQA-style "database" containing Dr. Mehrotra's colonoscopy reports. (note: because of privacy concerns, the data itself cannot be included in a public repository. Please contact <a href="mailto:alexander.p.conrad@gmail.com">alexander.p.conrad@gmail.com</a> for a copy of the data.)</p>
+        
+        
+        <h3>Natural Language Processing / Machine Learning Module</h3>
+        
+        <p>Code relating to the NLP/ML components should be stored in <i>emr_vis_nlp.ml</i>, with each implemented NLP module residing in its own sub-package. To develop a new NLP/ML module, implement a subclass of <i>emr_vis_nlp.ml.MLPredictor</i>, ensuring that the <i>loadPredictions()</i> method is overridden appropriately. You will also need to modify the method <i>emr_vis_nlp.controller.MainController.setModelFromDoclist(File)</i> to ensure that the appropriate model is loaded with respect to the chosen dataset. (Note that, at this time, not all of the classes within <i>emr_vis_nlp.ml</i> have been fully implemented; at the time of this writing, the back-end NLP components remain under development.)</p>
+        
+        <p>Currently, the only <i>MLPredictor</i> implemented so far (aside from <i>NullPredictor</i>, a simple placeholder class for when no predictor is loaded) is <i>emr_vis_nlp.ml.deprecated.DeprecatedMLPredictor</i>. This predictor uses Phuong's exploratory baseline models from Summer 2012 developed on Dr. Mehrotra's colonoscopy reports, and is specific to this dataset. Note that it may not be methodologically proper to evaluate this model on the colonoscopy dataset, as some of the documents used in its training are likely also present in the datasets loaded into the interface. This model is included in order to provide a provisional back-end source of NLP predictions until a new model can be developed. </p>
+        
+        
+    </body>
+</html>

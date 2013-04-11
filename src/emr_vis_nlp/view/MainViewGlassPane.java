@@ -2,6 +2,8 @@
 package emr_vis_nlp.view;
 
 import emr_vis_nlp.controller.MainController;
+import emr_vis_nlp.view.nested_grid.NestedFisheyeGrid;
+import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.JComponent;
@@ -29,8 +31,20 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
     
     private boolean mouseWasClicked = false;
     private VisualItem currentItem = null;
-
-    public MainViewGlassPane() {
+    
+    private NestedFisheyeGrid nestedGrid;
+    
+    // color for the pane
+    private Color backgroundColor;
+    
+    public static MainViewGlassPane getGlassPane() {
+        if (glassPane == null) {
+            glassPane = new MainViewGlassPane();
+        }
+        return glassPane;
+    }
+    
+    private MainViewGlassPane() {
         super();
         glassPane = this;
         // manually position the JScrollPane within the GlassPane
@@ -78,7 +92,12 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
         jTextPaneDocText = new JTextPane();
         jScrollPaneDocText.setViewportView(jTextPaneDocText);
         add(jScrollPaneDocText);
+        backgroundColor = Color.WHITE;
         setVisible(false);
+    }
+    
+    public void setFisheyeGrid(NestedFisheyeGrid nestedGrid) {
+        this.nestedGrid = nestedGrid;
     }
 
     public AbstractDocument getAbstDoc() {
@@ -103,6 +122,36 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
 //        jScrollPaneDocText.getVerticalScrollBar().setValue(jScrollPaneDocText.getVerticalScrollBar().getMinimum());
         jTextPaneDocText.setCaretPosition(0);
     }
+    
+    public void updateSizedPanePosition(int x, int y, int w, int h) {
+        jScrollPaneDocText.setBounds(x, y, w, h);
+        jScrollPaneDocText.setBackground(backgroundColor);
+    }
+    
+    public void displaySizedPaneTimer(int x, int y, int w, int h, final long animationMillis) {
+//        setBounds(x, y, w, h);
+        currentItem = null;
+        jScrollPaneDocText.setBounds(x, y, w, h);
+        jScrollPaneDocText.setBackground(backgroundColor);
+        jTextPaneDocText.setBackground(backgroundColor);
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    synchronized (this) {
+                        wait(animationMillis);
+                    }
+                    setVisible(true);
+                    jScrollPaneDocText.repaint();
+//        jScrollPaneDocText.getHorizontalScrollBar().setValue(0);
+//        jScrollPaneDocText.getVerticalScrollBar().setValue(jScrollPaneDocText.getVerticalScrollBar().getMinimum());
+                    jTextPaneDocText.setCaretPosition(0);
+                } catch (InterruptedException e) {}
+            }
+        };
+        runnable.run();
+        
+    }
 
     public void hidePane() {
         setVisible(false);
@@ -118,7 +167,9 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
         }
         // debug
 //        System.out.println("debug: "+this.getClass().getName()+": selectedText = \""+selectedText+"\"");
-        MainController.getMainController().getDocumentGrid().enableMouseListeners();
+        if (MainController.getMainController().getDocumentGrid() != null) {
+            MainController.getMainController().getDocumentGrid().enableMouseListeners();
+        }
     }
 
     @Override
@@ -174,6 +225,10 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
 
     public void setWasMouseClicked(boolean mouseWasClicked) {
         this.mouseWasClicked = mouseWasClicked;
+    }
+
+    public void setBackgroundColor(Color color) {
+        backgroundColor = color;
     }
     
 }

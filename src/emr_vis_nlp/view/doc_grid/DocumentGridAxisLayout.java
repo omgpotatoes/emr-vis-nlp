@@ -1,15 +1,14 @@
 
 package emr_vis_nlp.view.doc_grid;
 
-import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import prefuse.Visualization;
 import prefuse.action.layout.Layout;
 import prefuse.data.Schema;
 import prefuse.data.tuple.TupleSet;
-import prefuse.data.util.Index;
 import prefuse.util.PrefuseLib;
 import prefuse.visual.VisualItem;
 import prefuse.visual.VisualTable;
@@ -30,7 +29,8 @@ public class DocumentGridAxisLayout extends Layout {
     public static final String CAT_LABEL = "cat_label";
     public static final String MID_POINT = "mid_point";
     
-    private DocumentGridLayout docGridLayout;  // pointer to DocumentGridLayout for which this instance is drawing the axes
+//    private DocumentGridLayout docGridLayout;  // pointer to DocumentGridLayout for which this instance is drawing the axes
+    private DocumentGridLayoutNested docGridLayout;
     
     private double x_min;
     private double x_max;
@@ -40,9 +40,42 @@ public class DocumentGridAxisLayout extends Layout {
     private boolean m_asc = true;  // are values in ascending order?
     private boolean rebuildTable = false;  // flag variable indicating whether visualItem table should be rebuilt from scratch
     
-    public DocumentGridAxisLayout(String group, DocumentGridLayout docGridLayout) {
+    // data from docGridLayout
+    private String xName;
+    private String yName;
+    private List<String> xCats;
+    private List<String> yCats;
+    private List<Integer> xCatRegionSizes;
+    private List<Integer> yCatRegionSizes;
+    private List<Integer> xCatPositions;
+    private List<Integer> yCatPositions;
+    
+    public DocumentGridAxisLayout(String group, DocumentGridLayoutNested docGridLayout) {
         super(group);
         this.docGridLayout = docGridLayout;
+        xName = docGridLayout.getXAttr();
+        yName = docGridLayout.getYAttr();
+        xCats = docGridLayout.getXCats();
+        yCats = docGridLayout.getYCats();
+        xCatRegionSizes = docGridLayout.getXCatRegionSizes();
+        yCatRegionSizes = docGridLayout.getYCatRegionSizes();
+        xCatPositions = docGridLayout.getXCatPositions();
+        yCatPositions = docGridLayout.getYCatPositions();
+    }
+    
+    /**
+     * Tells this layout to re-acquire data from the DocumentGridLayout; generally, this method should be called after an axis change.
+     */
+    public void docGridLayoutUpdated() {
+        xName = docGridLayout.getXAttr();
+        yName = docGridLayout.getYAttr();
+        xCats = docGridLayout.getXCats();
+        yCats = docGridLayout.getYCats();
+        xCatRegionSizes = docGridLayout.getXCatRegionSizes();
+        yCatRegionSizes = docGridLayout.getYCatRegionSizes();
+        xCatPositions = docGridLayout.getXCatPositions();
+        yCatPositions = docGridLayout.getYCatPositions();
+        run();
     }
     
     /**
@@ -68,12 +101,26 @@ public class DocumentGridAxisLayout extends Layout {
     
     private void setMinMax(List<Integer> xCatPositions, List<Integer> xCatRegionSizes, List<Integer> yCatPositions, List<Integer> yCatRegionSizes) {
         
-        x_min = xCatPositions.get(0);
-        y_min = yCatPositions.get(0);
-        x_max = x_min;
-        for (Integer regionSize : xCatRegionSizes) x_max += regionSize;
-        y_max = y_min;
-        for (Integer regionSize : yCatRegionSizes) y_max += regionSize;
+        if (xCatPositions != null && xCatPositions.size() > 0) {
+            x_min = xCatPositions.get(0);   
+            x_max = x_min;
+            for (Integer regionSize : xCatRegionSizes) {
+                x_max += regionSize;
+            }
+        } else {
+            x_min = 0;
+            x_max = 0;
+        }
+        if (yCatPositions != null && yCatPositions.size() > 0) {
+            y_min = yCatPositions.get(0);
+            y_max = y_min;
+            for (Integer regionSize : yCatRegionSizes) {
+                y_max += regionSize;
+            }
+        } else {
+            y_min = 0;
+            y_max = 0;
+        }
     }
     
     /**
@@ -87,14 +134,7 @@ public class DocumentGridAxisLayout extends Layout {
         // get relevant information concerning layout from docGridLayout
         // - ordered list of x, y labels
         // - heights of each region (based on number of documents contained therein, and whether a selected document is contained)
-        String xName = docGridLayout.getXAttr();
-        String yName = docGridLayout.getYAttr();
-        List<String> xCats = docGridLayout.getXCats();
-        List<String> yCats = docGridLayout.getYCats();
-        List<Integer> xCatRegionSizes = docGridLayout.getXCatRegionSizes();
-        List<Integer> yCatRegionSizes = docGridLayout.getYCatRegionSizes();
-        List<Integer> xCatPositions = docGridLayout.getXCatPositions();
-        List<Integer> yCatPositions = docGridLayout.getYCatPositions();
+        
         
         // build grid and labels
 //        Rectangle2D b = getLayoutBounds();
@@ -116,7 +156,7 @@ public class DocumentGridAxisLayout extends Layout {
             int midPoint;
             String catName = "";
             if (isX) {
-                if (catIndex != -1) {
+                if (catIndex != -1 && catIndex < xCats.size()) {
                     catName = "x_" + xCats.get(catIndex);
 //                    catName = "" + xCats.get(catIndex);
                     value = xCatPositions.get(catIndex);
@@ -129,7 +169,7 @@ public class DocumentGridAxisLayout extends Layout {
                     midPoint = value;
                 }
             } else {
-                if (catIndex != -1) {
+                if (catIndex != -1 && catIndex < yCats.size()) {
                     catName = "y_" + yCats.get(catIndex);
 //                    catName = "" + yCats.get(catIndex);
                     value = yCatPositions.get(catIndex);
@@ -166,6 +206,7 @@ public class DocumentGridAxisLayout extends Layout {
         String label;
         int indexVal;
         int midPoint;
+//        assert xCats.size() == xCatPositions.size();
         for (int i=0; i<xCats.size(); i++) {
             String xCat = "x_"+xCats.get(i);
 //            String xCat = ""+xCats.get(i);

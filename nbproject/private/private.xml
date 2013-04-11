@@ -3,11 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/1">
         <file>
             <url>src/emr_vis_nlp/view/doc_grid/DocumentGrid.java</url>
-            <line>245</line>
+            <line>262</line>
         </file>
         <file>
             <url>src/emr_vis_nlp/view/doc_grid/DocumentGridTable.java</url>
-            <line>73</line>
+            <line>85</line>
         </file>
         <file>
             <url>src/emr_vis_nlp/model/DocDetailsTableModel.java</url>
@@ -15,7 +15,7 @@
         </file>
         <file>
             <url>src/emr_vis_nlp/ml/MLPredictor.java</url>
-            <line>19</line>
+            <line>38</line>
         </file>
     </editor-bookmarks>
 </project-private>

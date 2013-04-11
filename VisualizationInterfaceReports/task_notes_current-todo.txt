@@ -1,27 +1,28 @@
 
 Alex's emr-vis-nlp to-do list
-(last update: mar 12)
+(last update: mar 29)
 (FYI: code available at https://github.com/omgpotatoes/emr-vis-nlp)
 (FYI: open issues being tracked at https://github.com/omgpotatoes/emr-vis-nlp/issues?state=open)
 
+primary focus:
+- continue to implement nested grid view:
+-- incorporate old features: drag-to-reassign, interactive highlighted text, labels for grid units
+- assign glyph sizes to optimally use space
+- full document summarization (ie, full contents of old popup) within zoomed glyph
+-- document "summarization" with respect to given attribute: build summary based on portions of documents containing highest-rated features for target attribute (for particular attribute)
 
-document-grid view:
--- (backburner idea) on mouseover of terms in blown-up doc: highlight other docs which contain term? highlight sections of other docs that are relevant to the same issues? (or simplification: other terms that are strongly associated with whatever indicator the hovered term is)
--- (backburner idea) highlight piece of text before moving doc to indicate to back-end which terms are relevant
--- todo: finish fixing glyph auto movement wrt. boundary lines: regions too small to accomodate pieces?
--- (backburner todo) run force-layout before drawing to the screen (to eliminate jitter?)
-- (lower priority) revising histogram interactions: highlight on hover, or color-code all visible docs on hover of single attr's histogram? (as opposed to individual bars)
--- (low-priority backburner) rename "skew" column
-- representing multiple documents per patient:
+secondary foci:
+- rough implementation of document-by-variable feature table, with top-rated features (for highest-probability class?) given within cell
+- second refactoring of data model, ml predictor interfaces
+-- better overal integration with back-end; more pervasive incorporation of predictions / certainties
+- continuing to work on general documentation (especially high-level, big-picture!), general refactoring
+
+other low-priority items:
+- rename "skew" column; possibly reorganize attribute selection table as a tree?
+- renaming indicators & vars; explicit/textual/?, inferred/? 
+- think about: how to display rules?
+- representing multiple documents per patient; think about how to handle this?
 -- idea: box around glyphs for single patient? or, patient starts as single glyph, interacting causes it to be split into constituent glyphs representing each report for patient? (constituent docs organized temporally)
-- bugfix: ensure consistent attribute ordering! indicate max cert vs min cert indicators in visualization!
 - (idea: possibly have a details pane for active document?)
-
-misc:
-- take the dead code out of the master, put it in another branch
-- renaming indicators & vars; explicit/textual/?, inferred/? (backburner: how to display rules?)
--- for attr names: move from jtable to jtree? root -> vars, indicators, meta -> [specific attrs]
-- continuing to work on documentation, general refactoring
-- with respect to annotated bibliography: think about pieces of tool we're building and where it fits in with these other projects
-
+- keeping bibliography up-to-date: think about pieces of tool we're building and where it fits in with these other projects
 

@@ -13,6 +13,7 @@ import emr_vis_nlp.view.MainViewGlassPane;
 import emr_vis_nlp.view.VarDatasetRatioRenderer;
 import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
+import emr_vis_nlp.view.nested_grid.NestedFisheyeGrid;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -73,6 +74,10 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
      */
     private DocumentGrid documentGrid;
     /*
+     * object for nested grid layout
+     */
+    private NestedFisheyeGrid nestedGrid;
+    /*
      * panel for supplying a search query
      */
     private JSearchPanel search;
@@ -92,7 +97,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         initListeners();
         
         // init glasspane
-        glassPane = new MainViewGlassPane();
+//        glassPane = new MainViewGlassPane();
+        glassPane = MainViewGlassPane.getGlassPane();
         glassPane.addMouseListener(glassPane);
         setGlassPane(glassPane);
 
@@ -146,6 +152,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenuFile = new javax.swing.JMenu();
         jMenuItemLoadDataset = new javax.swing.JMenuItem();
+        jMenuML = new javax.swing.JMenu();
+        jMenuItemLoadPredictor = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("emr-vis-nlp");
@@ -401,7 +409,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jScrollPane4.setViewportView(jTableAttrSelection3);
 
         jButtonSelectAllDocGrid.setText("Select All");
-        jButtonSelectAllDocGrid.setEnabled(false);
         jButtonSelectAllDocGrid.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonSelectAllDocGridActionPerformed(evt);
@@ -524,6 +531,18 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         jMenuBar1.add(jMenuFile);
 
+        jMenuML.setText("ML");
+
+        jMenuItemLoadPredictor.setText("Load Prediction Model From File...");
+        jMenuItemLoadPredictor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemLoadPredictorActionPerformed(evt);
+            }
+        });
+        jMenuML.add(jMenuItemLoadPredictor);
+
+        jMenuBar1.add(jMenuML);
+
         setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -612,7 +631,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     }//GEN-LAST:event_jSplitPaneDocGridPropertyChange
 
     private void jButtonSelectAllDocGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectAllDocGridActionPerformed
-        // TODO add your handling code here:
+        controller.enableAllDocs();
     }//GEN-LAST:event_jButtonSelectAllDocGridActionPerformed
 
     private void jButtonSelectNoneDocGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectNoneDocGridActionPerformed
@@ -649,6 +668,25 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         controller.setFisheyeEnabled(enableFisheye);
     }//GEN-LAST:event_jToggleButtonFisheyeActionPerformed
 
+    private void jMenuItemLoadPredictorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemLoadPredictorActionPerformed
+        
+        // load a new MLPredictor from file
+        int returnVal = jFileChooser1.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = jFileChooser1.getSelectedFile();
+
+            // send doclist file to controller, instruct it to load new model
+            controller.setPredictor(file);
+
+        } else {
+            System.out.println("debug: \"Load Predictor\" action cancelled by user");
+        }
+        
+        
+        
+        
+    }//GEN-LAST:event_jMenuItemLoadPredictorActionPerformed
+
     public void updateDocTreemapSize() {
         // update size of treemap
         if (docTreeMapViewComponent != null) {
@@ -664,6 +702,12 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             int newWidth = documentGrid.getWidth();
             int newHeight = documentGrid.getHeight();
             documentGrid.resetSize(newWidth, newHeight);
+        }
+        // update size of nested grid
+        if (nestedGrid != null) {
+            int newWidth = nestedGrid.getWidth();
+            int newHeight = nestedGrid.getHeight();
+            nestedGrid.updateSize(newWidth, newHeight);
         }
         // also, update the selection table (will need to redraw VarBarChartForCells)
         if (docGridSelectionTableModel != null) {
@@ -722,38 +766,44 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     }
 
     public void rebuildDocumentGridView() {
-        documentGrid = controller.buildDocumentGrid();
+//        documentGrid = controller.buildDocumentGrid();
+//        jSplitPaneDocGrid.setBottomComponent(documentGrid);
+        nestedGrid = controller.buildNestedGrid();
+        jSplitPaneDocGrid.setBottomComponent(nestedGrid);
+        
         boolean enableFisheye = jToggleButtonFisheye.isSelected();
         controller.setFisheyeEnabled(enableFisheye);
-        jSplitPaneDocGrid.setBottomComponent(documentGrid);
         updateDocumentGridSize();
 //        controller.updateDocumentGrid();
 //        updateDocumentGridSize();
+        
         // rebuild the JSearchPanel
         // adopted from TreeMap.java demo
-        search = controller.getDocumentGrid().getSearchQuery().createSearchPanel();
-        search.setShowResultCount(true);
-        search.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
-        search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
-        final JFastLabel title = new JFastLabel("");
-        title.setVerticalAlignment(SwingConstants.BOTTOM);
+        if (documentGrid != null) {
+            search = controller.getDocumentGrid().getSearchQuery().createSearchPanel();
+            search.setShowResultCount(true);
+            search.setBorder(BorderFactory.createEmptyBorder(5, 5, 4, 0));
+            search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+            final JFastLabel title = new JFastLabel("");
+            title.setVerticalAlignment(SwingConstants.BOTTOM);
 //        final JFastLabel title = new JFastLabel("                 ");
 //        title.setPreferredSize(new Dimension(350, 20));
 //        title.setVerticalAlignment(SwingConstants.BOTTOM);
 //        title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
 //        title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
 //        Box box = UILib.getBox(new Component[]{title,search}, true, 10, 3, 0);
-        Box box = UILib.getBox(new Component[]{search}, true, 0, 0, 0);
-        // TODO fix visibility!!
-        jPanelSearchContainer.removeAll();
-        jPanelSearchContainer.invalidate();
-        jPanelSearchContainer.setLayout(new FlowLayout());
-        jPanelSearchContainer.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-        jPanelSearchContainer.add(box);
+            Box box = UILib.getBox(new Component[]{search}, true, 0, 0, 0);
+            // TODO fix visibility!!
+            jPanelSearchContainer.removeAll();
+            jPanelSearchContainer.invalidate();
+            jPanelSearchContainer.setLayout(new FlowLayout());
+            jPanelSearchContainer.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+            jPanelSearchContainer.add(box);
 //        jPanelSearchContainer.add(new JButton("testbutton")); // for testing only
-        jPanelSearchContainer.revalidate();
-        UILib.setColor(jPanelSearchContainer, this.getBackground(), Color.black);
+            jPanelSearchContainer.revalidate();
+            UILib.setColor(jPanelSearchContainer, this.getBackground(), Color.black);
 //        repaint();
+        }
     }
     
     @Override
@@ -889,7 +939,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         MainModel model = new NullMainModel();
         controller.setModel(model);
         
-        MLPredictor predictor = new NullPredictor(model);
+        MLPredictor predictor = new NullPredictor();
         controller.setPredictor(predictor);
 
         // setup view
@@ -927,6 +977,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenu jMenuFile;
     private javax.swing.JMenuItem jMenuItemLoadDataset;
+    private javax.swing.JMenuItem jMenuItemLoadPredictor;
+    private javax.swing.JMenu jMenuML;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel5;
