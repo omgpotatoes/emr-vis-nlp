@@ -55,11 +55,7 @@ public class NullPredictor extends MLPredictor {
     public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId) {
         ;
     }
-
-    @Override
-    public void loadPredictions() {
-        ;
-    }
+    
 
     @Override
     public Map<String, Double> getTermWeightsForDocForAttr(int globalDocId, int globalAttrId) {
@@ -68,6 +64,11 @@ public class NullPredictor extends MLPredictor {
 
     @Override
     public Map<String, Double> getTermWeightsForDocForAttr(int globalDocId, String globalAttrName) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void loadPredictions(MainModel model) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     

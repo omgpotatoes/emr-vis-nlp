@@ -18,7 +18,7 @@ public class Attribute {
     private String elaboration;
     
     private List<String> legalValues;
-
+    
     public Attribute(AttributeType attributeType, String name, String elaboration, List<String> legalValues) {
         this.attributeType = attributeType;
         this.name = name;
@@ -57,6 +57,11 @@ public class Attribute {
     public void setName(String name) {
         this.name = name;
     }
+
+    @Override
+    public String toString() {
+        return "Attribute{" + "attributeType=" + attributeType + ", name=" + name + ", elaboration=" + elaboration + ", legalValues=" + legalValues + '}';
+    }
     
     
     
@@ -64,11 +69,31 @@ public class Attribute {
     
     
     public static enum AttributeType {
-        N_GRAM,
-        PATTERN,
-        ONTOLOGY_ITEM,
-        NUMERIC,
-        STRING;
+        // these are feature types, not attribute types!
+//        N_GRAM,
+//        PATTERN,
+//        ONTOLOGY_ITEM,
+//        NUMERIC,
+//        STRING;
+        VARIABLE_CATEGORICAL,
+        VARIABLE_CONTINUOUS,
+        INDICATOR_CATEGORICAL,
+        INDICATOR_CONTINUOUS,
+        OTHER;
+        
+        public static AttributeType getType(String name) {
+            if (name.trim().equalsIgnoreCase(AttributeType.VARIABLE_CATEGORICAL.name())) {
+                return VARIABLE_CATEGORICAL;
+            } else if (name.trim().equalsIgnoreCase(AttributeType.VARIABLE_CONTINUOUS.name())) {
+                return VARIABLE_CONTINUOUS;
+            } else if (name.trim().equalsIgnoreCase(AttributeType.INDICATOR_CATEGORICAL.name())) {
+                return INDICATOR_CATEGORICAL;
+            } else if (name.trim().equalsIgnoreCase(AttributeType.INDICATOR_CONTINUOUS.name())) {
+                return INDICATOR_CONTINUOUS;
+            } else {
+                return OTHER;
+            }
+        }
     }
     
 }

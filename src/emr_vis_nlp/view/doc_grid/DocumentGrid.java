@@ -463,8 +463,10 @@ public class DocumentGrid extends Display {
     }
     
     public void updateXAxis(String xAxisAttrName, boolean doUpdate) {
-        // TODO : pull applicable values from ML module
-        List<String> xAxisCategories = t.getValueListForAttribute(xAxisAttrName);
+        // pull applicable values from ML module
+//        List<String> xAxisCategories = t.getValueListForAttribute(xAxisAttrName);
+        List<String> xAxisCategories = MainController.getMainController().getValuesForAttribute(xAxisAttrName);
+        
 //        docGridAxisLayout.updateXAxis
         documentGridLayout.updateXAxis(xAxisAttrName, xAxisCategories);
         // update the visual axis indicator as well
@@ -479,8 +481,10 @@ public class DocumentGrid extends Display {
     }
     
     public void updateYAxis(String yAxisAttrName, boolean doUpdate) {
-        // TODO : pull applicable values from ML module
-        List<String> yAxisCategories = t.getValueListForAttribute(yAxisAttrName);
+        // pull applicable values from ML module
+//        List<String> yAxisCategories = t.getValueListForAttribute(yAxisAttrName);
+        List<String> yAxisCategories = MainController.getMainController().getValuesForAttribute(yAxisAttrName);
+        
 //        docGridAxisLayout.updateXAxis
         documentGridLayout.updateYAxis(yAxisAttrName, yAxisCategories);
         // update the visual axis indicator as well
@@ -495,7 +499,9 @@ public class DocumentGrid extends Display {
     }
     
     public void updateColorAttr(String colorAttrName, boolean doUpdate) {
-        List<String> colorCategories = t.getValueListForAttribute(colorAttrName);
+        // pull applicable values from ML module
+//        List<String> colorCategories = t.getValueListForAttribute(colorAttrName);
+        List<String> colorCategories = MainController.getMainController().getValuesForAttribute(colorAttrName);
         // update colorAction
         this.colorAttrName = colorAttrName;
         docColorAction.updateColorAttr(colorAttrName, colorCategories);
@@ -625,6 +631,9 @@ public class DocumentGrid extends Display {
             if (item.canGetString(colorAttrName)) {
                 String attrVal = item.getString(colorAttrName);
                 Color attrValColor = catToColorMap.get(attrVal);
+                if (attrValColor == null) {
+                    return Color.CYAN.getRGB();
+                }
                 return attrValColor.getRGB();
             }
             

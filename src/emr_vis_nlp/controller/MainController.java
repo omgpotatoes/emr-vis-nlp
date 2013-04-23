@@ -116,7 +116,11 @@ public class MainController {
         disabledAttrValsMap = new HashMap<>();
         searchText = "";
     }
-
+    
+    
+    
+    /******* basic setters *******/
+    
     /**
      * Associates the controller with a back-end MainModel data source.
      * 
@@ -124,6 +128,10 @@ public class MainController {
      */
     public void setModel(MainModel model) {
         this.model = model;
+        
+        if (predictor != null) {
+            predictor.loadPredictions(model);
+        }
         
         // update view once model loading is complete
         if (view != null) view.resetAllViews();
@@ -147,13 +155,15 @@ public class MainController {
      */
     public void setPredictor(File predictorFile) {
         
-        // begin to parse predictorFile, 
+        // parse predictor modellist file
+        this.predictor = MLPredictor.buildPredictorFromXMLModelList(predictorFile);
+        if (model != null) {
+            this.predictor.loadPredictions(model);
+        }
         
-        
+        if (view != null) view.resetAllViews();
         
     }
-    
-    
 
     /**
      * Associates the controller with a front-end MainView to which view events should be pushed.
@@ -185,52 +195,11 @@ public class MainController {
         if (view != null) view.resetAllViews();
 
     }
-
-//    /**
-//     * Filters documents according to presence of string.
-//     *
-//     * @param str
-//     */
-//    public void applySimpleStringFilter(String str) {
-//        throw new UnsupportedOperationException();  // TODO
-////        model.applySimpleStringFilter(str);  // no longer part of model?
-//        // update components as appropriate
-////        view.resetAllViews();
-//
-//    }
-
-    /**
-     * Builds a new backing DocTableModel for a document-based table in the visualization. Bases this table on the currently-loaded MainModel.
-     *
-     * @return backing DocTableModel, or null if no model is currently loaded.
-     */
-    public DocTableModel buildSimpleDocTableModel() {
-        if (model != null && predictor != null) {
-            DocTableModel docTableModel = new DocTableModel(model.getAllDocuments(), model.getIsDocumentEnabledList(), predictor.getAttributeNames(), model.getIsAttributeEnabledList());
-            return docTableModel;
-        }
-        return null;
-    }
-
-    /**
-     * Builds a new backing AttrTableModel for an attribute selection table in the visualization. Bases this table on the currently-loaded MainModel.
-     *
-     * @return backing AttrTableModel, or null if not model is currently loaded.
-     */
-    public AttrTableModel buildSimpleAttrSelectionTableModel() {
-        if (model != null && predictor != null) {
-            AttrTableModel attrTableModel = new AttrTableModel(predictor.getAttributeNames(), model.getIsAttributeEnabledList(), this);
-            return attrTableModel;
-        }
-        return null;
-    }
-
-//    public TableModel buildSimpleAttrSelectionTableModelFocusOnly() {
-//        throw new UnsupportedOperationException("Not supported yet.");
-////        TableModel attrSelectionTableModel = model.buildSimpleAttrSelectionTableModelFocusOnly();
-////        return attrSelectionTableModel;
-//    }
-
+    
+    
+    
+    /******* on-updated methods *******/
+    
     /**
      * This method is called when the list of selected attributes (for a boolean-selection-based view) is changed. This method is responsible for pushing updates to all relevant views and view-backing intermediate models.
      * 
@@ -251,6 +220,217 @@ public class MainController {
         }
 
     }
+    
+    /**
+     * Called when attributes for a target document have been updated; is responsible for pushing out updates to relevant views.
+     * 
+     * @param docGlobalID 
+     */
+    public void documentAttributesUpdated(int docGlobalID) {
+        if (view != null) {
+            // refresh all relevant tables
+            view.attributeSelectionChanged();
+            // rebuild table models for all active document popups
+            for (JFrame popup : activePopups) {
+                ((DocFocusPopup) popup).rebuildDocDetailsTable();
+            }
+        }
+    }
+    
+    /**
+     * Updates the value of a particular attribute for a particular document. 
+     * NOTE: because this method may be called from multiple threads running in parallel (ie, from separate doc details windows), we should make sure it's synchronized
+     * 
+     * @param docID
+     * @param docAttr
+     * @param docAttrVal 
+     */
+    public synchronized void updateDocumentAttr(int docID, String docAttr, String docAttrVal) {
+        if (model != null) {
+            // update value in model
+            model.updateDocumentAttr(docID, docAttr, docAttrVal);
+            // update value in applicable visual tables
+            documentGridTable.setString(docID, docAttr, docAttrVal);
+        }
+    }
+    
+    /**
+     * Unhighlights all documents in all applicable views.
+     * 
+     */
+    public void unhighlightAllDocs() {
+        documentGrid.resetHighlightPredicate();
+    }
+    
+//    /**
+//     * Filters documents according to presence of string.
+//     *
+//     * @param str
+//     */
+//    public void applySimpleStringFilter(String str) {
+//        throw new UnsupportedOperationException();  // TODO
+////        model.applySimpleStringFilter(str);  // no longer part of model?
+//        // update components as appropriate
+////        view.resetAllViews();
+//
+//    }
+    
+    public void disableDocsWithAttrVal(String attrName, String attrValue) {
+        AttrValPredicate pred = new AttrValPredicate(attrName, attrValue);
+        disabledAttrValsMap.put(pred, true);
+        attrValPairsUpdated();
+    }
+    
+    public void enableDocsWithAttrVal(String attrName, String attrValue) {
+        AttrValPredicate pred = new AttrValPredicate(attrName, attrValue);
+        if (disabledAttrValsMap.containsKey(pred)) {
+            disabledAttrValsMap.remove(pred);
+        }
+        attrValPairsUpdated();
+    }
+    
+    public void enableAllDocs() {
+        disabledAttrValsMap.clear();
+        attrValPairsUpdated();
+        if (docGridSelectionModel != null) {
+            docGridSelectionModel.resetVarBarCharts();
+        }
+    }
+    
+    private void attrValPairsUpdated() {
+        // update appropriate components
+        // build predicate string for Prefuse components
+        StringBuilder predDisabledAttrValsBuilder = new StringBuilder();
+        Set<AttrValPredicate> keySet = disabledAttrValsMap.keySet();
+        Iterator<AttrValPredicate> keySetIterator = keySet.iterator();
+        while (keySetIterator.hasNext()) {
+            AttrValPredicate pred = keySetIterator.next();
+//            predDisabledAttrValsBuilder.append(pred.getTrueStrPred());
+            predDisabledAttrValsBuilder.append(pred.getFalseStrPred());
+            if (keySetIterator.hasNext()) {
+//                predDisabledAttrValsBuilder.append(" OR ");
+                predDisabledAttrValsBuilder.append(" AND ");
+            }
+        }
+        // push string to appropriate Prefuse components
+        String predDisabledAttrVals = predDisabledAttrValsBuilder.toString();
+        if (documentGrid != null) {
+            documentGrid.resetDocsVisiblePredicate(predDisabledAttrVals);
+        }
+        
+    }
+    
+    public void setSearchText(String text) {
+        searchText = text;
+        // update relevant views
+        view.setSearchText(searchText);
+    }
+    
+    public String getSearchText() {
+        return searchText;
+    }
+    
+    
+    
+    /******* back-end predictor-interaction methods *******/
+    
+    /**
+     * Returns whether a back-end model contains a prediction for a given attribute for a given document.
+     * 
+     * @param globalDocId
+     * @param attrName
+     * @return 
+     */
+    public boolean hasPrediction(int globalDocId, String attrName) {
+//        if (model != null) return model.hasPrediction(globalDocId, attrName);
+        if (predictor != null) return predictor.hasPrediction(globalDocId, attrName);
+        return false;
+    }
+    
+    /**
+     * Gets from the back-end model its prediction for a given attribute for a given document.
+     * 
+     * @param globalDocId
+     * @param attrName
+     * @return 
+     */
+    public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName) {
+//        if (model != null) return model.getPrediction(globalDocId, attrName);
+        if (predictor != null) return predictor.getPrediction(globalDocId, attrName);
+        return null;
+    }
+    
+    public String getDocumentSummary(int globalDocId, String globalAttrName) {
+        if (model != null && predictor != null) {
+            // convert name to id
+            // TODO : this is super-clunky! refactor to use a single class for attribute encapsulation!
+            List<String> allAttrs = predictor.getAttributeNames();
+            int globalAttrId = allAttrs.indexOf(globalAttrName);
+            if (predictor != null) {
+                return predictor.buildSummary(globalDocId, globalAttrId);
+            }
+        }
+        return "";
+    }
+
+    public List<String> getValuesForAttribute(String attrName) {
+        if (predictor != null) {
+            List<String> valList = predictor.getValuesForAttribute(attrName);
+            return valList;
+        }
+        return new ArrayList<>();
+    }
+    
+    
+    
+    /******* back-end model-interaction methods *******/
+    
+    public Document getDocument(int globalDocId) {
+        if (model != null) {
+            return model.getAllDocuments().get(globalDocId);
+        }
+        return null;
+    }
+    
+    
+    
+    /******* doc-table-view methods *******/
+    
+    /**
+     * Builds a new backing DocTableModel for a document-based table in the visualization. Bases this table on the currently-loaded MainModel.
+     *
+     * @return backing DocTableModel, or null if no model is currently loaded.
+     */
+    public DocTableModel buildSimpleDocTableModel() {
+        if (model != null && predictor != null) {
+            DocTableModel docTableModel = new DocTableModel(model.getAllDocuments(), model.getIsDocumentEnabledList(), predictor.getAttributeNames(), predictor.getAttributeEnabledList());
+            return docTableModel;
+        }
+        return null;
+    }
+
+    /**
+     * Builds a new backing AttrTableModel for an attribute selection table in the visualization. Bases this table on the currently-loaded MainModel.
+     *
+     * @return backing AttrTableModel, or null if not model is currently loaded.
+     */
+    public AttrTableModel buildSimpleAttrSelectionTableModel() {
+        if (model != null && predictor != null) {
+            AttrTableModel attrTableModel = new AttrTableModel(predictor.getAttributeNames(), predictor.getAttributeEnabledList(), this);
+            return attrTableModel;
+        }
+        return null;
+    }
+
+//    public TableModel buildSimpleAttrSelectionTableModelFocusOnly() {
+//        throw new UnsupportedOperationException("Not supported yet.");
+////        TableModel attrSelectionTableModel = model.buildSimpleAttrSelectionTableModelFocusOnly();
+////        return attrSelectionTableModel;
+//    }
+
+    
+    
+    /******* treemap-view methods *******/
     
     /**
      * Builds and returns a new DocumentTreeMapView component based on the current back-end model.
@@ -290,6 +470,27 @@ public class MainController {
             return docTreeMapSelectionModel;
         } return null;
     }
+    
+    /**
+     * Called when the categorically-selected attributes for the TreeMap view
+     * have been changed. Pushes relevant adjustments to the relevant views.
+     *
+     */
+    public void updateTreeMapAttributes() {
+
+        // get selected attrs from the table model
+        TreeMapSelectorTableModel treeMapSelectorTableModel = (TreeMapSelectorTableModel) docTreeMapSelectionModel;
+        List<String> currentSelectedAttrs = treeMapSelectorTableModel.getSelectedAttributeList();
+
+        // feed selected attrs to the treemap
+        //DocumentTreeMapView.updatePanelWithNewTreemap(docTreeMapViewComponent, model.getAllDocuments(), model.getAllSelectedDocuments(), currentSelectedAttrs);
+        view.orderedAttrSelectionChanged();
+
+    }
+    
+    
+    
+    /******* document-details methods *******/
 
     /**
      * Builds and returns a backing TableModel for presenting a detailed view of the attributes, predictions, certainties, and manually-annotated values associated with a particular document.
@@ -302,7 +503,7 @@ public class MainController {
         if (model != null && predictor != null) {
             Document doc = model.getAllDocuments().get(docGlobalId);
             List<String> allAttributes = predictor.getAttributeNames();
-            List<Boolean> allAttributesEnabled = model.getIsAttributeEnabledList();
+            List<Boolean> allAttributesEnabled = predictor.getAttributeEnabledList();
 
 //            Map<String, PredictionCertaintyTuple> attrPredictionMap = model.getPredictionsForDoc(docGlobalId);
             Map<String, PredictionCertaintyTuple> attrPredictionMap = predictor.getPredictionsForDoc(docGlobalId);
@@ -391,22 +592,6 @@ public class MainController {
     }
     
     /**
-     * Called when attributes for a target document have been updated; is responsible for pushing out updates to relevant views.
-     * 
-     * @param docGlobalID 
-     */
-    public void documentAttributesUpdated(int docGlobalID) {
-        if (view != null) {
-            // refresh all relevant tables
-            view.attributeSelectionChanged();
-            // rebuild table models for all active document popups
-            for (JFrame popup : activePopups) {
-                ((DocFocusPopup) popup).rebuildDocDetailsTable();
-            }
-        }
-    }
-
-    /**
      * Constructs a new window for presenting a single document in detail, ie,
      * in terms of its text and attribute values. This method should generally
      * only be called by displayDocDetailsWindow, after that method checks for
@@ -457,7 +642,7 @@ public class MainController {
             });
         }
     }
-
+    
     /**
      * Removes a target document's details popup from the controller's internal
      * tracking. This should be called whenever the details window is closed.
@@ -478,21 +663,14 @@ public class MainController {
 
     }
     
-    /**
-     * Called when the categorically-selected attributes for the TreeMap view
-     * have been changed. Pushes relevant adjustments to the relevant views.
-     *
-     */
-    public void updateTreeMapAttributes() {
-
-        // get selected attrs from the table model
-        TreeMapSelectorTableModel treeMapSelectorTableModel = (TreeMapSelectorTableModel) docTreeMapSelectionModel;
-        List<String> currentSelectedAttrs = treeMapSelectorTableModel.getSelectedAttributeList();
-
-        // feed selected attrs to the treemap
-        //DocumentTreeMapView.updatePanelWithNewTreemap(docTreeMapViewComponent, model.getAllDocuments(), model.getAllSelectedDocuments(), currentSelectedAttrs);
-        view.orderedAttrSelectionChanged();
-
+    
+    
+    /******* document-grid-view methods *******/
+    
+    public DocumentGrid getDocumentGrid() {
+        if (documentGrid != null)
+            return documentGrid;
+        return null;
     }
     
     /**
@@ -560,47 +738,6 @@ public class MainController {
         }
         
     }
-
-    /**
-     * Builds and returns a new backing table model for the table used to select attributes for the document grid view.
-     * 
-     * @return backing DocGridTableSelectorModel
-     */
-    public DocGridTableSelectorModel buildSimpleDocGridSelectionTableModel() {
-        DocGridTableSelectorModel newDocGridTableModel = new DocGridTableSelectorModel(predictor.getAttributeNames());
-//        TableModel newDocGridSelectionTableModel = model.buildSimpleDocGridSelectionTableModel();
-        docGridSelectionModel = newDocGridTableModel;
-        return docGridSelectionModel;
-    }
-
-    /**
-     * Builds a VarBarChartForCell display for a given attribute. Returned
-     * display is meant to be used as cell in table.
-     *
-     * @param attrName name of target attribute for which display shoudl be created
-     * @return varbarchart visualization for target attribute
-     */
-    public VarBarChartForCell getVarBarChartForCell(String attrName) {
-        VarBarChartForCell varBarChart = new VarBarChartForCell(this, attrName, model.getAllDocuments());
-        return varBarChart;
-    }
-    
-    /**
-     * Updates the value of a particular attribute for a particular document. 
-     * NOTE: because this method may be called from multiple threads running in parallel (ie, from separate doc details windows), we should make sure it's synchronized
-     * 
-     * @param docID
-     * @param docAttr
-     * @param docAttrVal 
-     */
-    public synchronized void updateDocumentAttr(int docID, String docAttr, String docAttrVal) {
-        if (model != null) {
-            // update value in model
-            model.updateDocumentAttr(docID, docAttr, docAttrVal);
-            // update value in applicable visual tables
-            documentGridTable.setString(docID, docAttr, docAttrVal);
-        }
-    }
     
     /**
      * Resets the documentgrid view, causing it to perform necessary layout, preforce, and other operations.
@@ -615,32 +752,6 @@ public class MainController {
     }
     
     /**
-     * Returns whether a back-end model contains a prediction for a given attribute for a given document.
-     * 
-     * @param globalDocId
-     * @param attrName
-     * @return 
-     */
-    public boolean hasPrediction(int globalDocId, String attrName) {
-//        if (model != null) return model.hasPrediction(globalDocId, attrName);
-        if (predictor != null) return predictor.hasPrediction(globalDocId, attrName);
-        return false;
-    }
-    
-    /**
-     * Gets from the back-end model its prediction for a given attribute for a given document.
-     * 
-     * @param globalDocId
-     * @param attrName
-     * @return 
-     */
-    public PredictionCertaintyTuple getPrediction(int globalDocId, String attrName) {
-//        if (model != null) return model.getPrediction(globalDocId, attrName);
-        if (predictor != null) return predictor.getPrediction(globalDocId, attrName);
-        return null;
-    }
-
-    /**
      * Highlights documents matching attribute value criteria in applicable
      * views.
      *
@@ -652,59 +763,49 @@ public class MainController {
         // for now, assume only a single highlight set at a time
         documentGrid.setHighlightPredicate(attrName, attrValue);
     }
+
+    /**
+     * Builds and returns a new backing table model for the table used to select attributes for the document grid view.
+     * 
+     * @return backing DocGridTableSelectorModel
+     */
+    public DocGridTableSelectorModel buildSimpleDocGridSelectionTableModel() {
+        DocGridTableSelectorModel newDocGridTableModel = new DocGridTableSelectorModel(predictor.getAttributeNames());
+//        TableModel newDocGridSelectionTableModel = model.buildSimpleDocGridSelectionTableModel();
+        docGridSelectionModel = newDocGridTableModel;
+        return docGridSelectionModel;
+    }
+    
+    public DocGridDragControl getDocDragControl() {
+        if (documentGrid != null)
+            return documentGrid.getDragControl();
+        return null;
+    }
+    
+    public void setFisheyeEnabled(boolean enableFisheye) {
+        if (documentGrid != null)
+            documentGrid.setFisheyeEnabled(enableFisheye);
+    }
+
+    
+    
+    /******* interactive-bar-chart methods *******/
     
     /**
-     * Unhighlights all documents in all applicable views.
-     * 
+     * Builds a VarBarChartForCell display for a given attribute. Returned
+     * display is meant to be used as cell in table.
+     *
+     * @param attrName name of target attribute for which display shoudl be created
+     * @return varbarchart visualization for target attribute
      */
-    public void unhighlightAllDocs() {
-        documentGrid.resetHighlightPredicate();
+    public VarBarChartForCell getVarBarChartForCell(String attrName) {
+        VarBarChartForCell varBarChart = new VarBarChartForCell(this, attrName, model.getAllDocuments());
+        return varBarChart;
     }
     
-    public void disableDocsWithAttrVal(String attrName, String attrValue) {
-        AttrValPredicate pred = new AttrValPredicate(attrName, attrValue);
-        disabledAttrValsMap.put(pred, true);
-        attrValPairsUpdated();
-    }
     
-    public void enableDocsWithAttrVal(String attrName, String attrValue) {
-        AttrValPredicate pred = new AttrValPredicate(attrName, attrValue);
-        if (disabledAttrValsMap.containsKey(pred)) {
-            disabledAttrValsMap.remove(pred);
-        }
-        attrValPairsUpdated();
-    }
     
-    public void enableAllDocs() {
-        disabledAttrValsMap.clear();
-        attrValPairsUpdated();
-        if (docGridSelectionModel != null) {
-            docGridSelectionModel.resetVarBarCharts();
-        }
-    }
-    
-    private void attrValPairsUpdated() {
-        // update appropriate components
-        // build predicate string for Prefuse components
-        StringBuilder predDisabledAttrValsBuilder = new StringBuilder();
-        Set<AttrValPredicate> keySet = disabledAttrValsMap.keySet();
-        Iterator<AttrValPredicate> keySetIterator = keySet.iterator();
-        while (keySetIterator.hasNext()) {
-            AttrValPredicate pred = keySetIterator.next();
-//            predDisabledAttrValsBuilder.append(pred.getTrueStrPred());
-            predDisabledAttrValsBuilder.append(pred.getFalseStrPred());
-            if (keySetIterator.hasNext()) {
-//                predDisabledAttrValsBuilder.append(" OR ");
-                predDisabledAttrValsBuilder.append(" AND ");
-            }
-        }
-        // push string to appropriate Prefuse components
-        String predDisabledAttrVals = predDisabledAttrValsBuilder.toString();
-        if (documentGrid != null) {
-            documentGrid.resetDocsVisiblePredicate(predDisabledAttrVals);
-        }
-        
-    }
+    /******* glasspane-related methods *******/
     
     /**
      * Retrieves the glasspane from the mainview for use by other requesting views.
@@ -718,67 +819,43 @@ public class MainController {
         return null;
     }
     
-    public DocumentGrid getDocumentGrid() {
-        if (documentGrid != null)
-            return documentGrid;
-        return null;
-    }
     
-    public void setSearchText(String text) {
-        searchText = text;
-        // update relevant views
-        view.setSearchText(searchText);
-    }
     
-    public String getSearchText() {
-        return searchText;
-    }
     
-    public DocGridDragControl getDocDragControl() {
-        if (documentGrid != null)
-            return documentGrid.getDragControl();
-        return null;
-    }
     
-    public void setFisheyeEnabled(boolean enableFisheye) {
-        if (documentGrid != null)
-            documentGrid.setFisheyeEnabled(enableFisheye);
-    }
     
-    public NestedFisheyeGrid buildNestedGrid() {
-        // default values for axes; these should be eliminated and overridden
-        String xAxisAttrName = "Indicator_26";
-        String yAxisAttrName = "Indicator_4";
-        String colorAttrName = "INDICATOR_19B";
-        if (docGridSelectionModel != null) {
-            // if docGridSelectionModel == null, something probably wasn't initialized correctly in the mainview?
-            xAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getXAxisAttribute();
-            yAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getYAxisAttribute();
-            colorAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getColorAttribute();
-        }
-
-        nestedFisheyeGrid = new NestedFisheyeGrid(predictor.getAttributeNames(), model.getAllDocuments(), model.getIsDocumentEnabledList(), xAxisAttrName, yAxisAttrName, colorAttrName);
-        return nestedFisheyeGrid;
-    }
     
-    public String getDocumentSummary(int globalDocId, String globalAttrName) {
-        if (model != null && predictor != null) {
-            // convert name to id
-            // TODO : this is super-clunky! refactor to use a single class for attribute encapsulation!
-            List<String> allAttrs = predictor.getAttributeNames();
-            int globalAttrId = allAttrs.indexOf(globalAttrName);
-            if (predictor != null) {
-                return predictor.buildSummary(globalDocId, globalAttrId);
-            }
-        }
-        return "";
-    }
     
-    public Document getDocument(int globalDocId) {
-        if (model != null) {
-            return model.getAllDocuments().get(globalDocId);
-        }
-        return null;
-    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // old piccolo junk, should be able to delete
+//    public NestedFisheyeGrid buildNestedGrid() {
+//        // default values for axes; these should be eliminated and overridden
+//        String xAxisAttrName = "Indicator_26";
+//        String yAxisAttrName = "Indicator_4";
+//        String colorAttrName = "INDICATOR_19B";
+//        if (docGridSelectionModel != null) {
+//            // if docGridSelectionModel == null, something probably wasn't initialized correctly in the mainview?
+//            xAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getXAxisAttribute();
+//            yAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getYAxisAttribute();
+//            colorAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getColorAttribute();
+//        }
+//
+//        nestedFisheyeGrid = new NestedFisheyeGrid(predictor.getAttributeNames(), model.getAllDocuments(), model.getIsDocumentEnabledList(), xAxisAttrName, yAxisAttrName, colorAttrName);
+//        return nestedFisheyeGrid;
+//    }
+    
+    
+    
+    
+    
     
 }

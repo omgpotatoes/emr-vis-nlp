@@ -766,10 +766,10 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     }
 
     public void rebuildDocumentGridView() {
-//        documentGrid = controller.buildDocumentGrid();
-//        jSplitPaneDocGrid.setBottomComponent(documentGrid);
-        nestedGrid = controller.buildNestedGrid();
-        jSplitPaneDocGrid.setBottomComponent(nestedGrid);
+        documentGrid = controller.buildDocumentGrid();
+        jSplitPaneDocGrid.setBottomComponent(documentGrid);
+//        nestedGrid = controller.buildNestedGrid();
+//        jSplitPaneDocGrid.setBottomComponent(nestedGrid);
         
         boolean enableFisheye = jToggleButtonFisheye.isSelected();
         controller.setFisheyeEnabled(enableFisheye);

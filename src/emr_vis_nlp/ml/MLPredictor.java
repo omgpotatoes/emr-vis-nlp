@@ -1,6 +1,7 @@
 package emr_vis_nlp.ml;
 
 import emr_vis_nlp.controller.MainController;
+import emr_vis_nlp.ml.colon_vars.MLPredictorColonVars;
 import emr_vis_nlp.ml.deprecated.RuntimeIndicatorPrediction;
 import emr_vis_nlp.ml.deprecated.SimpleSQMatcher;
 import emr_vis_nlp.model.Document;
@@ -25,6 +26,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
@@ -48,6 +50,8 @@ public abstract class MLPredictor {
     
     
     protected List<Attribute> attributeList;
+    protected List<Boolean> attributeEnabledList;
+    protected Map<String, Integer> attrNameToIndexMap;
     
     /*
      * For each Document, map from each attribute name to prediction
@@ -91,12 +95,16 @@ public abstract class MLPredictor {
         
     }
     
+    public List<Boolean> getAttributeEnabledList() {
+        return attributeEnabledList;
+    }
+    
     /**
      * Loads and/or generates appropriate attribute predictions for the model
      * data. Namely, this method is responsible for appropriately populating
      * predictionMapList.
      */
-    public abstract void loadPredictions();
+    public abstract void loadPredictions(MainModel model);
     
     public abstract Map<String, Double> getTermWeightsForDocForAttr(int globalDocId, int globalAttrId);
     
@@ -428,6 +436,16 @@ public abstract class MLPredictor {
         return summary.toString();
         
     }
+
+    public List<String> getValuesForAttribute(String xAxisAttrName) {
+        if (attrNameToIndexMap != null) {
+            int attrId = attrNameToIndexMap.get(xAxisAttrName);
+            return attributeList.get(attrId).getLegalValues();
+        }
+        return new ArrayList<>();
+    }
+    
+    
     
     public static class WeightedSentence implements Comparable<WeightedSentence> {
         
@@ -494,14 +512,55 @@ public abstract class MLPredictor {
             // debug
             System.out.println("debug: modellist type is \"" + MLPredictorType.mlpredictor_colonoscopy_deprecated + "\"");
             // build the appropriate MLPredictor
-            throw new UnsupportedOperationException();  // todo : implement this?
+            throw new UnsupportedOperationException();  // todo : do we care about the old predictor enough to implement this?
             
         } else if (modellistTypeName.equals(MLPredictorType.mlpredictor_colonoscopy_vars.toString())) {
             // type is variable-based, from spring 2013
             // debug
             System.out.println("debug: modellist type is \"" + MLPredictorType.mlpredictor_colonoscopy_vars + "\"");
             // build the appropriate MLPredictor
+            String modellistName = modellistRoot.getAttribute("name").trim().toLowerCase();
+            String modelRootPath = modellistRoot.getAttribute("modelroot").trim().toLowerCase();
+            // if modelRootPath is relative, tack on location of the modellist xml
+            if (modelRootPath.length() < 2 || modelRootPath.charAt(0) == '.' || (modelRootPath.charAt(0) != '/' && modelRootPath.charAt(1) != ':')) {
+                String parentDir = predictorFile.getParent();
+                modelRootPath = parentDir + File.separator + modelRootPath;
+            }
             
+            String modelFoldName = modellistRoot.getAttribute("foldname").trim().toLowerCase();
+            NodeList attributeNodes = modellistRoot.getElementsByTagName("Attr");
+            List<Attribute> attributeList = new ArrayList<>();
+            List<String> modelNames = new ArrayList<>();
+            if (attributeNodes != null && attributeNodes.getLength() > 0) {
+                for (int n=0; n<attributeNodes.getLength(); n++) {
+                    Element attributeNode = (Element) attributeNodes.item(n);
+                    NodeList attributeValNodes = attributeNode.getElementsByTagName("Vals");
+                    Element attributeValNode = (Element) attributeValNodes.item(0);
+                    String valString = attributeValNode.getFirstChild().getNodeValue().trim();
+                    Scanner valSplitter = new Scanner(valString);
+                    List<String> valList = new ArrayList<>();
+                    while (valSplitter.hasNext()) {
+                        String nextVal = valSplitter.next().trim();
+                        if (!nextVal.isEmpty()) {
+                            valList.add(nextVal);
+                        }
+                    }
+                    String attrName = attributeNode.getAttribute("name").trim().toLowerCase();
+                    String attrTypeStr = attributeNode.getAttribute("type").trim().toLowerCase();
+                    Attribute.AttributeType attrType = Attribute.AttributeType.getType(attrTypeStr);
+                    
+                    // build attribute
+                    Attribute newAttr = new Attribute(attrType, attrName, attrName, valList);
+                    // debug
+                    System.out.println("debug: MLPredictor: built new attribute: "+newAttr.toString());
+                    attributeList.add(newAttr);
+                    modelNames.add(attrName);
+                    // build model
+                    
+                    
+                }
+            }
+            predictor = new MLPredictorColonVars(modellistName, modelRootPath, modelFoldName, modelNames, attributeList);
             
         } else {
             // type is not recognized

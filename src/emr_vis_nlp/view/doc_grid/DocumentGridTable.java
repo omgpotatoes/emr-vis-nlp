@@ -1,5 +1,8 @@
 package emr_vis_nlp.view.doc_grid;
 
+import emr_vis_nlp.controller.MainController;
+import emr_vis_nlp.ml.MLPredictor;
+import emr_vis_nlp.ml.PredictionCertaintyTuple;
 import emr_vis_nlp.model.Document;
 import java.util.*;
 import prefuse.data.Table;
@@ -82,23 +85,34 @@ public class DocumentGridTable extends Table {
         // find all possible values for each attribute
         // map each value to an integer
         attrToValueToIntMap = new HashMap<>();
+//        for (String attrName : allAttributes) {
+//            Map<String, Integer> valueToIntMap = new HashMap<>();
+//            attrToValueToIntMap.put(attrName, valueToIntMap);
+//            int valueCounter = 0;  // will prefuse complain if we start indexing at 0?
+//            for (int d = 0; d < allDocs.size(); d++) {
+//                Document doc = allDocs.get(d);
+//                Map<String, String> docAttrs = doc.getAttributes();
+//                String value = "";
+//                if (docAttrs.containsKey(attrName)) {
+//                    value = docAttrs.get(attrName);
+//                }
+//                if (!valueToIntMap.containsKey(value)) {
+//                    valueToIntMap.put(value, valueCounter);
+//                    valueCounter++;
+//                }
+//            }
+//        }
+        // pull values from model rather than model now
         for (String attrName : allAttributes) {
             Map<String, Integer> valueToIntMap = new HashMap<>();
             attrToValueToIntMap.put(attrName, valueToIntMap);
-            int valueCounter = 0;  // will prefuse complain if we start indexing at 0?
-            for (int d = 0; d < allDocs.size(); d++) {
-                Document doc = allDocs.get(d);
-                Map<String, String> docAttrs = doc.getAttributes();
-                String value = "";
-                if (docAttrs.containsKey(attrName)) {
-                    value = docAttrs.get(attrName);
-                }
-                if (!valueToIntMap.containsKey(value)) {
-                    valueToIntMap.put(value, valueCounter);
-                    valueCounter++;
-                }
+            List<String> attrValues = MainController.getMainController().getValuesForAttribute(attrName);
+            for (int i=0; i<attrValues.size(); i++) {
+                valueToIntMap.put(attrValues.get(i), i);
             }
+            
         }
+        
         
         // populate table data
         // include continuous-value-based attribute for display
@@ -120,8 +134,20 @@ public class DocumentGridTable extends Table {
                 String value = "";
                 if (docAttrs.containsKey(attrName)) {
                     value = docAttrs.get(attrName);
+                } else {
+                    // assign based on predictor
+                    PredictionCertaintyTuple pred;
+                    if ((pred = MainController.getMainController().getPrediction(d, attrName)) != null) {
+                        value = pred.getValue();
+                    }
                 }
-                int valueInt = attrToValueToIntMap.get(attrName).get(value);
+                //debug: 
+                int valueInt = 0;
+                if (attrToValueToIntMap.containsKey(attrName) && attrToValueToIntMap.get(attrName).containsKey(value)) {
+                    valueInt = attrToValueToIntMap.get(attrName).get(value);
+                } else {
+                    System.out.println("err: value \""+value+"\" not found in map for attribute \""+attrName+"\"");
+                }
                 set(rowCounter, attrName, value);
                 set(rowCounter, attrName+CONTINUOUS_SUFFIX, valueInt);
             }

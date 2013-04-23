@@ -41,10 +41,16 @@ public class DeprecatedMLPredictor extends MLPredictor {
         
         List<String> attributeNameList = model.getAllAttributeNames();  // do we necessarily want to do this? perhaps sometimes we may want to get the attributes from the prediction model instead?
         attributeList = new ArrayList<>();
+        attributeEnabledList = new ArrayList<>();
+        int counter = 0;
+        attrNameToIndexMap = new HashMap<>();
         for (String attributeName : attributeNameList) {
             List<String> attrVals = new ArrayList<>(); attrVals.add("Pass"); attrVals.add("Fail"); attrVals.add("N/A"); 
-            Attribute attribute = new Attribute(Attribute.AttributeType.STRING, attributeName, attributeName, attrVals);
+            Attribute attribute = new Attribute(Attribute.AttributeType.INDICATOR_CATEGORICAL, attributeName, attributeName, attrVals);
             attributeList.add(attribute);
+            attributeEnabledList.add(true);
+            attrNameToIndexMap.put(attributeName, counter);
+            counter++;
         }
         
         documentList = model.getAllDocuments();
@@ -52,12 +58,12 @@ public class DeprecatedMLPredictor extends MLPredictor {
         
         memoizedTermWeightMaps = new HashMap<>();
         
-        loadPredictions();
+        loadPredictions(model);
         
     }
     
     @Override
-    public void loadPredictions() {
+    public void loadPredictions(MainModel model) {
         
         // load predictions for all docs
         List<String> defaultValList = DatasetTermTranslator.getDefaultValList();
