@@ -2,7 +2,7 @@
 package emr_vis_nlp.view.doc_grid;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.view.VarBarChartForCell;
+import emr_vis_nlp.view.var_bar_chart.VarBarChartForCell;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

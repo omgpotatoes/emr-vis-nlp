@@ -1,19 +1,17 @@
 package emr_vis_nlp.main;
 
-import emr_vis_nlp.view.JTableCombos;
+import emr_vis_nlp.view.var_bar_chart.JTableCombos;
 import emr_vis_nlp.view.doc_table.DocTableModel;
 import emr_vis_nlp.view.doc_table.AttrTableModel;
 import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.ml.MLPredictor;
-import emr_vis_nlp.ml.NullPredictor;
+import emr_vis_nlp.ml.nullpred.NullPredictor;
 import emr_vis_nlp.model.*;
-import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
 import emr_vis_nlp.view.MainView;
 import emr_vis_nlp.view.MainViewGlassPane;
-import emr_vis_nlp.view.VarDatasetRatioRenderer;
+import emr_vis_nlp.view.var_bar_chart.VarDatasetRatioRenderer;
 import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
-import emr_vis_nlp.view.nested_grid.NestedFisheyeGrid;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -52,18 +50,9 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
      */
     private AttrTableModel attrSelectionTableModel;
     /**
-     * backing model for the treemap attribute selection table
-     */
-    private TableModel treeMapSelectionTableModel;
-    /**
      * backing model for the document grid attribute selection table
      */
     private DocGridTableSelectorModel docGridSelectionTableModel;
-    /**
-     * treemap-holding object for document-oriented layout
-     */
-//    private DocumentTreeMapView docTreeMapView;
-    private JComponent docTreeMapViewComponent;
     /*
      * glasspane onto which various views may write
      */
@@ -73,10 +62,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
      * object for document-grid layout
      */
     private DocumentGrid documentGrid;
-    /*
-     * object for nested grid layout
-     */
-    private NestedFisheyeGrid nestedGrid;
     /*
      * panel for supplying a search query
      */
@@ -128,14 +113,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jTableAttrSelection = new javax.swing.JTable();
         jButtonSelectNoneDocTable = new javax.swing.JButton();
         jButtonSelectAllDocTable = new javax.swing.JButton();
-        jPanelDocMap = new javax.swing.JPanel();
-        jSplitPaneDocMap = new javax.swing.JSplitPane();
-        jPanel5 = new javax.swing.JPanel();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        jTableAttrSelection2 = new JTableCombos();
-        jLabelSearch1 = new javax.swing.JLabel();
-        jTextFieldSearch1 = new javax.swing.JTextField();
-        jPanelDocMapDummy = new javax.swing.JPanel();
         jPanelDocGrid = new javax.swing.JPanel();
         jSplitPaneDocGrid = new javax.swing.JSplitPane();
         jPanelDocGridDummy = new javax.swing.JPanel();
@@ -256,105 +233,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         jTabbedPane1.addTab("Document Table", jPanelDocTable);
 
-        jPanelDocMap.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                jPanelDocMapPropertyChange(evt);
-            }
-        });
-
-        jSplitPaneDocMap.setDividerLocation(200);
-        jSplitPaneDocMap.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                jSplitPaneDocMapPropertyChange(evt);
-            }
-        });
-
-        jTableAttrSelection2.setAutoCreateRowSorter(true);
-        jTableAttrSelection2.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Attribute Name", "Enabled?"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.Object.class, java.lang.Boolean.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false, true
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        jScrollPane3.setViewportView(jTableAttrSelection2);
-
-        jLabelSearch1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelSearch1.setText("Search:");
-
-        jTextFieldSearch1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextFieldSearch1ActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabelSearch1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTextFieldSearch1, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabelSearch1)
-                    .addComponent(jTextFieldSearch1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE))
-        );
-
-        jSplitPaneDocMap.setLeftComponent(jPanel5);
-
-        javax.swing.GroupLayout jPanelDocMapDummyLayout = new javax.swing.GroupLayout(jPanelDocMapDummy);
-        jPanelDocMapDummy.setLayout(jPanelDocMapDummyLayout);
-        jPanelDocMapDummyLayout.setHorizontalGroup(
-            jPanelDocMapDummyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 589, Short.MAX_VALUE)
-        );
-        jPanelDocMapDummyLayout.setVerticalGroup(
-            jPanelDocMapDummyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 541, Short.MAX_VALUE)
-        );
-
-        jSplitPaneDocMap.setRightComponent(jPanelDocMapDummy);
-
-        javax.swing.GroupLayout jPanelDocMapLayout = new javax.swing.GroupLayout(jPanelDocMap);
-        jPanelDocMap.setLayout(jPanelDocMapLayout);
-        jPanelDocMapLayout.setHorizontalGroup(
-            jPanelDocMapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPaneDocMap, javax.swing.GroupLayout.Alignment.TRAILING)
-        );
-        jPanelDocMapLayout.setVerticalGroup(
-            jPanelDocMapLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPaneDocMap)
-        );
-
-        jTabbedPane1.addTab("Document Map", jPanelDocMap);
-
         jPanelDocGrid.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 jPanelDocGridPropertyChange(evt);
@@ -443,6 +321,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         jToggleButtonFisheye.setSelected(true);
         jToggleButtonFisheye.setText("Toggle Fisheye Distortion");
+        jToggleButtonFisheye.setEnabled(false);
         jToggleButtonFisheye.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jToggleButtonFisheyeActionPerformed(evt);
@@ -574,100 +453,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         }
     }//GEN-LAST:event_jMenuItemLoadDatasetActionPerformed
 
-    private void jTextFieldSearch1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldSearch1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextFieldSearch1ActionPerformed
-
-    private void jTableSimpleDocsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableSimpleDocsMouseClicked
-        
-        // listens for double-click on an item from the table, in order to load the details window for the given document
-        int numClicks = evt.getClickCount();
-        // get selected table index
-        int selectedDocRowIndexRaw = jTableSimpleDocs.getSelectedRow();
-        
-        if (numClicks >= 2) {
-            
-            int selectedDocRowIndexModel = jTableSimpleDocs.convertRowIndexToModel(selectedDocRowIndexRaw);
-            int globalDocIndex = selectedDocRowIndexModel;
-            try {
-                globalDocIndex = ((DocTableModel)docTableModel).getGlobalIndexForModelRow(selectedDocRowIndexModel);
-            } catch (ClassCastException e) {
-                e.printStackTrace();
-                System.out.println("err?: could not cast docTableModel?");
-            }
-            
-            // debug
-//            System.out.println("debug: double++-click (" + numClicks + ") on selected row: " + globalDocIndex +" (raw="+selectedDocRowIndexRaw+", model="+selectedDocRowIndexModel+")");
-
-//            // create and display new popup for selected document
-//            final JFrame newPopup = controller.buildDocDetailsWindow(globalDocIndex);
-//            java.awt.EventQueue.invokeLater(new Runnable() {
-//                public void run() {
-//                    newPopup.setVisible(true);
-//                }
-//            });
-            
-            // let the controller handle this
-            controller.displayDocDetailsWindow(globalDocIndex);
-            
-        }
-        
-    }//GEN-LAST:event_jTableSimpleDocsMouseClicked
-
-    private void jSplitPaneDocMapPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jSplitPaneDocMapPropertyChange
-        updateDocTreemapSize();
-    }//GEN-LAST:event_jSplitPaneDocMapPropertyChange
-
-    private void jPanelDocMapPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jPanelDocMapPropertyChange
-        updateDocTreemapSize();
-    }//GEN-LAST:event_jPanelDocMapPropertyChange
-
-    private void jPanelDocGridPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jPanelDocGridPropertyChange
-        updateDocumentGridSize();
-    }//GEN-LAST:event_jPanelDocGridPropertyChange
-
-    private void jSplitPaneDocGridPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jSplitPaneDocGridPropertyChange
-        updateDocumentGridSize();
-    }//GEN-LAST:event_jSplitPaneDocGridPropertyChange
-
-    private void jButtonSelectAllDocGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectAllDocGridActionPerformed
-        controller.enableAllDocs();
-    }//GEN-LAST:event_jButtonSelectAllDocGridActionPerformed
-
-    private void jButtonSelectNoneDocGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectNoneDocGridActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButtonSelectNoneDocGridActionPerformed
-
-    private void jButtonResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonResetActionPerformed
-        controller.resetDocGridView();
-    }//GEN-LAST:event_jButtonResetActionPerformed
-
-    private void jButtonSelectAllDocTableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectAllDocTableActionPerformed
-        if (attrSelectionTableModel != null) {
-            attrSelectionTableModel.selectAll();
-        }
-    }//GEN-LAST:event_jButtonSelectAllDocTableActionPerformed
-
-    private void jButtonSelectNoneDocTableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectNoneDocTableActionPerformed
-        if (attrSelectionTableModel != null) {
-            attrSelectionTableModel.selectNone();
-        }
-    }//GEN-LAST:event_jButtonSelectNoneDocTableActionPerformed
-
-    private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
-        
-        // if selection is doc grid, redraw at appropriate size
-        if (jTabbedPane1.getSelectedIndex() == 2) {
-            updateDocumentGridSize();
-        }
-        
-    }//GEN-LAST:event_jTabbedPane1StateChanged
-
-    private void jToggleButtonFisheyeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButtonFisheyeActionPerformed
-        boolean enableFisheye = jToggleButtonFisheye.isSelected();
-        controller.setFisheyeEnabled(enableFisheye);
-    }//GEN-LAST:event_jToggleButtonFisheyeActionPerformed
-
     private void jMenuItemLoadPredictorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemLoadPredictorActionPerformed
         
         // load a new MLPredictor from file
@@ -687,14 +472,89 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         
     }//GEN-LAST:event_jMenuItemLoadPredictorActionPerformed
 
-    public void updateDocTreemapSize() {
-        // update size of treemap
-        if (docTreeMapViewComponent != null) {
-            int newWidth = docTreeMapViewComponent.getWidth();
-            int newHeight = docTreeMapViewComponent.getHeight();
-            ((DocumentTreeMapView)docTreeMapViewComponent).resetSize(newWidth, newHeight);
+    private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
+
+        // if selection is doc grid, redraw at appropriate size
+        if (jTabbedPane1.getSelectedIndex() == 2) {
+            updateDocumentGridSize();
         }
-    }
+    }//GEN-LAST:event_jTabbedPane1StateChanged
+
+    private void jPanelDocGridPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jPanelDocGridPropertyChange
+        updateDocumentGridSize();
+    }//GEN-LAST:event_jPanelDocGridPropertyChange
+
+    private void jSplitPaneDocGridPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jSplitPaneDocGridPropertyChange
+        updateDocumentGridSize();
+    }//GEN-LAST:event_jSplitPaneDocGridPropertyChange
+
+    private void jToggleButtonFisheyeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButtonFisheyeActionPerformed
+        boolean enableFisheye = jToggleButtonFisheye.isSelected();
+        controller.setFisheyeEnabled(enableFisheye);
+    }//GEN-LAST:event_jToggleButtonFisheyeActionPerformed
+
+    private void jButtonResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonResetActionPerformed
+        controller.resetDocGridView();
+    }//GEN-LAST:event_jButtonResetActionPerformed
+
+    private void jButtonSelectNoneDocGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectNoneDocGridActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButtonSelectNoneDocGridActionPerformed
+
+    private void jButtonSelectAllDocGridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectAllDocGridActionPerformed
+        controller.enableAllDocs();
+    }//GEN-LAST:event_jButtonSelectAllDocGridActionPerformed
+
+    private void jButtonSelectAllDocTableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectAllDocTableActionPerformed
+        if (attrSelectionTableModel != null) {
+            attrSelectionTableModel.selectAll();
+        }
+    }//GEN-LAST:event_jButtonSelectAllDocTableActionPerformed
+
+    private void jButtonSelectNoneDocTableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectNoneDocTableActionPerformed
+        if (attrSelectionTableModel != null) {
+            attrSelectionTableModel.selectNone();
+        }
+    }//GEN-LAST:event_jButtonSelectNoneDocTableActionPerformed
+
+    private void jTableSimpleDocsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableSimpleDocsMouseClicked
+
+        // listens for double-click on an item from the table, in order to load the details window for the given document
+        int numClicks = evt.getClickCount();
+        // get selected table index
+        int selectedDocRowIndexRaw = jTableSimpleDocs.getSelectedRow();
+
+        if (numClicks >= 2) {
+
+            int selectedDocRowIndexModel = jTableSimpleDocs.convertRowIndexToModel(selectedDocRowIndexRaw);
+            int globalDocIndex = selectedDocRowIndexModel;
+            try {
+                globalDocIndex = ((DocTableModel) docTableModel).getGlobalIndexForModelRow(selectedDocRowIndexModel);
+            } catch (ClassCastException e) {
+                e.printStackTrace();
+                System.out.println("err?: could not cast docTableModel?");
+            }
+
+            // debug
+//            System.out.println("debug: double++-click (" + numClicks + ") on selected row: " + globalDocIndex +" (raw="+selectedDocRowIndexRaw+", model="+selectedDocRowIndexModel+")");
+
+//            // create and display new popup for selected document
+//            final JFrame newPopup = controller.buildDocDetailsWindow(globalDocIndex);
+//            java.awt.EventQueue.invokeLater(new Runnable() {
+//                public void run() {
+//                    newPopup.setVisible(true);
+//                }
+//            });
+
+            // let the controller handle this
+            controller.displayDocDetailsWindow(globalDocIndex);
+
+        }
+    }//GEN-LAST:event_jTableSimpleDocsMouseClicked
+    
+    
+    
+    /******* document-grid-related methods *******/
     
     public void updateDocumentGridSize() {
         // update size of document grid
@@ -703,68 +563,12 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             int newHeight = documentGrid.getHeight();
             documentGrid.resetSize(newWidth, newHeight);
         }
-        // update size of nested grid
-        if (nestedGrid != null) {
-            int newWidth = nestedGrid.getWidth();
-            int newHeight = nestedGrid.getHeight();
-            nestedGrid.updateSize(newWidth, newHeight);
-        }
         // also, update the selection table (will need to redraw VarBarChartForCells)
         if (docGridSelectionTableModel != null) {
             docGridSelectionTableModel.resetVarBarCharts();
         }
     }
     
-    public void rebuildDocumentTable() {
-
-        // query for new backend for the simple document table, load
-        docTableModel = controller.buildSimpleDocTableModel();
-        jTableSimpleDocs.setModel(docTableModel);
-
-        // build sorter for the table
-        docTableModelSorter = new TableRowSorter<>(docTableModel);
-        jTableSimpleDocs.setRowSorter(docTableModelSorter);
-
-        // TODO build filter for table
-        // idea: rather than writing custom filter, simply set "text" as a 
-        //  row, allow for sorting in this manner?
-        // similarly, allow for sorting by values, by augmenting attribute 
-        //  cells with attr name?
-
-    }
-
-    public void resetAttributeSelectionTable() {
-
-        // tableModel for document table-based view
-        AttrTableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModel();
-//        TableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModelFocusOnly();
-        attrSelectionTableModel = newAttrSelectionTableModel;
-        jTableAttrSelection.setModel(attrSelectionTableModel);
-        
-        // tableModel for treemap-based view
-        //jTableAttrSelection2.setModel(attrSelectionTableModel);
-        TableModel newTreeMapSelectionTableModel = controller.buildSimpleTreeMapSelectionTableModel();
-        treeMapSelectionTableModel = newTreeMapSelectionTableModel;
-        jTableAttrSelection2.setModel(treeMapSelectionTableModel);
-        
-        // tableModel for grid-based view
-        //jTableAttrSelection2.setModel(attrSelectionTableModel);
-        DocGridTableSelectorModel newDocGridSelectionTableModel = controller.buildSimpleDocGridSelectionTableModel();
-        docGridSelectionTableModel = newDocGridSelectionTableModel;
-        jTableAttrSelection3.setModel(docGridSelectionTableModel);
-
-    }
-
-    public void rebuildDocumentTreeMapView() {
-//        docTreeMapView = controller.buildDocTreeMapView();
-        docTreeMapViewComponent = controller.buildDocTreeMapViewComponent();
-//        jPanelDocTreeHolder.removeAll();
-//        jPanelDocTreeHolder.add(docTreeMapViewComponent);
-//        jPanelDocTreeHolder.validate();
-        jSplitPaneDocMap.setBottomComponent(docTreeMapViewComponent);
-        updateDocTreemapSize();
-    }
-
     public void rebuildDocumentGridView() {
         documentGrid = controller.buildDocumentGrid();
         jSplitPaneDocGrid.setBottomComponent(documentGrid);
@@ -806,6 +610,61 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         }
     }
     
+    
+    
+    /******* document-table-related methods *******/
+    
+    public void rebuildDocumentTable() {
+
+        // query for new backend for the simple document table, load
+        docTableModel = controller.buildSimpleDocTableModel();
+        jTableSimpleDocs.setModel(docTableModel);
+
+        // build sorter for the table
+        docTableModelSorter = new TableRowSorter<>(docTableModel);
+        jTableSimpleDocs.setRowSorter(docTableModelSorter);
+
+        // TODO build filter for table
+        // idea: rather than writing custom filter, simply set "text" as a 
+        //  row, allow for sorting in this manner?
+        // similarly, allow for sorting by values, by augmenting attribute 
+        //  cells with attr name?
+
+    }
+
+    
+    
+    /******* attribute-related methods? *******/
+    
+    public void resetAttributeSelectionTable() {
+
+        // tableModel for document table-based view
+        AttrTableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModel();
+//        TableModel newAttrSelectionTableModel = controller.buildSimpleAttrSelectionTableModelFocusOnly();
+        attrSelectionTableModel = newAttrSelectionTableModel;
+        jTableAttrSelection.setModel(attrSelectionTableModel);
+        
+        // tableModel for grid-based view
+        //jTableAttrSelection2.setModel(attrSelectionTableModel);
+        DocGridTableSelectorModel newDocGridSelectionTableModel = controller.buildSimpleDocGridSelectionTableModel();
+        docGridSelectionTableModel = newDocGridSelectionTableModel;
+        jTableAttrSelection3.setModel(docGridSelectionTableModel);
+
+    }
+    
+    
+    
+    /******* glasspane-related views *******/
+    
+    @Override
+    public MainViewGlassPane getGlassPane() {
+        return glassPane;
+    }
+
+    
+    
+    
+    
     @Override
     public void resetAllViews() {
 
@@ -818,23 +677,13 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         // query for new backend for attribute table, load
         resetAttributeSelectionTable();
 
-        // query, reload document tree view
-        rebuildDocumentTreeMapView();
-
         // reload document grid view
         rebuildDocumentGridView();
         
         // TODO layout additional panels as-needed...
 
-
-
     }
     
-    @Override
-    public MainViewGlassPane getGlassPane() {
-        return glassPane;
-    }
-
     @Override
     public void attributeSelectionChanged() {
 
@@ -848,15 +697,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
     }
     
-    @Override
-    public void orderedAttrSelectionChanged() {
-
-        // update relevant panes
-
-        // update treemap view
-        rebuildDocumentTreeMapView();
-
-    }
     
     @Override
     public void axisAttrSelectionChanged() {
@@ -874,6 +714,9 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             search.setQuery(text);
         }
     }
+    
+    
+    
 
     /**
      * @param args the command line arguments
@@ -973,7 +816,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JButton jButtonSelectNoneDocTable;
     private javax.swing.JFileChooser jFileChooser1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabelSearch1;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenu jMenuFile;
     private javax.swing.JMenuItem jMenuItemLoadDataset;
@@ -981,25 +823,18 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JMenu jMenuML;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanelDocGrid;
     private javax.swing.JPanel jPanelDocGridDummy;
-    private javax.swing.JPanel jPanelDocMap;
-    private javax.swing.JPanel jPanelDocMapDummy;
     private javax.swing.JPanel jPanelDocTable;
     private javax.swing.JPanel jPanelSearchContainer;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JSplitPane jSplitPaneDocGrid;
-    private javax.swing.JSplitPane jSplitPaneDocMap;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTableAttrSelection;
-    private javax.swing.JTable jTableAttrSelection2;
     private javax.swing.JTable jTableAttrSelection3;
     private javax.swing.JTable jTableSimpleDocs;
-    private javax.swing.JTextField jTextFieldSearch1;
     private javax.swing.JToggleButton jToggleButtonFisheye;
     // End of variables declaration//GEN-END:variables
 }

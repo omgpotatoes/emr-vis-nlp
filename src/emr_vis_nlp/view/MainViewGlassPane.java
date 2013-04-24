@@ -2,7 +2,6 @@
 package emr_vis_nlp.view;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.view.nested_grid.NestedFisheyeGrid;
 import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -14,13 +13,17 @@ import javax.swing.text.AbstractDocument;
 import prefuse.visual.VisualItem;
 
 /**
- *
+ * This JComponent is designed to serve as a MainView's Glasspane; that is, to 
+ * be loaded on-demand to do custom positioning of custom elements overtop of 
+ * the regular view. 
+ * 
+ * @see http://docs.oracle.com/javase/tutorial/uiswing/components/rootpane.html
  * @author alexander.p.conrad@gmail.com
  */
 public class MainViewGlassPane extends JComponent implements MouseListener {
 
     // TODO this should be a singleton, since we can have only 1 glasspane defined for the jframe at a time?
-    private static MainViewGlassPane glassPane;
+    private static MainViewGlassPane glassPane = null;
     
     private JScrollPane jScrollPaneDocText;
     private JTextPane jTextPaneDocText;
@@ -31,8 +34,6 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
     
     private boolean mouseWasClicked = false;
     private VisualItem currentItem = null;
-    
-    private NestedFisheyeGrid nestedGrid;
     
     // color for the pane
     private Color backgroundColor;
@@ -46,7 +47,6 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
     
     private MainViewGlassPane() {
         super();
-        glassPane = this;
         // manually position the JScrollPane within the GlassPane
         setLayout(null);
         jScrollPaneDocText = new JScrollPane();
@@ -94,10 +94,6 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
         add(jScrollPaneDocText);
         backgroundColor = Color.WHITE;
         setVisible(false);
-    }
-    
-    public void setFisheyeGrid(NestedFisheyeGrid nestedGrid) {
-        this.nestedGrid = nestedGrid;
     }
 
     public AbstractDocument getAbstDoc() {

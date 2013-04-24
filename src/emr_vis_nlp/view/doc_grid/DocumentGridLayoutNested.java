@@ -2,11 +2,8 @@
 package emr_vis_nlp.view.doc_grid;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.model.Document;
-import emr_vis_nlp.view.nested_grid.NestedFisheyeGrid;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
 import prefuse.Constants;
@@ -174,7 +171,7 @@ public class DocumentGridLayoutNested extends Layout {
         yCatPositions = new ArrayList<>();
         xCatRegionSizes = new ArrayList<>();
         yCatRegionSizes = new ArrayList<>();
-        
+
         Iterator iter = m_vis.items(m_group);  // optionally, can add predicatefilter as second argument, if needed
         int numItems = m_vis.size(m_group);
 
@@ -322,7 +319,7 @@ public class DocumentGridLayoutNested extends Layout {
             int pxInRegion = (int) (x_range * regionPercsY[y]);
             glyphsPerInnerRowInCol[y] = pxInRegion / glyphWidthPx;
         }
-        
+
         // assign region sizes, percentages based on adjusted region sizes
 //        int regionAccumulator = (int)x_min;
 //        xCatPositions.add((int)x_min);
@@ -340,7 +337,7 @@ public class DocumentGridLayoutNested extends Layout {
 //            regionAccumulator += (int)(regionPerc*y_range);
 //            yCatPositions.add(regionAccumulator);
 //        }
-        
+
 
         // TODO : sort by certainties: 
         //  for each nested grid, sort first by the y-attr certainty (for predictions; manual annotations automatically pushed to front of list)
@@ -401,7 +398,7 @@ public class DocumentGridLayoutNested extends Layout {
         int widthFocusCol = -1;
         int heightFocusRow = -1;
         for (int currentRow = 0; currentRow < globalRowCount; currentRow++) {
-            
+
             if (currentRow >= metaGridYThresh) {
                 metaGridY++;
                 if (metaGridY < gridEndingGlyphCountsY.length) {
@@ -470,13 +467,13 @@ public class DocumentGridLayoutNested extends Layout {
         double collapsedHeight = (y_range - focusHeight) / (globalRowCount + regionPercsY.length - 1);
 //            double collapsedWidth = (widthPx - focusWidth) / (documents.size());
         double collapsedWidth = (x_range - focusWidth) / (globalColCount + regionPercsX.length - 1);
-        
+
         // store positions at which regions end, where boundaries should be drawn
-        int regionAccumulatorX = (int)x_min;
-        int regionAccumulatorY = (int)y_min;
-        xCatPositions.add((int)regionAccumulatorX);
-        yCatPositions.add((int)regionAccumulatorY);
-        
+        int regionAccumulatorX = (int) x_min;
+        int regionAccumulatorY = (int) y_min;
+        xCatPositions.add((int) regionAccumulatorX);
+        yCatPositions.add((int) regionAccumulatorY);
+
         // reset counters
         documentGlyphGridCounter = new int[attrValsX.size()][attrValsY.size()];
         metaGridY = 0;
@@ -487,8 +484,8 @@ public class DocumentGridLayoutNested extends Layout {
         // track our current x, y positions
         double xOffset = x_min;
         double yOffset = y_min;
-        
-        
+
+
         for (int currentRow = 0; currentRow < globalRowCount; currentRow++) {
 
             // figure out which meta-grid we are in
@@ -497,14 +494,14 @@ public class DocumentGridLayoutNested extends Layout {
                 // add a buffer, to ensure gap between groups
                 yOffset += glyphHeightPx;
                 regionAccumulatorY += glyphHeightPx;
-                
+
                 // remember where gap was located (so long as we're not off the grid)
                 if (metaGridY <= gridEndingGlyphCountsY.length) {
                     yCatPositions.add((int) yOffset);
                     yCatRegionSizes.add(regionAccumulatorY);
                     regionAccumulatorY = 0;
                 }
-                
+
                 if (metaGridY < gridEndingGlyphCountsY.length) {
                     metaGridYThresh = gridEndingGlyphCountsY[metaGridY];
                 } else {
@@ -534,7 +531,7 @@ public class DocumentGridLayoutNested extends Layout {
 //                        currentCol++;
                     xOffset += glyphWidthPx;
                     regionAccumulatorX += glyphWidthPx;
-                    
+
                     // if we're in first row (no need to be redundant), remember where gap was located (so long as we're not off the grid)
                     if (metaGridX <= gridEndingGlyphCountsX.length && currentRow == 0) {
                         xCatPositions.add((int) xOffset);
@@ -578,7 +575,7 @@ public class DocumentGridLayoutNested extends Layout {
 //                        }
 
 //                        docGridNode.setBounds(Double.MIN_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-                    
+
                     // set the Start* fields for animation
                     double oldX = docGridNode.getDouble(VisualItem.X);
                     double oldY = docGridNode.getDouble(VisualItem.Y);
@@ -588,7 +585,7 @@ public class DocumentGridLayoutNested extends Layout {
                     docGridNode.setStartY(oldY);
                     docGridNode.setDouble(WIDTH_START, oldW);
                     docGridNode.setDouble(HEIGHT_START, oldH);
-                    
+
                     docGridNode.set(VisualItem.X, xOffset);
                     docGridNode.setEndX(xOffset);
                     docGridNode.set(VisualItem.Y, yOffset);
@@ -623,6 +620,23 @@ public class DocumentGridLayoutNested extends Layout {
 
         }
         
+        // if we didn't advance through all of the categories, ensure that we add appropriate entries to *CatPositions, *RegionSizes so that we don't throw out of bounds exceptions later!
+        // for region sizes: sum total in array, subtract from total area, assign remainder to missing region (0 for subsequent regions?)
+        // for positions: simply assign max value for each additional needed category?
+        
+        while (xCatPositions.size() < attrValsX.size()) {
+            xCatPositions.add((int)x_max);
+        }
+        while (yCatPositions.size() < attrValsY.size()) {
+            yCatPositions.add((int)y_max);
+        }
+        while (xCatRegionSizes.size() < attrValsX.size()) {
+            xCatRegionSizes.add(0);
+        }
+        while (yCatRegionSizes.size() < attrValsY.size()) {
+            yCatRegionSizes.add(0);
+        }
+
         // if we've got an associated axisLayout, run it now
         if (docGridAxisLayout != null) {
             docGridAxisLayout.setVisualization(m_vis);

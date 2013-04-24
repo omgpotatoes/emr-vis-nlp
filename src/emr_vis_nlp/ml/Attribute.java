@@ -64,17 +64,8 @@ public class Attribute {
     }
     
     
-    
-    
-    
-    
     public static enum AttributeType {
-        // these are feature types, not attribute types!
-//        N_GRAM,
-//        PATTERN,
-//        ONTOLOGY_ITEM,
-//        NUMERIC,
-//        STRING;
+        
         VARIABLE_CATEGORICAL,
         VARIABLE_CONTINUOUS,
         INDICATOR_CATEGORICAL,

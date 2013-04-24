@@ -1,11 +1,12 @@
 package emr_vis_nlp.controller;
 
+import emr_vis_nlp.view.doc_details_popup.DocFocusPopup;
+import emr_vis_nlp.view.var_bar_chart.VarBarChartForCell;
 import emr_vis_nlp.ml.PredictionCertaintyTuple;
 import emr_vis_nlp.model.mpqa_colon.MpqaColonMainModel;
 import emr_vis_nlp.ml.MLPredictor;
 import emr_vis_nlp.ml.deprecated.DeprecatedMLPredictor;
-import emr_vis_nlp.view.DocDetailsTableModel;
-import emr_vis_nlp.view.doc_map.TreeMapSelectorTableModel;
+import emr_vis_nlp.view.doc_details_popup.DocDetailsTableModel;
 import emr_vis_nlp.view.doc_table.DocTableModel;
 import emr_vis_nlp.view.doc_table.AttrTableModel;
 import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
@@ -14,8 +15,6 @@ import emr_vis_nlp.view.*;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import emr_vis_nlp.view.doc_grid.DocumentGrid.DocGridDragControl;
 import emr_vis_nlp.view.doc_grid.DocumentGridTable;
-import emr_vis_nlp.view.doc_map.DocumentTreeMapView;
-import emr_vis_nlp.view.nested_grid.NestedFisheyeGrid;
 import java.io.File;
 import java.util.*;
 import javax.swing.JComponent;
@@ -63,14 +62,6 @@ public class MainController {
      */
     private List<Integer> activePopupIDs;
     /**
-     * current treemap view component (if any)
-     */
-    private JComponent docTreeMapViewComponent = null;
-    /**
-     * current treemap view attr selection model (if any)
-     */
-    private TreeMapSelectorTableModel docTreeMapSelectionModel = null;
-    /**
      * current doc grid view attr selection model (if any)
      */
     private DocGridTableSelectorModel docGridSelectionModel = null;
@@ -78,10 +69,6 @@ public class MainController {
      * current document grid component (if any)
      */
     private DocumentGrid documentGrid = null;
-    /**
-     * piccolo2d-based interactive nested grid layout
-     */
-    private NestedFisheyeGrid nestedFisheyeGrid = null;
     /**
      * backing table for current document grid (if any)
      */
@@ -145,7 +132,10 @@ public class MainController {
     public void setPredictor(MLPredictor predictor) {
         this.predictor = predictor;
         
-        if (view != null) view.resetAllViews();
+        if (view != null) {
+            view.resetAllViews();
+            attributeSelectionUpdated(predictor.getAttributeEnabledList());
+        }
     }
     
     /**
@@ -188,6 +178,7 @@ public class MainController {
         model = new MpqaColonMainModel(this);
         ((MpqaColonMainModel) model).loadDataFromDoclist(file);
         // load predictor for dataset as well
+        // TODO: eliminate deprecated predictor, replace with null predictor
         predictor = new DeprecatedMLPredictor(model);
         // }
         
@@ -427,66 +418,6 @@ public class MainController {
 ////        TableModel attrSelectionTableModel = model.buildSimpleAttrSelectionTableModelFocusOnly();
 ////        return attrSelectionTableModel;
 //    }
-
-    
-    
-    /******* treemap-view methods *******/
-    
-    /**
-     * Builds and returns a new DocumentTreeMapView component based on the current back-end model.
-     * 
-     * @return treemap-like interactive visualization for exploring the dataset
-     */
-    public JComponent buildDocTreeMapViewComponent() {
-        if (model != null && predictor != null) {
-            // get selected attributes from interface
-            List<String> selectedAttrsForTree = new ArrayList<>();
-            if (docTreeMapSelectionModel != null) {
-                TreeMapSelectorTableModel treeMapSelectorTableModel = (TreeMapSelectorTableModel) docTreeMapSelectionModel;
-                selectedAttrsForTree = treeMapSelectorTableModel.getSelectedAttributeList();
-            } else {
-                // if there's no docTreeMapSelectionModel currently loaded, then the interface has not been initialized properly
-                // TODO eliminate, replace with proper default initialization?
-//            selectedAttrsForTree.add("Indicator_1");
-//            selectedAttrsForTree.add("Indicator_21");
-//            selectedAttrsForTree.add("Indicator_19");
-            }
-            JComponent newDocTreeMapViewComponent = DocumentTreeMapView.buildNewTreeMapOnly(this, model.getAllDocuments(), model.getIsDocumentEnabledList(), selectedAttrsForTree);
-            docTreeMapViewComponent = newDocTreeMapViewComponent;
-            return docTreeMapViewComponent;
-        }
-        return null;
-    }
-
-    /**
-     * Builds backing TableModel for a treemap-oriented attribute selection table, based on the attributes in the currently-loaded Model.
-     * 
-     * @return backing model for categorical attribute selection, else null if no model is loaded.
-     */
-    public TreeMapSelectorTableModel buildSimpleTreeMapSelectionTableModel() {
-        if (model != null && predictor != null) {
-            TreeMapSelectorTableModel newDocTreeMapSelectionTableModel = new TreeMapSelectorTableModel(predictor.getAttributeNames(), this);
-            docTreeMapSelectionModel = newDocTreeMapSelectionTableModel;
-            return docTreeMapSelectionModel;
-        } return null;
-    }
-    
-    /**
-     * Called when the categorically-selected attributes for the TreeMap view
-     * have been changed. Pushes relevant adjustments to the relevant views.
-     *
-     */
-    public void updateTreeMapAttributes() {
-
-        // get selected attrs from the table model
-        TreeMapSelectorTableModel treeMapSelectorTableModel = (TreeMapSelectorTableModel) docTreeMapSelectionModel;
-        List<String> currentSelectedAttrs = treeMapSelectorTableModel.getSelectedAttributeList();
-
-        // feed selected attrs to the treemap
-        //DocumentTreeMapView.updatePanelWithNewTreemap(docTreeMapViewComponent, model.getAllDocuments(), model.getAllSelectedDocuments(), currentSelectedAttrs);
-        view.orderedAttrSelectionChanged();
-
-    }
     
     
     
@@ -729,14 +660,6 @@ public class MainController {
             documentGrid.updateView(false);
         }
         
-        // update nested grid
-        if (nestedFisheyeGrid != null) {
-            nestedFisheyeGrid.setAttrNameX(xAxisAttrName);
-            nestedFisheyeGrid.setAttrNameY(yAxisAttrName);
-            nestedFisheyeGrid.setAttrNameColor(colorAttrName);
-            nestedFisheyeGrid.refreshView();
-        }
-        
     }
     
     /**
@@ -745,9 +668,6 @@ public class MainController {
     public void resetDocGridView() {
         if (documentGrid != null) {
             documentGrid.resetView();
-        }
-        if (nestedFisheyeGrid != null) {
-            nestedFisheyeGrid.refreshView();
         }
     }
     
@@ -818,43 +738,6 @@ public class MainController {
         }
         return null;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // old piccolo junk, should be able to delete
-//    public NestedFisheyeGrid buildNestedGrid() {
-//        // default values for axes; these should be eliminated and overridden
-//        String xAxisAttrName = "Indicator_26";
-//        String yAxisAttrName = "Indicator_4";
-//        String colorAttrName = "INDICATOR_19B";
-//        if (docGridSelectionModel != null) {
-//            // if docGridSelectionModel == null, something probably wasn't initialized correctly in the mainview?
-//            xAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getXAxisAttribute();
-//            yAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getYAxisAttribute();
-//            colorAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getColorAttribute();
-//        }
-//
-//        nestedFisheyeGrid = new NestedFisheyeGrid(predictor.getAttributeNames(), model.getAllDocuments(), model.getIsDocumentEnabledList(), xAxisAttrName, yAxisAttrName, colorAttrName);
-//        return nestedFisheyeGrid;
-//    }
-    
-    
-    
     
     
     

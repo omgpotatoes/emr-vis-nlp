@@ -79,6 +79,7 @@ public class MLPredictorColonVars extends MLPredictor {
             // debug
             System.out.println("debug: "+this.getClass().getName()+": loading term weight file "+termWeightPath);
             Map<String, Double> predictorTermWeightMap = new HashMap<>();
+            int predictorTermWeightMapCounter = 0;
             // read file; should have two lines
             File termWeightFile = null;
             Scanner termWeightFileReader = null;
@@ -95,6 +96,7 @@ public class MLPredictorColonVars extends MLPredictor {
                     String newTerm = line1Splitter.next();
                     double newWeight = line2Splitter.nextDouble();
                     predictorTermWeightMap.put(newTerm, newWeight);
+                    predictorTermWeightMapCounter++;
                 }
             } catch (FileNotFoundException e) {                
                 e.printStackTrace();
@@ -107,6 +109,8 @@ public class MLPredictorColonVars extends MLPredictor {
                     termWeightFileReader.close();
                 }
             }
+            // debug
+            System.out.println("debug: "+this.getClass().getName()+": read "+predictorTermWeightMapCounter+" terms from "+termWeightPath);
             predictorsTermWeightMaps.add(predictorTermWeightMap);
         }
         

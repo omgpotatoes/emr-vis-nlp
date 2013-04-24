@@ -61,9 +61,9 @@ public class Feature {
     
     @Override
     public String toString() {
-        if (type == FeatureType.NGRAM) {
+        if (type == FeatureType.N_GRAM) {
             return featureText;
-        } else if (type == FeatureType.REGEXP) {
+        } else if (type == FeatureType.PATTERN) {
             return featureText;
         } else {
             // include conditions for other FeatureTypes above here...
@@ -71,5 +71,14 @@ public class Feature {
         }
     }
     
+    public static enum FeatureType {
+        
+        N_GRAM,
+        PATTERN,
+        ONTOLOGY_ITEM,
+        NUMERIC,
+        STRING;
+        
+    }
     
 }
