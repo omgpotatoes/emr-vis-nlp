@@ -48,7 +48,7 @@ public class CertSVMPredictor {
         // label instances
         for (int i = 0; i < unlabeled.numInstances(); i++) {
 //            System.out.println("debug: "+this.getClass().getName()+": classifier: "+m_Classifier.toString());
-            double[] instanceDist = this.m_Classifier.distributionForInstance(unlabeled.instance(i));
+            double[] instanceDist = this.m_Classifier.distributionForInstance(unlabeled.instance(i));  // BUG: this is simply returning array of [0, 1] or [1, 0] ?
             dist[i] = instanceDist;
         }
 
@@ -58,9 +58,10 @@ public class CertSVMPredictor {
     public double[] predictInstanceDistribution(String fnInstances) throws Exception {
         // assume that the file contains only 1 instance
         // load instances
+        // TODO: eliminate intermediate file, use StringReader instead!
         Instances data = new Instances(new BufferedReader(new FileReader(fnInstances)));
         // remove reportID attribute
-        String[] options = weka.core.Utils.splitOptions("-R 1");
+        String[] options = weka.core.Utils.splitOptions("-R 1");  // removes the first attribute in instances (should be the document id?)
         String filterName = "weka.filters.unsupervised.attribute.Remove";
         Filter filter = (Filter) Class.forName(filterName).newInstance();
         if (filter instanceof OptionHandler) {
@@ -145,51 +146,52 @@ public class CertSVMPredictor {
         writer.close();
     }
 
-    public Map<String, Double> getTermWeights() {
-
-        try {
-            
-            // get weights
-            double[] weights = ((LibSVM) m_Classifier).getFeatureWeights();
-//            String weightStr = ((LibSVM) m_Classifier).getWeights();
-//            // debug
-//            System.out.println("debug: ColonsopyModel.getTermWeights: weightStr: "+weightStr);
-//            List<Double> weightList = new ArrayList<>();
-//            Scanner weightStrSplitter = new Scanner(weightStr);
-//            while (weightStrSplitter.hasNextDouble()) {
-//                weightList.add(weightStrSplitter.nextDouble());
+    // termWeights are not stored in MLPredictorColonVars, read straight from file
+//    public Map<String, Double> getTermWeights() {
+//
+//        try {
+//            
+//            // get weights
+//            double[] weights = ((LibSVM) m_Classifier).getFeatureWeights();
+////            String weightStr = ((LibSVM) m_Classifier).getWeights();
+////            // debug
+////            System.out.println("debug: ColonsopyModel.getTermWeights: weightStr: "+weightStr);
+////            List<Double> weightList = new ArrayList<>();
+////            Scanner weightStrSplitter = new Scanner(weightStr);
+////            while (weightStrSplitter.hasNextDouble()) {
+////                weightList.add(weightStrSplitter.nextDouble());
+////            }
+////            double[] weights = new double[weightList.size()];
+////            for (int w=0; w<weightList.size(); w++)  {
+////                weights[w] = weightList.get(w);
+////            }
+//
+//            // map weights to terms
+//            List<String> bowTerms = RuntimeIndicatorPrediction.getListOfBOWTerms();
+//
+//            assert weights.length == bowTerms.size();
+//            
+//            if (weights.length != bowTerms.size()) {
+//                
+//                System.err.println("weights and bowTerms not of same length! "+weights.length+" vs "+bowTerms.size());
+//                return null;
+//                
 //            }
-//            double[] weights = new double[weightList.size()];
-//            for (int w=0; w<weightList.size(); w++)  {
-//                weights[w] = weightList.get(w);
+//            
+//            Map<String, Double> termWeightMap = new HashMap<>();
+//            for (int t=0; t<bowTerms.size(); t++) {
+//                termWeightMap.put(bowTerms.get(t), weights[t]);
 //            }
-
-            // map weights to terms
-            List<String> bowTerms = RuntimeIndicatorPrediction.getListOfBOWTerms();
-
-            assert weights.length == bowTerms.size();
-            
-            if (weights.length != bowTerms.size()) {
-                
-                System.err.println("weights and bowTerms not of same length! "+weights.length+" vs "+bowTerms.size());
-                return null;
-                
-            }
-            
-            Map<String, Double> termWeightMap = new HashMap<>();
-            for (int t=0; t<bowTerms.size(); t++) {
-                termWeightMap.put(bowTerms.get(t), weights[t]);
-            }
-            
-            return termWeightMap;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("err: could not get feature weights from model: " + m_Classifier.toString());
-        }
-
-        return null;
-
-    }
+//            
+//            return termWeightMap;
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            System.out.println("err: could not get feature weights from model: " + m_Classifier.toString());
+//        }
+//
+//        return null;
+//
+//    }
     
 }

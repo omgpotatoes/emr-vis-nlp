@@ -132,12 +132,30 @@ public class MLPredictorColonVars extends MLPredictor {
 
         return predictions;
     }
+    
+    public double[] predictInstanceSingleAttr(String fnInstance, int p) {
+        // assume binary classifiers
+        double[] prediction = new double[2];
+
+        // each of these models corresponds to one of the indicators
+//        for (int i = 0; i < predictors.size(); i++) {
+            try {
+                prediction = predictors.get(p).predictInstanceDistribution(fnInstance);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("err: "+this.getClass().getName()+": unable to perform prediction on file "+fnInstance+" using model for attr "+modelNames.get(p));
+            }
+//        }
+
+        return prediction;
+    }
 
     public Map<String, Double> getTermWeightMapForModelIndex(int modelIndex) {
 
-        CertSVMPredictor predictor = predictors.get(modelIndex);
-        Map<String, Double> termWeights = predictor.getTermWeights();
-        return termWeights;
+//        CertSVMPredictor predictor = predictors.get(modelIndex);
+//        Map<String, Double> termWeights = predictor.getTermWeights();
+//        return termWeights;
+        return predictorsTermWeightMaps.get(modelIndex);
 
     }
     
@@ -207,6 +225,7 @@ public class MLPredictorColonVars extends MLPredictor {
                     tempFileBuilder.append(",0\n");
 
                     tempFileWriter.write(tempFileBuilder.toString());
+                    tempFileWriter.close();
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -222,27 +241,30 @@ public class MLPredictorColonVars extends MLPredictor {
                 
                 // d1 = indicator; d2 = probs. for each val [-1, 0, 1]
 //            double[][] predictions = RuntimeIndicatorPrediction.predictIndicatorsForTempFile();
-                double[][] predictions = predictInstance(TEMP_ARFF_FILE);
+//                double[][] predictions = predictInstance(TEMP_ARFF_FILE);
+                double[] prediction = predictInstanceSingleAttr(TEMP_ARFF_FILE, p);
 //            int[] predictedIndicatorScores = new int[predictions.length];
-                String[] predictedIndicatorScores = new String[predictions.length];
-                double[] predictedIndicatorCerts = new double[predictions.length];
+//                String[] predictedIndicatorScores = new String[predictions.length];
+//                double[] predictedIndicatorCerts = new double[predictions.length];
                 // find largest value for each indicator; store value and certainty
                 //for (int p = 0; p < predictions.length; p++) {
 //                String attributeNamePretty = DatasetTermTranslator.getAttrTranslation(RuntimeIndicatorPrediction.predictedIndicatorNames[p]);
 //                double negOneVal = predictions[p][0];
 //                double zeroVal = predictions[p][1];
 //                double oneVal = predictions[p][2];
-                double zeroVal = predictions[p][0];
-                double oneVal = predictions[p][1];
+//                double zeroVal = predictions[p][0];
+//                double oneVal = predictions[p][1];
+                double zeroVal = prediction[0];
+                double oneVal = prediction[1];
                 String attributeName = attributeList.get(p).getName();
                 PredictionCertaintyTuple predCertTuple = null;
                 if (zeroVal >= oneVal) {
-                    predictedIndicatorScores[p] = attributeList.get(p).getLegalValues().get(0);
-                    predictedIndicatorCerts[p] = zeroVal;
+//                    predictedIndicatorScores[p] = attributeList.get(p).getLegalValues().get(0);
+//                    predictedIndicatorCerts[p] = zeroVal;
                     predCertTuple = new PredictionCertaintyTuple(attributeName, attributeList.get(p).getLegalValues().get(0), zeroVal);
                 } else {
-                    predictedIndicatorScores[p] = attributeList.get(p).getLegalValues().get(1);
-                    predictedIndicatorCerts[p] = oneVal;
+//                    predictedIndicatorScores[p] = attributeList.get(p).getLegalValues().get(1);
+//                    predictedIndicatorCerts[p] = oneVal;
                     predCertTuple = new PredictionCertaintyTuple(attributeName, attributeList.get(p).getLegalValues().get(1), oneVal);
                 }
 
