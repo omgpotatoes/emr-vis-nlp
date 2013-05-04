@@ -48,18 +48,27 @@ public class CertSVMPredictor {
         // label instances
         for (int i = 0; i < unlabeled.numInstances(); i++) {
 //            System.out.println("debug: "+this.getClass().getName()+": classifier: "+m_Classifier.toString());
-            double[] instanceDist = this.m_Classifier.distributionForInstance(unlabeled.instance(i));  // BUG: this is simply returning array of [0, 1] or [1, 0] ?
+            LibSVM libsvm = (LibSVM) m_Classifier;
+            libsvm.setProbabilityEstimates(true);
+//            libsvm.buildClassifier(trainSet);
+//            double[] instanceDist = m_Classifier.distributionForInstance(unlabeled.instance(i));  // BUG: this is simply returning array of [0, 1] or [1, 0] ?
+            double[] instanceDist = libsvm.distributionForInstance(unlabeled.instance(i));
             dist[i] = instanceDist;
         }
 
         return dist;
     }
-
+    
     public double[] predictInstanceDistribution(String fnInstances) throws Exception {
+        BufferedReader reader = new BufferedReader(new FileReader(fnInstances));
+        return predictInstanceDistribution(reader);
+    }
+    
+    public double[] predictInstanceDistribution(Reader reader) throws Exception {
         // assume that the file contains only 1 instance
         // load instances
         // TODO: eliminate intermediate file, use StringReader instead!
-        Instances data = new Instances(new BufferedReader(new FileReader(fnInstances)));
+        Instances data = new Instances(reader);
         // remove reportID attribute
         String[] options = weka.core.Utils.splitOptions("-R 1");  // removes the first attribute in instances (should be the document id?)
         String filterName = "weka.filters.unsupervised.attribute.Remove";

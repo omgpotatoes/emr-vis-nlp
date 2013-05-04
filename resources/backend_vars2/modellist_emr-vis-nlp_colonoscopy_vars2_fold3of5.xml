@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<MLPredictor name="emr-vis-nlp_colonoscopy_vars2_fold3of5" type="mlpredictor_colonoscopy_vars" modelroot="./" foldname="fold3of5">
+	<Attr name="any-adenoma" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="appendiceal-orifice" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="ASA" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="biopsy" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="cecum" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="ileo-cecal-valve" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="indication-type" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="informed-consent" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="nursing-report" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="prep-adequateNo" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="prep-adequateNot" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="prep-adequateYes" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="proc-aborted" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+	<Attr name="withdraw-time" type="variable_categorical">
+		<Vals>
+			False
+			True
+		</Vals>
+	</Attr>
+</MLPredictor>

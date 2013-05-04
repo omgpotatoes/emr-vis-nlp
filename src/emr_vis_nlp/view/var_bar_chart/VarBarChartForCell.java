@@ -1,9 +1,9 @@
 package emr_vis_nlp.view.var_bar_chart;
 
 import emr_vis_nlp.controller.MainController;
+import emr_vis_nlp.ml.PredictionCertaintyTuple;
 import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.model.Document;
-import emr_vis_nlp.model.mpqa_colon.DatasetTermTranslator;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -26,11 +26,15 @@ import javax.swing.*;
  */
 public class VarBarChartForCell extends JPanel {
 
-    // idea: draw bars for whole dataset in background (faint colors), 
-    //  draw bars for selected subset overtop (saturated).
-    private String attrName;
+    // TODO : draw bars for whole dataset in background (faint colors), bars for selected subset overtop (saturated).
+    
     // governing controller
     private MainController controller;
+    
+    // name of attribute being represented with this object
+    private String attrName;
+    // list of values for this attribute
+    private List<String> attrVals;
     // list of documents being represented in this table
     private List<Document> allDocs;
     // list of all cols for cell
@@ -38,18 +42,13 @@ public class VarBarChartForCell extends JPanel {
     // current tooltiptext
     private String toolTipText = "";
 
-    public VarBarChartForCell(MainController controller, String attrName, List<Document> allDocs) {
+    public VarBarChartForCell(String attrName, List<String> attrVals, List<Document> allDocs) {
         super();
         this.attrName = attrName;
+        this.attrVals = attrVals;
         this.allDocs = allDocs;
-        this.controller = controller;
+        this.controller = MainController.getMainController();
         rebuildComponents();
-    }
-
-    public VarBarChartForCell() {
-        this.attrName = "";
-        allDocs = new ArrayList<>();
-        allCols = new ArrayList<>();
     }
 
     public void rebuildComponents() {
@@ -70,11 +69,8 @@ public class VarBarChartForCell extends JPanel {
 
         if (!attrName.equals("") && !abnormalNameMap.containsKey(attrName)) {
             // get scores for all docs
-            //  assume that docs are only of biomed type
-//            String[] vals = {"-1", "0", "1"};
-//            String[] vals = {"not_eligible", "eligible", "pass"};
-//            String[] vals = {"N/A", "Fail", "Pass"};
-            List<String> valList = DatasetTermTranslator.getDefaultValList();
+//            List<String> valList = DatasetTermTranslator.getDefaultValList();
+            List<String> valList = attrVals;
             String[] vals = new String[valList.size()];
             for (int v=0; v<valList.size(); v++) {
                 vals[v] = valList.get(v);
@@ -102,9 +98,16 @@ public class VarBarChartForCell extends JPanel {
 
                 } else {
 
-                    // name isn't valid, shouldn't happen
-                    System.err.println("VarBarChartForCell: could not find attribute \"" + attrName + "\" for doc: " + doc.getName());
-                    assert false;
+                    // name isn't valid or we don't have annotation, so we should get prediction
+                    PredictionCertaintyTuple prediction = controller.getPrediction(d, attrName);
+                    String val = prediction.getValue();
+                    if (valCountMap.containsKey(val)) {
+                        valCountMap.put(val, valCountMap.get(val) + 1);
+                    } else {
+                        System.err.println("VarBarChartForCell: encountered abnormal val \"" + val + "\" for attr \"" + attrName + "\" predicted for doc " + doc.getName());
+                    }
+//                    System.err.println("VarBarChartForCell: could not find attribute \"" + attrName + "\" for doc: " + doc.getName());
+//                    assert false;
 
                 }
 
@@ -193,7 +196,18 @@ public class VarBarChartForCell extends JPanel {
 //            // old alpha code for incorporating cluster selection no longer needed; see previous version's code if needed
             
             // update tooltip text
-            toolTipText = attrName+":  "+((int)(100*valPercs[0]))+"% N/A, "+((int)(100*valPercs[1]))+"% Fail, "+((int)(100*valPercs[2]))+"% Pass (click to select)";
+//            toolTipText = attrName+":  "+((int)(100*valPercs[0]))+"% N/A, "+((int)(100*valPercs[1]))+"% Fail, "+((int)(100*valPercs[2]))+"% Pass (click to select)";
+            toolTipText = attrName+": ";
+            for (int i=0; i<attrVals.size(); i++) {
+                String attrVal = attrVals.get(i);
+                toolTipText += ((int)(100*valPercs[i]))+"% "+attrVal;
+                if (i < attrVals.size()-1) {
+                    toolTipText += ", ";
+                } else {
+                    toolTipText += " (click to select/de-select)";
+                }
+            }
+            
             setToolTipText(toolTipText);
             
         }
@@ -202,116 +216,6 @@ public class VarBarChartForCell extends JPanel {
 //        repaint();
         
     }
-    
-    // old way of doing this: overridding the paintComponent method (but this led to problems when we wanted to enable interaction)
-    // keeping code around for now, in case we decide to switch back to this approach
-//    @Override
-//    public void paintComponent(Graphics graphics) {
-//        super.paintComponent(graphics);
-//
-//        Dimension dim = getSize();
-//        int clientWidth = dim.width;
-//        int clientHeight = dim.height;
-//
-//        Map<String, Boolean> abnormalNameMap = DocGridTableSelectorModel.getAbnormalNameMap();
-//        
-//        // draw the basic outline of the box
-//
-//        if (!attrName.equals("") && !abnormalNameMap.containsKey(attrName)) {
-//            // get scores for all docs
-//            //  assume that docs are only of biomed type
-////            String[] vals = {"-1", "0", "1"};
-////            String[] vals = {"not_eligible", "eligible", "pass"};
-//            String[] vals = {"N/A", "Fail", "Pass"};  // TODO make these model-independent!
-//            Map<String, Integer> valCountMap = new HashMap<>();
-//            for (String val : vals) {
-//                valCountMap.put(val, 0);
-//            }
-//            int barWidth = clientWidth / vals.length;
-//
-//            for (int d = 0; d < allDocs.size(); d++) {
-//
-//                Document doc = allDocs.get(d);
-//                Map<String, String> attributes = doc.getAttributes();
-//
-//                if (attributes.containsKey(attrName)) {
-//
-//                    String val = attributes.get(attrName) + "";
-//                    if (valCountMap.containsKey(val)) {
-//                        valCountMap.put(val, valCountMap.get(val) + 1);
-//                    } else {
-//                        // shouldn't happen
-//                        System.err.println("VarBarChartForCell: encountered abnormal val \"" + val + "\" for attr \"" + attrName + "\" in doc " + doc.getName());
-//                    }
-//
-//                } else {
-//
-//                    // name isn't valid, shouldn't happen
-//                    System.err.println("VarBarChartForCell: could not find attribute \"" + attrName + "\" for doc: " + doc.getName());
-//                    assert false;
-//
-//                }
-//
-//            }
-//
-//            // find fraction for each value
-//            int totalVals = 0;
-//            int[] valCounts = new int[vals.length];
-//            double[] valPercs = new double[vals.length];
-////            double[] valPercsSelected = new double[vals.length];
-//            for (int v = 0; v < vals.length; v++) {
-//                String val = vals[v];
-//                valCounts[v] = valCountMap.get(val);
-//                totalVals += valCounts[v];
-//            }
-//
-//            // draw the faint background bars for the whole dataset
-////            Font labelFont = new Font("Book Antiqua", Font.PLAIN, 10);
-////            FontMetrics labelFontMetrics = graphics.getFontMetrics(labelFont);
-//
-//            //int labelHeight = 18;
-//            int labelHeight = 0;
-//            for (int v = 0; v < vals.length; v++) {
-//
-//                //int left = v * barWidth + 1;
-//            	int left = v * barWidth;
-//                int top = clientHeight - labelHeight;
-//
-//                //int height = (int) (((double) valCounts[v] / (double) totalVals) * (clientHeight - labelHeight));
-//                int height = (int) (((double) valCounts[v] / (double) allDocs.size()) * (clientHeight - labelHeight)); // base size of box on size of whole dataset, to illustrate sparsely-instantiated vars
-//                valPercs[v] = ((double) valCounts[v] / (double) allDocs.size());
-//                height = -height;
-//                //int width = barWidth - 2;
-//                int width = barWidth;
-//
-//                // debug
-//                //System.out.println("debug: VarBarChart: drawing box: " + left + ", " + (top+height) + ", " + width + ", " + (-height));
-//
-////                graphics.setColor(Color.gray);
-//                graphics.setColor(Color.blue);
-//                graphics.fillRect(left, top + height, width, -height);
-//                //graphics.setColor(Color.black);
-//                //graphics.drawRect(left, top, width, height);
-//
-////                int q = clientHeight - labelFontMetrics.getDescent();
-////                int labelWidth = labelFontMetrics.stringWidth(vals[v]);
-////                int p = v * barWidth + (barWidth - labelWidth) / 2;
-////                graphics.setColor(Color.black);
-////                graphics.drawString(vals[v], p, q);
-//
-//            }
-//
-//
-////            // old alpha code for incorporating cluster selection no longer needed; see previous version's code if needed
-//            
-//            // update tooltip text
-//            setToolTipText(attrName+":  "+((int)(100*valPercs[0]))+"% N/A, "+((int)(100*valPercs[1]))+"% Fail, "+((int)(100*valPercs[2]))+"% Pass");
-//            
-//        }
-//        
-////        setOpaque(false);
-//
-//    }
     
     /**
      * Intermediate method for connecting the mouseevents captured by the JTable to the event handling code in the actual cell itself.
@@ -339,7 +243,14 @@ public class VarBarChartForCell extends JPanel {
             allCols.get(c).setIsEnabled(true);
         }
     }
-    
+
+    public int getNumVals() {
+        if (attrVals != null) {
+            return attrVals.size();
+        }
+        return 0;
+    }
+
     @Override
     public String toString() {
         return toolTipText;

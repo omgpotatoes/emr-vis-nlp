@@ -99,7 +99,7 @@ public abstract class MLPredictor {
     }
 
     public List<String> getValuesForAttribute(String xAxisAttrName) {
-        if (attrNameToIndexMap != null) {
+        if (attrNameToIndexMap != null && attrNameToIndexMap.containsKey(xAxisAttrName)) {
             int attrId = attrNameToIndexMap.get(xAxisAttrName);
             return attributeList.get(attrId).getLegalValues();
         }
@@ -119,7 +119,7 @@ public abstract class MLPredictor {
     
     public abstract Map<String, Double> getTermWeightsForDocForAttr(int globalDocId, String globalAttrName);
     
-    
+    public abstract List<String> getAttributeValues(String attrName);
     
     
     /******* text highlighting methods *******/

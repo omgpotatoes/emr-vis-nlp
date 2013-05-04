@@ -131,6 +131,11 @@ public class DocumentMedColon extends Document {
                         var = lineSplitter.next();
                         val = lineSplitter.next();
                         
+                        // if name begins with ``VAR_'' , remove; necessary so that names match with what the predictor model expects
+                        if (var.length() >= 4 && var.substring(0,4).equalsIgnoreCase("VAR_")) {
+                            var = var.substring(4);
+                        }
+                        
                         // don't worry about handling attrs and vars separately
 //                        Scanner varSplitter = new Scanner(var);
 //                        varSplitter.useDelimiter("_");

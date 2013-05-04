@@ -23,15 +23,19 @@ public class DatasetTermTranslator {
         valNameMap = new HashMap<>();
         valNameMap.put("-1", "N/A");
         valNameMap.put("", "N/A");
-        valNameMap.put("0", "Fail");
-        valNameMap.put("1", "Pass");
+//        valNameMap.put("0", "Fail");
+//        valNameMap.put("1", "Pass");
+        valNameMap.put("0", "False");
+        valNameMap.put("1", "True");
     }
     
     public static void buildDefaultValList() {
         defaultValList = new ArrayList<>();
         defaultValList.add("N/A");
-        defaultValList.add("Fail");
-        defaultValList.add("Pass");
+//        defaultValList.add("Fail");
+//        defaultValList.add("Pass");
+        defaultValList.add("False");
+        defaultValList.add("True");
     }
     
     public static void buildAttrNameMap() {

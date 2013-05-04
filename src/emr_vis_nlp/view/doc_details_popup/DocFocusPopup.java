@@ -1,5 +1,6 @@
 package emr_vis_nlp.view.doc_details_popup;
 
+import emr_vis_nlp.view.glasspane.DocDetailsTableModel;
 import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.model.Document;
 import javax.swing.ListSelectionModel;

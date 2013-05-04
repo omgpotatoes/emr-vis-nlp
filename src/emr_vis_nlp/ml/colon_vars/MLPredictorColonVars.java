@@ -7,10 +7,7 @@ import emr_vis_nlp.ml.MLPredictor;
 import emr_vis_nlp.ml.PredictionCertaintyTuple;
 import emr_vis_nlp.model.Document;
 import emr_vis_nlp.model.MainModel;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -85,16 +82,23 @@ public class MLPredictorColonVars extends MLPredictor {
             Scanner termWeightFileReader = null;
             try {
                 termWeightFile = new File(termWeightPath);
-                termWeightFileReader = new Scanner(termWeightFile);
+                // need to use a fileinputstream here, else weird things may happen due to overful buffers?
+                termWeightFileReader = new Scanner(new FileInputStream(termWeightFile));
                 String line1 = termWeightFileReader.nextLine();
+                // debug
+//                System.out.println("debug: line1: "+line1);
                 String line2 = termWeightFileReader.nextLine();
+//                System.out.println("debug: line2: "+line2);
                 Scanner line1Splitter = new Scanner(line1);
                 line1Splitter.useDelimiter(",");
                 Scanner line2Splitter = new Scanner(line2);
                 line2Splitter.useDelimiter(",");
                 while (line1Splitter.hasNext()) {
                     String newTerm = line1Splitter.next();
+                    // debug
+//                    System.out.print("debug: newTerm=\""+newTerm+"\", ");
                     double newWeight = line2Splitter.nextDouble();
+//                    System.out.print(" newWeight="+newWeight+"\n");
                     predictorTermWeightMap.put(newTerm, newWeight);
                     predictorTermWeightMapCounter++;
                 }
@@ -116,34 +120,71 @@ public class MLPredictorColonVars extends MLPredictor {
         
     }
     
-    public double[][] predictInstance(String fnInstance) {
+    // tempfile-based prediction methods replaced with in-memory reader-based methods for speedup
+//    public double[][] predictInstance(String fnInstance) {
+//        // assume binary classifiers
+//        double[][] predictions = new double[predictors.size()][2];
+//
+//        // each of these models corresponds to one of the indicators
+//        for (int i = 0; i < predictors.size(); i++) {
+//            try {
+//                predictions[i] = predictors.get(i).predictInstanceDistribution(fnInstance);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                System.out.println("err: "+this.getClass().getName()+": unable to perform prediction on file "+fnInstance+" using model for attr "+modelNames.get(i));
+//            }
+//        }
+//
+//        return predictions;
+//    }
+    
+    public double[][] predictInstance(Reader reader) {
         // assume binary classifiers
         double[][] predictions = new double[predictors.size()][2];
 
         // each of these models corresponds to one of the indicators
         for (int i = 0; i < predictors.size(); i++) {
             try {
-                predictions[i] = predictors.get(i).predictInstanceDistribution(fnInstance);
+                predictions[i] = predictors.get(i).predictInstanceDistribution(reader);
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println("err: "+this.getClass().getName()+": unable to perform prediction on file "+fnInstance+" using model for attr "+modelNames.get(i));
+                System.out.println("err: "+this.getClass().getName()+": unable to perform prediction using reader "+reader.toString()+" using model for attr "+modelNames.get(i));
             }
         }
 
         return predictions;
     }
     
-    public double[] predictInstanceSingleAttr(String fnInstance, int p) {
+    // tempfile-based prediction methods replaced with in-memory reader-based methods for speedup
+//    public double[] predictInstanceSingleAttr(String fnInstance, int p) {
+//        // assume binary classifiers
+//        double[] prediction = new double[2];
+//
+//        // each of these models corresponds to one of the indicators
+////        for (int i = 0; i < predictors.size(); i++) {
+//            try {
+//                prediction = predictors.get(p).predictInstanceDistribution(fnInstance);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                System.out.println("err: "+this.getClass().getName()+": unable to perform prediction on file "+fnInstance+" using model for attr "+modelNames.get(p));
+//            }
+////        }
+//
+//        return prediction;
+//    }
+    
+    
+    public double[] predictInstanceSingleAttr(Reader reader, int p) {
         // assume binary classifiers
         double[] prediction = new double[2];
 
         // each of these models corresponds to one of the indicators
 //        for (int i = 0; i < predictors.size(); i++) {
             try {
-                prediction = predictors.get(p).predictInstanceDistribution(fnInstance);
+                prediction = predictors.get(p).predictInstanceDistribution(reader);
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println("err: "+this.getClass().getName()+": unable to perform prediction on file "+fnInstance+" using model for attr "+modelNames.get(p));
+                System.out.println("err: "+this.getClass().getName()+": unable to perform prediction using reader "+reader.toString()+" using model for attr "+modelNames.get(p));
             }
 //        }
 
@@ -172,14 +213,16 @@ public class MLPredictorColonVars extends MLPredictor {
                 // build temporary file for this document
                 //RuntimeIndicatorPrediction.buildTemporaryFileForText(documentList.get(d).getText());
                 String documentText = documentList.get(d).getText();
-
-                File tempFile = null;
-                FileWriter tempFileWriter = null;
+                
+                // eliminate tempFile, build reader directly
+//                File tempFile = null;
+//                FileWriter tempFileWriter = null;
                 StringBuilder tempFileBuilder = new StringBuilder();
-                try {
-                    tempFile = new File(TEMP_ARFF_FILE);
-                    tempFile.delete();
-                    tempFileWriter = new FileWriter(tempFile);
+                StringReader strReader = null;
+//                try {
+//                    tempFile = new File(TEMP_ARFF_FILE);
+//                    tempFile.delete();
+//                    tempFileWriter = new FileWriter(tempFile);
 
 //                    String header = "% This is the Colonoscopy problem\n@relation current_working_report\n@attribute [ReportID] numeric\n";
                     String header = "% This is the Colonoscopy problem\n@relation current_working_report\n@attribute [report_identifier] numeric\n";
@@ -224,25 +267,28 @@ public class MLPredictorColonVars extends MLPredictor {
                     // append final value for classlabel; doesn't matter, since we're doing prediction on this document?
                     tempFileBuilder.append(",0\n");
 
-                    tempFileWriter.write(tempFileBuilder.toString());
-                    tempFileWriter.close();
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    System.out.println("error writing temp file: " + TEMP_ARFF_FILE);
-                } finally {
-                    if (tempFileWriter != null) {
-                        try {
-                            tempFileWriter.close();
-                        } catch (IOException e) {
-                        }
-                    }
-                }
+//                    tempFileWriter.write(tempFileBuilder.toString());
+//                    tempFileWriter.close();
+                    strReader = new StringReader(tempFileBuilder.toString());
+                    
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    System.out.println("error writing temp file: " + TEMP_ARFF_FILE);
+//                } finally {
+//                    if (tempFileWriter != null) {
+//                        try {
+//                            tempFileWriter.close();
+//                        } catch (IOException e) {
+//                        }
+//                    }
+//                }
+                
+                
                 
                 // d1 = indicator; d2 = probs. for each val [-1, 0, 1]
 //            double[][] predictions = RuntimeIndicatorPrediction.predictIndicatorsForTempFile();
 //                double[][] predictions = predictInstance(TEMP_ARFF_FILE);
-                double[] prediction = predictInstanceSingleAttr(TEMP_ARFF_FILE, p);
+                double[] prediction = predictInstanceSingleAttr(strReader, p);
 //            int[] predictedIndicatorScores = new int[predictions.length];
 //                String[] predictedIndicatorScores = new String[predictions.length];
 //                double[] predictedIndicatorCerts = new double[predictions.length];
@@ -303,8 +349,14 @@ public class MLPredictorColonVars extends MLPredictor {
     @Override
     public Map<String, Double> getTermWeightsForDocForAttr(int globalDocId, String globalAttrName) {
         return getTermWeightsForDocForAttr(globalDocId, attrNameToIndexMap.get(globalAttrName));
-        
     }
     
+    @Override
+    public List<String> getAttributeValues(String attrName) {
+        List<String> vals = new ArrayList<>();
+        vals.add("False");
+        vals.add("True");
+        return vals;
+    }
     
 }

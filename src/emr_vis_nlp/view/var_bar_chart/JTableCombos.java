@@ -60,21 +60,40 @@ public class JTableCombos extends JTable {
 
 
 
+//                        chart.unhighlightCells();
+                    
                     // hardcode for 3 regions (for now)
                     // TODO generalize this code to multiple regions!
-                    double regionBound1 = xChart + widthChart * 1.0 / 3.0;
-                    double regionBound2 = xChart + widthChart * 2.0 / 3.0;
-//                        chart.unhighlightCells();
-                    if (xPointer > xChart && xPointer < regionBound1) {
-                        chart.clickOnCell(0);
-                    } else if (xPointer < regionBound2) {
-                        chart.clickOnCell(1);
-                    } else if (xPointer < xChart + widthChart) {
-                        chart.clickOnCell(2);
-                    } else {
-                        // shouldn't happen
-                        System.err.println("JTableCombos: unexpected mouse click event: " + e.toString());
+//                    double regionBound1 = xChart + widthChart * 1.0 / 3.0;
+//                    double regionBound2 = xChart + widthChart * 2.0 / 3.0;
+//                    if (xPointer > xChart && xPointer < regionBound1) {
+//                        chart.clickOnCell(0);
+//                    } else if (xPointer < regionBound2) {
+//                        chart.clickOnCell(1);
+//                    } else if (xPointer < xChart + widthChart) {
+//                        chart.clickOnCell(2);
+//                    } else {
+//                        // shouldn't happen
+//                        System.err.println("JTableCombos: unexpected mouse click event: " + e.toString());
+//                    }
+                    
+                    int numVals = chart.getNumVals();
+                    if (numVals <= 0) numVals = 1;
+                    double[] regionBounds = new double[numVals-1];
+                    boolean cellClicked = false;
+                    for (int i=0; i<regionBounds.length; i++) {
+                        regionBounds[i] = xChart + widthChart * (i+1.0) / numVals;
+                        if (xPointer < regionBounds[i]) {
+                            chart.clickOnCell(i);
+                            cellClicked = true;
+                            break;
+                        }
                     }
+                    if (!cellClicked) {
+                        chart.clickOnCell(numVals-1);
+                    }
+                    
+                    
                     // clear all other boxes
                     // click now applies to filtering rather than highlighting
 //                        int numRows = getModel().getRowCount();

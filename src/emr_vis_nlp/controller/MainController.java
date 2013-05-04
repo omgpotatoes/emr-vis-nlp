@@ -1,12 +1,13 @@
 package emr_vis_nlp.controller;
 
+import emr_vis_nlp.main.MainTabbedView;
+import emr_vis_nlp.view.glasspane.MainViewGlassPane;
 import emr_vis_nlp.view.doc_details_popup.DocFocusPopup;
 import emr_vis_nlp.view.var_bar_chart.VarBarChartForCell;
 import emr_vis_nlp.ml.PredictionCertaintyTuple;
 import emr_vis_nlp.model.mpqa_colon.MpqaColonMainModel;
 import emr_vis_nlp.ml.MLPredictor;
-import emr_vis_nlp.ml.deprecated.DeprecatedMLPredictor;
-import emr_vis_nlp.view.doc_details_popup.DocDetailsTableModel;
+import emr_vis_nlp.view.glasspane.DocDetailsTableModel;
 import emr_vis_nlp.view.doc_table.DocTableModel;
 import emr_vis_nlp.view.doc_table.AttrTableModel;
 import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
@@ -14,10 +15,10 @@ import emr_vis_nlp.model.*;
 import emr_vis_nlp.view.*;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
 import emr_vis_nlp.view.doc_grid.DocumentGrid.DocGridDragControl;
+import emr_vis_nlp.view.doc_grid.DocumentGrid.DocumentSelectControl;
 import emr_vis_nlp.view.doc_grid.DocumentGridTable;
 import java.io.File;
 import java.util.*;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.BadLocationException;
@@ -41,18 +42,19 @@ public class MainController {
      * single controller instance (singleton design pattern)
      */
     private static MainController mainController = null;
+    
     /**
      * main model controlled by this
      */
-    private MainModel model;
+    private MainModel model = null;
     /**
      * main view controlled by this
      */
-    private MainView view;
+    private MainTabbedView view;
     /**
      * currently-loaded machine learning predictor
      */
-    private MLPredictor predictor;
+    private MLPredictor predictor = null;
     /**
      * list of active popup windows
      */
@@ -81,6 +83,10 @@ public class MainController {
      * current string for search
      */
     private String searchText;
+    /*
+     * boolean flags for attributes currently enabled
+     */
+    private List<Boolean> attributesEnabled;
     
     /**
      * Factory method for generating a singleton MainController.
@@ -134,7 +140,8 @@ public class MainController {
         
         if (view != null) {
             view.resetAllViews();
-            attributeSelectionUpdated(predictor.getAttributeEnabledList());
+            attributesEnabled = predictor.getAttributeEnabledList();
+            attributeSelectionUpdated(attributesEnabled);
         }
     }
     
@@ -143,15 +150,27 @@ public class MainController {
      * 
      * @param predictorFile file serving as a list of all individual Weka models and related meta information to include in this MLPredictor
      */
-    public void setPredictor(File predictorFile) {
+    public void setPredictor(final File predictorFile) {
         
         // parse predictor modellist file
-        this.predictor = MLPredictor.buildPredictorFromXMLModelList(predictorFile);
-        if (model != null) {
-            this.predictor.loadPredictions(model);
-        }
+        if (view != null) view.startProgressBar();
+        // load predictor in its own thread, so that the interface is not frozen
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                predictor = MLPredictor.buildPredictorFromXMLModelList(predictorFile);
+                if (model != null) {
+                    predictor.loadPredictions(model);
+                }
+                attributesEnabled = predictor.getAttributeEnabledList();
+                if (view != null) {
+                    view.resetAllViews();
+                }
+                if (view != null) view.stopProgressBar();
+            }
+        };
+        new Thread(runnable).start();
         
-        if (view != null) view.resetAllViews();
         
     }
 
@@ -160,7 +179,7 @@ public class MainController {
      * 
      * @param view the MainView with which this controller is associated.
      */
-    public void setView(MainView view) {
+    public void setView(MainTabbedView view) {
         this.view = view;
     }
     
@@ -169,21 +188,38 @@ public class MainController {
      * 
      * @param file doclist file pointing the resources required by MainModel.
      */
-    public void setModelFromDoclist(File file) {
+    public void setModelFromDoclist(final File file) {
 
         // load new model from doclist
         // TODO add support for dataset types beyond MpqaColon
         
         // if type == mpqa_colon {
+        if (view != null) view.startProgressBar();
         model = new MpqaColonMainModel(this);
-        ((MpqaColonMainModel) model).loadDataFromDoclist(file);
+        // load model in its own thread, so that the interface is not frozen
+        Runnable runnable = new Runnable() {
+
+            @Override
+            public void run() {
+                ((MpqaColonMainModel) model).loadDataFromDoclist(file);
+                // update view once model loading is complete
+                if (view != null && predictor != null) {
+                    view.resetAllViews();
+                }
+                if (view != null) {
+                    view.stopProgressBar();
+                }
+            }
+        };
+        new Thread(runnable).start();
+        
+//        if (view != null) view.stopProgressBar();
         // load predictor for dataset as well
         // TODO: eliminate deprecated predictor, replace with null predictor
-        predictor = new DeprecatedMLPredictor(model);
+//        predictor = new DeprecatedMLPredictor(model);
+//        attributesEnabled = predictor.getAttributeEnabledList();
         // }
         
-        // update view once model loading is complete
-        if (view != null) view.resetAllViews();
 
     }
     
@@ -198,9 +234,7 @@ public class MainController {
      */
     public void attributeSelectionUpdated(List<Boolean> newSelectedAttributes) {
         
-        // update selection in model
-        // TODO eliminate this? backing model should not be changed in response to selection actions on the front-end?
-        model.setEnabledAttributes(newSelectedAttributes);
+        attributesEnabled = newSelectedAttributes;
 
         // indicate to main view that all relevant displays should be redrawn / rebuilt
         view.attributeSelectionChanged();
@@ -394,7 +428,7 @@ public class MainController {
      */
     public DocTableModel buildSimpleDocTableModel() {
         if (model != null && predictor != null) {
-            DocTableModel docTableModel = new DocTableModel(model.getAllDocuments(), model.getIsDocumentEnabledList(), predictor.getAttributeNames(), predictor.getAttributeEnabledList());
+            DocTableModel docTableModel = new DocTableModel(model.getAllDocuments(), model.getIsDocumentEnabledList(), predictor.getAttributeNames(), attributesEnabled);
             return docTableModel;
         }
         return null;
@@ -407,7 +441,7 @@ public class MainController {
      */
     public AttrTableModel buildSimpleAttrSelectionTableModel() {
         if (model != null && predictor != null) {
-            AttrTableModel attrTableModel = new AttrTableModel(predictor.getAttributeNames(), predictor.getAttributeEnabledList(), this);
+            AttrTableModel attrTableModel = new AttrTableModel(predictor.getAttributeNames(), attributesEnabled, this);
             return attrTableModel;
         }
         return null;
@@ -434,7 +468,7 @@ public class MainController {
         if (model != null && predictor != null) {
             Document doc = model.getAllDocuments().get(docGlobalId);
             List<String> allAttributes = predictor.getAttributeNames();
-            List<Boolean> allAttributesEnabled = predictor.getAttributeEnabledList();
+            List<Boolean> allAttributesEnabled = attributesEnabled;
 
 //            Map<String, PredictionCertaintyTuple> attrPredictionMap = model.getPredictionsForDoc(docGlobalId);
             Map<String, PredictionCertaintyTuple> attrPredictionMap = predictor.getPredictionsForDoc(docGlobalId);
@@ -533,12 +567,13 @@ public class MainController {
      */
     private JFrame buildDocDetailsWindow(int docGlobalID) {
         if (model != null && predictor != null) {
-        Document doc = model.getAllDocuments().get(docGlobalID);
-        JFrame popup = new DocFocusPopup(doc, docGlobalID);
-        activePopups.add(popup);
-        activePopupIDs.add(docGlobalID);
-        return popup;
-        } return null;
+            Document doc = model.getAllDocuments().get(docGlobalID);
+            JFrame popup = new DocFocusPopup(doc, docGlobalID);
+            activePopups.add(popup);
+            activePopupIDs.add(docGlobalID);
+            return popup;
+        }
+        return null;
     }
 
     /**
@@ -614,20 +649,20 @@ public class MainController {
         // default values for axes; these should be eliminated and overridden
         String xAxisAttrName = "Indicator_26";
         String yAxisAttrName = "Indicator_4";
-        String shapeAttrName = "";
+//        String shapeAttrName = "";
         String colorAttrName = "INDICATOR_19B";
         if (docGridSelectionModel != null) {
             // if docGridSelectionModel == null, something probably wasn't initialized correctly in the mainview?
             xAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getXAxisAttribute();
             yAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getYAxisAttribute();
-            shapeAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getShapeAttribute();
+//            shapeAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getShapeAttribute();
             colorAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getColorAttribute();
         }
 
         // build table for grid
         documentGridTable = new DocumentGridTable(predictor.getAttributeNames(), model.getAllDocuments(), model.getIsDocumentEnabledList());
         // build, return grid (while maintaining reference)
-        documentGrid = new DocumentGrid(documentGridTable, xAxisAttrName, yAxisAttrName, shapeAttrName, colorAttrName);
+        documentGrid = new DocumentGrid(documentGridTable, xAxisAttrName, yAxisAttrName, colorAttrName);
         return documentGrid;
 
     }
@@ -642,12 +677,12 @@ public class MainController {
 
         String xAxisAttrName = "";
         String yAxisAttrName = "";
-        String shapeAttrName = "";
+//        String shapeAttrName = "";
         String colorAttrName = "";
         if (docGridSelectionModel != null) {
             xAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getXAxisAttribute();
             yAxisAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getYAxisAttribute();
-            shapeAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getShapeAttribute();
+//            shapeAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getShapeAttribute();
             colorAttrName = ((DocGridTableSelectorModel) docGridSelectionModel).getColorAttribute();
         }
 
@@ -655,7 +690,7 @@ public class MainController {
         if (documentGrid != null) {
             documentGrid.updateXAxis(xAxisAttrName);
             documentGrid.updateYAxis(yAxisAttrName);
-            documentGrid.updateShapeAttr(shapeAttrName);
+//            documentGrid.updateShapeAttr(shapeAttrName);
             documentGrid.updateColorAttr(colorAttrName);
             documentGrid.updateView(false);
         }
@@ -702,9 +737,17 @@ public class MainController {
         return null;
     }
     
-    public void setFisheyeEnabled(boolean enableFisheye) {
+    public DocumentSelectControl getDocSelectControl() {
         if (documentGrid != null)
-            documentGrid.setFisheyeEnabled(enableFisheye);
+            return documentGrid.getSelectControl();
+        return null;
+    }
+    
+    public void setFisheyeEnabled(boolean enableFisheye) {
+        // fisheye no longer togglable
+//        if (documentGrid != null)
+//            documentGrid.setFisheyeEnabled(enableFisheye);
+            
     }
 
     
@@ -719,7 +762,13 @@ public class MainController {
      * @return varbarchart visualization for target attribute
      */
     public VarBarChartForCell getVarBarChartForCell(String attrName) {
-        VarBarChartForCell varBarChart = new VarBarChartForCell(this, attrName, model.getAllDocuments());
+        List<String> attrVals;
+        if (predictor != null) {
+            attrVals = predictor.getAttributeValues(attrName);
+        } else {
+            attrVals = new ArrayList<>();
+        }
+        VarBarChartForCell varBarChart = new VarBarChartForCell(attrName, attrVals, model.getAllDocuments());
         return varBarChart;
     }
     

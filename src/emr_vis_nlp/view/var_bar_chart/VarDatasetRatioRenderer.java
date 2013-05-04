@@ -23,35 +23,16 @@ import javax.swing.table.TableCellRenderer;
  */
 public class VarDatasetRatioRenderer implements TableCellRenderer {
     
-//    public VarDatasetRatioRenderer() {
-//        
-//        setOpaque(true);  // do this for background to show up?
-//        
-//    }
-    
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         // get name of attr from row; map back through table
         //  only render if attr is "proper"
         if (value instanceof JPanel) {
-//            if (isSelected || hasFocus) {
-//                ((Component) value).setForeground(UIManager.getColor("List.selectionForeground"));
-//                ((Component) value).setBackground(UIManager.getColor("List.selectionBackground"));
-//            } else {
-//                ((Component) value).setForeground(UIManager.getColor("Panel.foreground"));
-//                ((Component) value).setBackground(UIManager.getColor("Panel.background"));
-//            }
-            
+            // needed to make the interactive histograms appear
             ((Component) value).setForeground(UIManager.getColor("Panel.foreground"));
             return ((Component) value);
         } else {
-//            if (value instanceof String) {
-//            if (column == 0) {
-//                setToolTipText((String)value);
-//            int rowModel = table.convertRowIndexToModel(row);
-//            String valueFromModel = (String)table.getModel().getValueAt(rowModel,column);
-//            setToolTipText(valueFromModel);
-//            }
+            // if not a histogram, use default renderer
             return new DefaultTableCellRenderer().getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         }
         

@@ -146,7 +146,7 @@ public class DocumentGridTable extends Table {
                 if (attrToValueToIntMap.containsKey(attrName) && attrToValueToIntMap.get(attrName).containsKey(value)) {
                     valueInt = attrToValueToIntMap.get(attrName).get(value);
                 } else {
-                    System.out.println("err: value \""+value+"\" not found in map for attribute \""+attrName+"\"");
+//                    System.out.println("err: value \""+value+"\" not found in map for attribute \""+attrName+"\"");
                 }
                 set(rowCounter, attrName, value);
                 set(rowCounter, attrName+CONTINUOUS_SUFFIX, valueInt);

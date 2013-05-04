@@ -49,7 +49,7 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
     /**
      * number of options each combo box should present
      */
-    private int numOptions = 5;
+    private int numOptions = 4;
     private String[] optionList;
     
     
@@ -63,8 +63,8 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         optionList[0] = NOT_SEL_MSG;
         optionList[1] = X_AXIS_SEL;
         optionList[2] = Y_AXIS_SEL;
-        optionList[3] = SHAPE_SEL;
-        optionList[4] = COLOR_SEL;
+//        optionList[3] = SHAPE_SEL;
+        optionList[3] = COLOR_SEL;
 //        for (int i = 1; i < numOptions; i++) {
 //            optionList[i] = i + "!";
 //        }
@@ -244,27 +244,27 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         
     }
     
-    public String getShapeAttribute() {
-        
-        for (int r=0; r<allAttributesSelectorBoxes.size(); r++) {
-            int selectedIndex = allAttributesSelectorBoxes.get(r).getSelectedIndex();
-            if (selectedIndex == 3) {
-                String attributeName = allAttributes.get(r);
-                return attributeName;
-            }
-            
-        }
-        
-        // shouldn't reach here, means nothing is selected!
-        return "";
-        
-    }
+//    public String getShapeAttribute() {
+//        
+//        for (int r=0; r<allAttributesSelectorBoxes.size(); r++) {
+//            int selectedIndex = allAttributesSelectorBoxes.get(r).getSelectedIndex();
+//            if (selectedIndex == 3) {
+//                String attributeName = allAttributes.get(r);
+//                return attributeName;
+//            }
+//            
+//        }
+//        
+//        // shouldn't reach here, means nothing is selected!
+//        return "";
+//        
+//    }
     
     public String getColorAttribute() {
         
         for (int r=0; r<allAttributesSelectorBoxes.size(); r++) {
             int selectedIndex = allAttributesSelectorBoxes.get(r).getSelectedIndex();
-            if (selectedIndex == 4) {
+            if (selectedIndex == 3) {
                 String attributeName = allAttributes.get(r);
                 return attributeName;
             }

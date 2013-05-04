@@ -390,4 +390,13 @@ public class DeprecatedMLPredictor extends MLPredictor {
         
     }
     
+    @Override
+    public List<String> getAttributeValues(String attrName) {
+        List<String> vals = new ArrayList<>();
+        vals.add("N/A");
+        vals.add("Fail");
+        vals.add("Pass");
+        return vals;
+    }
+    
 }

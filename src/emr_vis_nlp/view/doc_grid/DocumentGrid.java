@@ -1,7 +1,7 @@
 package emr_vis_nlp.view.doc_grid;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.view.MainViewGlassPane;
+import emr_vis_nlp.view.glasspane.MainViewGlassPane;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.*;
@@ -10,20 +10,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import javax.swing.*;
+import javax.swing.text.AbstractDocument;
 import prefuse.Constants;
 import prefuse.Display;
 import prefuse.Visualization;
 import prefuse.action.ActionList;
 import prefuse.action.RepaintAction;
 import prefuse.action.animate.LocationAnimator;
-import prefuse.action.animate.SizeAnimator;
 import prefuse.action.assignment.ColorAction;
 import prefuse.action.assignment.ShapeAction;
 import prefuse.action.assignment.SizeAction;
-import prefuse.action.distortion.Distortion;
 import prefuse.action.filter.VisibilityFilter;
 import prefuse.activity.SlowInSlowOutPacer;
-import prefuse.controls.AnchorUpdateControl;
 import prefuse.controls.ControlAdapter;
 import prefuse.controls.DragControl;
 import prefuse.data.Tuple;
@@ -90,7 +88,7 @@ public class DocumentGrid extends Display {
 //    private DocumentGridAxisLayout docGridAxisLayout;
     private DocumentGridAxisLayout docGridAxisLayout;
     // handles generation of glyphs
-    private DocumentShapeAction docShapeAction;
+//    private DocumentShapeAction docShapeAction;   // (note: now consistently using squares)
     // handles glyph coloration
     private DocumentColorAction docColorAction;
     // handles glyph border coloration
@@ -115,14 +113,8 @@ public class DocumentGrid extends Display {
     
     // scale for fisheye distortion
     // important: these two numbers control the distance&size and size distortions of fisheye!
-    private double fisheyeDistortScale = 25.;
-    private double fisheyeDistortSize = 0.5;
-    private Distortion feye;
-//    private Distortion bifocal;
-    private Rectangle2D feyeBoundingBox;
-    private AnchorUpdateControl anchorUpdateControl;
     private DocGridDragControl docDragControl;
-    private boolean fisheyeEnabled = true;
+    private DocumentSelectControl docSelectControl;
     
     // predicate controlling which document glyphs will be rendered
     private Predicate docGlyphVisiblePredicate;
@@ -140,7 +132,7 @@ public class DocumentGrid extends Display {
     // 
     private Display display;
     
-    public DocumentGrid(final DocumentGridTable t, String xAxisInitName, String yAxisInitName, String shapeInitName, String colorInitName) {
+    public DocumentGrid(final DocumentGridTable t, String xAxisInitName, String yAxisInitName, String colorInitName) {
         super(new Visualization());
         display = this;
         this.t = t;
@@ -235,40 +227,9 @@ public class DocumentGrid extends Display {
 
 //
         // force action, to move docs out of the way when dragging (borrowed from datamountain)
-//        final ForceDirectedLayout fl = new DocGlyphForceLayout(false);
-//        ActivityListener fReset = new ActivityAdapter() {
-//            @Override
-//            public void activityCancelled(Activity a) {
-//                fl.reset(); 
-//             } 
-//        };
-//        ActionList forces = new ActionList(Activity.INFINITY);
-//        forces.add(fl);
-//        forces.addActivityListener(fReset);
-//        m_vis.putAction("forces", forces);
-        
         // ActionList for interspersed FDL iterations with fisheye
-        // WARNING: force-directed layout and fisheye distortion do not play nicely with each other! both should NOT be simultaneously active, only one at a time at most!
-//        ActionList fishForce = new ActionList();
-////        preforce.add(new DataMountainForceLayout(true));
-//        fishForce.add(new DataMountainForceLayout(false, -0.4f, 30f, 0f, false));
-//        m_vis.putAction("fishforce", fishForce);
-        
         // ActionList for performing fisheye distortion
-        ActionList distort = new ActionList();
-//        ActionList distort = new ActionList(Activity.INFINITY);  // high resource overhead in having this always run; should only run actionlist in response to anchor (mouse pointer) adjustment
-        // manually define boundingbox for fisheye as width, height of view
-        feyeBoundingBox = new Rectangle(0, 0, initWidth, initHeight);
-        feye = new FisheyeDistortionDocGrid(fisheyeDistortScale, fisheyeDistortSize, feyeBoundingBox);
-        feye.setSizeDistorted(true);
-//        feye.setGroup(DATA_GROUP);  // don't set group; we want to handle the axes also?
-        distort.add(feye);
-//        bifocal = new BifocalDistortionDocGrid(0.2,4.5,feyeBoundingBox);
-//        distort.add(bifocal);
-//        distort.add(fishForce);
-//        distort.add(forces);
-        distort.add(new RepaintAction());
-//        m_vis.putAction("distort", distort);
+        // (above section eliminated due to poor readability; see archive branch in github repo)
         
         ActionList animate = new ActionList(1250);
         animate.setPacingFunction(new SlowInSlowOutPacer());
@@ -374,9 +335,10 @@ public class DocumentGrid extends Display {
         docDragControl = new DocGridDragControl(DATA_GROUP, documentGridLayout, controller);
         addControlListener(docDragControl);
         // control for loading document details in glasspane
-        addControlListener(new DocumentSelectControl(glassPane));
+        docSelectControl = new DocumentSelectControl(glassPane);
+        addControlListener(docSelectControl);
         // control for performing fisheye distortion
-        anchorUpdateControl = new AnchorUpdateControl(feye, "distort");
+//        anchorUpdateControl = new AnchorUpdateControl(feye, "distort");
 //        addControlListener(anchorUpdateControl);
         
         // run actionlists
@@ -403,9 +365,6 @@ public class DocumentGrid extends Display {
      */
     public void resetSize(int newWidth, int newHeight) {
         setSize(newWidth, newHeight);
-        
-        // update bounds for fisheye distortion
-        feyeBoundingBox.setRect(0, 0, newWidth, newHeight);
         
         // redo layout, force initialization
 //        m_vis.runAfter("preforce", "update");  // temporarily (?) disable for testing
@@ -509,20 +468,20 @@ public class DocumentGrid extends Display {
             m_vis.run("repaint");
     }
     
-    public void updateShapeAttr(String shapeAttrName) {
-        updateShapeAttr(shapeAttrName, false);
-    }
-    
-    public void updateShapeAttr(String shapeAttrName, boolean doUpdate) {
-        if (docShapeAction != null) {
-            this.shapeAttrName = shapeAttrName;
-            List<String> shapeCategories = t.getValueListForAttribute(shapeAttrName);
-            // update shapeAction
-            docShapeAction.updateShapeAttr(shapeAttrName, shapeCategories);
-            if (doUpdate)
-                m_vis.run("repaint");
-        }
-    }
+//    public void updateShapeAttr(String shapeAttrName) {
+//        updateShapeAttr(shapeAttrName, false);
+//    }
+//    
+//    public void updateShapeAttr(String shapeAttrName, boolean doUpdate) {
+//        if (docShapeAction != null) {
+//            this.shapeAttrName = shapeAttrName;
+//            List<String> shapeCategories = t.getValueListForAttribute(shapeAttrName);
+//            // update shapeAction
+//            docShapeAction.updateShapeAttr(shapeAttrName, shapeCategories);
+//            if (doUpdate)
+//                m_vis.run("repaint");
+//        }
+//    }
 
     public void resetHighlightPredicate() {
         highlightPredicate = null;
@@ -537,22 +496,8 @@ public class DocumentGrid extends Display {
     }
     
     public void enableMouseListeners() {
-        anchorUpdateControl.setEnabled(true);
+//        anchorUpdateControl.setEnabled(true);
     }
-    
-    public void setFisheyeEnabled(boolean fisheyeEnabled) {
-        this.fisheyeEnabled = fisheyeEnabled;
-        if (fisheyeEnabled) {
-            // enable the fisheye distortion
-            m_vis.run("distort");
-            anchorUpdateControl.setEnabled(true);
-        } else {
-            // freeze the fisheye distortion
-            m_vis.cancel("distort");
-            anchorUpdateControl.setEnabled(false);
-        }
-    }
-    
     
     
     /**
@@ -602,9 +547,19 @@ public class DocumentGrid extends Display {
 //                ColorLib.rgb(85, 85, 85), ColorLib.rgb(0, 0, 0)), 0, 9);
         
         // TODO: assign color based on other properties, such as whether or not a manual annotation is present?
+        // old uglier palette
+//        public static final Color[] GLYPH_COLOR_PALETTE = {
+//            new Color(191, 48, 48), new Color(18, 178, 37), new Color(176, 95, 220), 
+//            new Color(160, 82, 45), new Color(91, 229, 108),  new Color(99, 148, 220)
+//        };
+        // lighter pastel palette
+        // (adopetd from http://www.colorschemer.com/schemes/viewscheme.php?id=5128)
         public static final Color[] GLYPH_COLOR_PALETTE = {
-            new Color(191, 48, 48), new Color(18, 178, 37), new Color(176, 95, 220), 
-            new Color(160, 82, 45), new Color(91, 229, 108),  new Color(99, 148, 220)
+            new Color(204, 204, 255), 
+            new Color(204, 255, 204), 
+            new Color(255, 204, 204),
+            new Color(204, 255, 255), 
+            new Color(255, 255, 204), 
         };
         
         private String colorAttrName;
@@ -720,61 +675,60 @@ public class DocumentGrid extends Display {
     /*
      * Assigns appropriate shapes to document glyphs.
      */
-    public static class DocumentShapeAction extends ShapeAction {
-        
+//    public static class DocumentShapeAction extends ShapeAction {
+//        
 //        public static final int[] GLYPH_SHAPE_PALETTE = {
 //            Constants.SHAPE_RECTANGLE, Constants.SHAPE_DIAMOND, Constants.SHAPE_ELLIPSE, 
 //            Constants.SHAPE_HEXAGON, Constants.SHAPE_CROSS, Constants.SHAPE_STAR
 //        };
-        public static final int[] GLYPH_SHAPE_PALETTE = {Constants.SHAPE_RECTANGLE};
-        
-        private String shapeAttrName;
-        private List<String> shapeAttrCategories;
-        private Map<String, Integer> catToShapeMap;
-        
-        public DocumentShapeAction(String group, String shapeAttrName, List<String> shapeAttrCategories) {
-            super(group);
-            this.shapeAttrName = shapeAttrName;
-            this.shapeAttrCategories = shapeAttrCategories;
-            catToShapeMap = new HashMap<>();
-            for (int i=0; i<shapeAttrCategories.size(); i++) {
-                int paletteIndex = i % GLYPH_SHAPE_PALETTE.length;
-                String category = shapeAttrCategories.get(i);
-                catToShapeMap.put(category, GLYPH_SHAPE_PALETTE[paletteIndex]);
-            }
-        }
-        
-//        public DocumentShapeAction(String group, int shape, String shapeAttrName, List<String> shapeAttrCategories) {
-//            super(group, shape);
+//        
+//        private String shapeAttrName;
+//        private List<String> shapeAttrCategories;
+//        private Map<String, Integer> catToShapeMap;
+//        
+//        public DocumentShapeAction(String group, String shapeAttrName, List<String> shapeAttrCategories) {
+//            super(group);
 //            this.shapeAttrName = shapeAttrName;
 //            this.shapeAttrCategories = shapeAttrCategories;
+//            catToShapeMap = new HashMap<>();
+//            for (int i=0; i<shapeAttrCategories.size(); i++) {
+//                int paletteIndex = i % GLYPH_SHAPE_PALETTE.length;
+//                String category = shapeAttrCategories.get(i);
+//                catToShapeMap.put(category, GLYPH_SHAPE_PALETTE[paletteIndex]);
+//            }
 //        }
-        
-        @Override
-        public int getShape(VisualItem item) {
-            
-            if (item.canGetString(shapeAttrName)) {
-                String attrVal = item.getString(shapeAttrName);
-                int shape = catToShapeMap.get(attrVal);
-                return shape;
-            }
-            
-            return(Constants.SHAPE_RECTANGLE);
-            //return super.getShape(item);
-        }
-        
-        public void updateShapeAttr(String shapeAttrName, List<String> shapeAttrCategories) {
-            this.shapeAttrName = shapeAttrName;
-            this.shapeAttrCategories = shapeAttrCategories;
-            catToShapeMap = new HashMap<>();
-            for (int i=0; i<shapeAttrCategories.size(); i++) {
-                int paletteIndex = i % GLYPH_SHAPE_PALETTE.length;
-                String category = shapeAttrCategories.get(i);
-                catToShapeMap.put(category, GLYPH_SHAPE_PALETTE[paletteIndex]);
-            }
-        }
-        
-    }
+//        
+////        public DocumentShapeAction(String group, int shape, String shapeAttrName, List<String> shapeAttrCategories) {
+////            super(group, shape);
+////            this.shapeAttrName = shapeAttrName;
+////            this.shapeAttrCategories = shapeAttrCategories;
+////        }
+//        
+//        @Override
+//        public int getShape(VisualItem item) {
+//            
+//            if (item.canGetString(shapeAttrName)) {
+//                String attrVal = item.getString(shapeAttrName);
+//                int shape = catToShapeMap.get(attrVal);
+//                return shape;
+//            }
+//            
+//            return(Constants.SHAPE_RECTANGLE);
+//            //return super.getShape(item);
+//        }
+//        
+//        public void updateShapeAttr(String shapeAttrName, List<String> shapeAttrCategories) {
+//            this.shapeAttrName = shapeAttrName;
+//            this.shapeAttrCategories = shapeAttrCategories;
+//            catToShapeMap = new HashMap<>();
+//            for (int i=0; i<shapeAttrCategories.size(); i++) {
+//                int paletteIndex = i % GLYPH_SHAPE_PALETTE.length;
+//                String category = shapeAttrCategories.get(i);
+//                catToShapeMap.put(category, GLYPH_SHAPE_PALETTE[paletteIndex]);
+//            }
+//        }
+//        
+//    }
     
     /*
      * Simply assigns a rectangle shape to each glyph, to facilitate ease of text drawing.
@@ -792,29 +746,6 @@ public class DocumentGrid extends Display {
         }
         
     }
-    
-//    // "renderer" which does not actually render anything; 
-//    public static class NullRenderer implements prefuse.render.Renderer {
-//
-//        public NullRenderer() {}
-//
-//        @Override
-//        public void render(Graphics2D gd, VisualItem vi) {
-////            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//
-//        @Override
-//        public boolean locatePoint(Point2D pd, VisualItem vi) {
-////            throw new UnsupportedOperationException("Not supported yet.");
-//            return false;
-//        }
-//
-//        @Override
-//        public void setBounds(VisualItem vi) {
-////            throw new UnsupportedOperationException("Not supported yet.");
-//        }
-//        
-//    }
 
     /*
      * Handles rendering of document glyphs and drawing of document text (for
@@ -990,13 +921,70 @@ public class DocumentGrid extends Display {
      */
     public class DocumentSelectControl extends ControlAdapter {
         
-        private boolean isPopupLoaded;
+//        private boolean isPopupLoaded;
         private MainViewGlassPane glassPane;
+        
+        /**
+         * indicates that we should not zoom on next mouseevent; needed in order to prevent glasspane from immediately reopening after a click-to-close
+         */
+        private VisualItem disableNextZoomItem = null;
         
         public DocumentSelectControl(MainViewGlassPane glassPane) {
             super();
             this.glassPane = glassPane;
-            isPopupLoaded = false;
+//            isPopupLoaded = false;
+        }
+        
+        public void disableNextZoomOnItem(VisualItem item) {
+            disableNextZoomItem = item;
+        }
+        
+        /**
+         * Given a MouseEvent, finds the VisualItem (if any) on which the event occurred.
+         * 
+         * @param e
+         * @return item on which the MouseEvent occurred, or null if it did not occur on any item.
+         */
+        public VisualItem findClickedItem(MouseEvent e) {
+            
+            // get click coordinates
+            int x = e.getX();
+            int y = e.getY();
+            // translate coordinates to Prefuse region
+            int xOffset = 0;
+            int yOffset = 0;
+            JComponent component = display;
+            // recursively go through this Component's ancestors, summing offset information in order to get the absolute position relative to window
+            do {
+                Point visLocation = component.getLocation();
+                xOffset += visLocation.x;
+                yOffset += visLocation.y;
+            } while ((!component.getParent().getClass().equals(JRootPane.class)) && (component = (JComponent) component.getParent()) != null);
+            x -= xOffset;
+            y -= yOffset;
+            
+            // debug
+//            System.out.println("debug: "+this.getClass().getName()+": mouse click at ("+x+", "+y+")");
+            
+            // search each item, determining which was clicked on
+            Iterator items = m_vis.getGroup(DATA_GROUP).tuples();
+            while (items.hasNext()) {
+                VisualItem item = (VisualItem)items.next();
+                double itemX = item.getX();
+                double itemY = item.getY();
+                double itemW = item.getDouble(WIDTH);
+                double itemH = item.getDouble(HEIGHT);
+                if (x >= itemX && x <= (itemX+itemW) && y >= itemY && y <= (itemY+itemH)) {
+                    // debug
+//                    System.out.println("debug: "+this.getClass().getName()+": match: ("+itemX+", "+itemY+", "+itemW+", "+itemH+")");
+                    return item;
+                } else {
+                    // debug
+//                    System.out.println("debug: "+this.getClass().getName()+": no-match: ("+itemX+", "+itemY+", "+itemW+", "+itemH+")");
+                }
+            }
+            return null;
+            
         }
         
         @Override
@@ -1023,8 +1011,52 @@ public class DocumentGrid extends Display {
                         item.setBoolean(WIDTH_FOCUS, true);
                         item.setBoolean(HEIGHT_FOCUS, true);
                     }
+                    
+                    // ensure that the layout has been reprocessed before loading glasspane
+                    documentGridLayout.categoricalLayout();
+                    
                     m_vis.run("init");  // init is needed to run here, since sizing is tightly-bound with our faux-fisheye zooming
 //                    m_vis.run("repaint");
+                    
+                    // appear the glasspane at appropriate size & location
+                    // get relative location of Visualization
+                    int xOffset = 0;
+                    int yOffset = 0;
+                    JComponent component = display;
+                    // recursively go through this Component's ancestors, summing offset information in order to get the absolute position relative to window
+                    do {
+                        Point visLocation = component.getLocation();
+                        xOffset += visLocation.x;
+                        yOffset += visLocation.y;
+                    } while ((!component.getParent().getClass().equals(JRootPane.class)) && (component = (JComponent) component.getParent()) != null);
+                    // debug
+//                    System.out.println("debug: " + this.getClass().getName() + ": offsets: " + xOffset + ", " + yOffset);
+                    
+                    String attrIdStr = colorAttrName;  // TODO make highlighting more general, not just based on color!
+                    
+//                    double x = item.getX() + xOffset - (nodeRenderer.getShape(item).getBounds2D().getWidth()) / 2;
+//                    double y = item.getY() + yOffset - (nodeRenderer.getShape(item).getBounds2D().getHeight()) / 2;
+//                    double w = nodeRenderer.getShape(item).getBounds2D().getWidth();
+//                    double h = nodeRenderer.getShape(item).getBounds2D().getHeight();
+                    
+                    if (disableNextZoomItem == null || disableNextZoomItem != item) {
+                        disableNextZoomItem = null;
+                        int x = (int) item.getEndX() + bufferPx + xOffset;
+                        int y = (int) item.getEndY() + bufferPx + yOffset;
+                        int w = (int) item.getDouble(WIDTH_END) - 2 * bufferPx;
+                        int h = (int) item.getDouble(HEIGHT_END) - 2 * bufferPx;
+                        // debug
+                        System.out.println("debug: " + this.getClass().getName() + ": displaying sized glasspane at x=" + x + ", y=" + y + ", w=" + w + ", h=" + h);
+                        glassPane.displaySizedPane((int) x, (int) y, (int) w, (int) h, item);
+
+                        AbstractDocument doc = glassPane.getAbstDoc();
+                        controller.writeDocTextWithHighlights(doc, nodeId, attrIdStr);
+
+                        glassPane.setBackgroundColor(new Color(docColorAction.getColor(item)));
+                    } else {
+                        disableNextZoomItem = null;
+                    }
+                    
                 }
             }
             
@@ -1101,6 +1133,11 @@ public class DocumentGrid extends Display {
     public DocGridDragControl getDragControl() {
         if (docDragControl != null)
             return docDragControl;
+        return null;
+    }
+    public DocumentSelectControl getSelectControl() {
+        if (docSelectControl != null)
+            return docSelectControl;
         return null;
     }
 
@@ -1382,167 +1419,7 @@ public class DocumentGrid extends Display {
     /*
      * Force controllers adpoted (and expanded) from the DataMountain example, in order to prevent / reduce initial occlusion on layout, and to reduce occlusion on dogument glyph dragging (when distortions are not active)
      */
-//    private static final String ANCHORITEM = "_anchorItem";
-//    private static final Schema ANCHORITEM_SCHEMA = new Schema();
-//
-//    static {
-//        ANCHORITEM_SCHEMA.addColumn(ANCHORITEM, ForceItem.class);
-//    }
-//
-//    public class DocGlyphForceLayout extends ForceDirectedLayout {
-//
-//        public DocGlyphForceLayout(boolean enforceBounds) {
-//            super("data", enforceBounds, false);
-//
-//            ForceSimulator fsim = new ForceSimulator();
-//            // (gravConstant, minDistance, theta)
-//            fsim.addForce(new NBodyForce(-0.6f, 40f, NBodyForce.DEFAULT_THETA));
-////            fsim.addForce(new SpringForce(1e-5f,0f));
-//            fsim.addForce(new DragForce(0.08f));
-//            setForceSimulator(fsim);
-//            
-//            m_nodeGroup = "data";
-//            m_edgeGroup = null;
-//        }
-//        
-//        public DocGlyphForceLayout(boolean enforceBounds, float gravConstant, float minDistance, float dragCoeff, boolean runOnce) {
-//            super("data",enforceBounds,runOnce);
-//            
-//            ForceSimulator fsim = new ForceSimulator();
-//            // (gravConstant, minDistance, theta)
-//            fsim.addForce(new NBodyForce(gravConstant, minDistance, NBodyForce.DEFAULT_THETA));
-////            fsim.addForce(new SpringForce(1e-5f,0f));
-//            fsim.addForce(new DragForce(dragCoeff));
-//            setForceSimulator(fsim);
-//            
-//            m_nodeGroup = "data";
-//            m_edgeGroup = null;
-//        }
-//        
-//        @Override
-//        protected float getMassValue(VisualItem n) {
-//            return n.isHover() ? 5f : 1f;
-//        }
-//
-//        @Override
-//        public void reset() {
-//            Iterator iter = m_vis.visibleItems(m_nodeGroup);
-//            while ( iter.hasNext() ) {
-//                VisualItem item = (VisualItem)iter.next();
-//                ForceItem aitem = (ForceItem)item.get(ANCHORITEM);
-//                if ( aitem != null ) {
-//                    aitem.location[0] = (float)item.getEndX();
-//                    aitem.location[1] = (float)item.getEndY();
-//                }
-//            }
-//            super.reset();
-//        }
-//        
-//        @Override
-//        protected void initSimulator(ForceSimulator fsim) {
-//            // make sure we have force items to work with
-//            TupleSet t = (TupleSet)m_vis.getGroup(m_group);
-//            t.addColumns(ANCHORITEM_SCHEMA);
-//            t.addColumns(FORCEITEM_SCHEMA);
-//            
-//            Iterator iter = m_vis.visibleItems(m_nodeGroup);
-//            while ( iter.hasNext() ) {
-//                VisualItem item = (VisualItem)iter.next();
-//                // get force item
-//                ForceItem fitem = (ForceItem)item.get(FORCEITEM);
-//                if ( fitem == null ) {
-//                    fitem = new ForceItem();
-//                    item.set(FORCEITEM, fitem);
-//                }
-//                fitem.location[0] = (float)item.getEndX();
-//                fitem.location[1] = (float)item.getEndY();
-//                fitem.mass = getMassValue(item);
-//                
-//                // get spring anchor
-//                ForceItem aitem = (ForceItem)item.get(ANCHORITEM);
-//                if ( aitem == null ) {
-//                    aitem = new ForceItem();
-//                    item.set(ANCHORITEM, aitem);
-//                    aitem.location[0] = fitem.location[0];
-//                    aitem.location[1] = fitem.location[1];
-//                }
-//                
-//                fsim.addItem(fitem);
-//                fsim.addSpring(fitem, aitem, 0);
-//            }     
-//        }   
-//        
-//        @Override
-//        public void setX(VisualItem item, VisualItem referrer, double x) {
-//            // ensure that the item is not pushed over a boundary
-//            double width = nodeRenderer.getShape(item).getBounds2D().getWidth();
-//            double oldX = item.getX();
-//            double newX = x;
-//            List<Integer> boundaryPositions = documentGridLayout.getXCatPositions();
-//
-//            boolean crossesBoundary = false;
-//            if (boundaryPositions != null) {
-//                for (int i = 0; i < boundaryPositions.size(); i++) {
-//                    int boundaryPosition = boundaryPositions.get(i);
-//                    if ((oldX - width / 2 > boundaryPosition && newX - width / 2 < boundaryPosition)
-//                            || (oldX + width / 2 < boundaryPosition && newX + width / 2 > boundaryPosition)) {
-//                        crossesBoundary = true;
-//                    }
-//                }
-//
-//                // ensure it didn't go beyond maximum as well!
-//                if (boundaryPositions.size() > 0) {
-//                    int maxBoundaryPosition = boundaryPositions.get(boundaryPositions.size() - 1);
-//                    maxBoundaryPosition += documentGridLayout.getXCatRegionSizes().get(documentGridLayout.getXCatRegionSizes().size() - 1);
-//                    if ((oldX - width / 2 > maxBoundaryPosition && newX - width / 2 < maxBoundaryPosition)
-//                            || (oldX + width / 2 < maxBoundaryPosition && newX + width / 2 > maxBoundaryPosition)) {
-//                        crossesBoundary = true;
-//                    }
-//                }
-//            }
-//            
-//            if (!crossesBoundary) {
-//                super.setX(item, referrer, x);
-//            }
-//            
-//        }
-//        
-//        @Override
-//        public void setY(VisualItem item, VisualItem referrer, double y) {
-//            // ensure that the item is not pushed over a boundary
-//            double height = nodeRenderer.getShape(item).getBounds2D().getHeight();
-//            double oldY = item.getY();
-//            double newY = y;
-//            List<Integer> boundaryPositions = documentGridLayout.getYCatPositions();
-//            
-//            boolean crossesBoundary = false;
-//            if (boundaryPositions != null) {
-//                for (int i = 0; i < boundaryPositions.size(); i++) {
-//                    int boundaryPosition = boundaryPositions.get(i);
-//                    if ((oldY - height / 2 > boundaryPosition && newY - height / 2 < boundaryPosition)
-//                            || (oldY + height / 2 < boundaryPosition && newY + height / 2 > boundaryPosition)) {
-//                        crossesBoundary = true;
-//                    }
-//                }
-//
-//                // ensure it didn't go beyond maximum as well!
-//                if (boundaryPositions.size() > 0) {
-//                    int maxBoundaryPosition = boundaryPositions.get(boundaryPositions.size() - 1);
-//                    maxBoundaryPosition += documentGridLayout.getYCatRegionSizes().get(documentGridLayout.getYCatRegionSizes().size() - 1);
-//                    if ((oldY - height / 2 > maxBoundaryPosition && newY - height / 2 < maxBoundaryPosition)
-//                            || (oldY + height / 2 < maxBoundaryPosition && newY + height / 2 > maxBoundaryPosition)) {
-//                        crossesBoundary = true;
-//                    }
-//                }
-//            }
-//            
-//            if (!crossesBoundary) {
-//                super.setY(item, referrer, y);
-//            }
-//            
-//        }
-//        
-//    }
+    // (eliminated from design; see archive branch of github repo)
     
     /**
      * Simple VisibilityFilter to control which documents are currently visible. Extended to support dynamic predicate updating.

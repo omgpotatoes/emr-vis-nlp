@@ -1,22 +1,14 @@
 package emr_vis_nlp.main;
 
-import emr_vis_nlp.view.var_bar_chart.JTableCombos;
-import emr_vis_nlp.view.doc_table.DocTableModel;
-import emr_vis_nlp.view.doc_table.AttrTableModel;
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.ml.MLPredictor;
-import emr_vis_nlp.ml.nullpred.NullPredictor;
-import emr_vis_nlp.model.*;
-import emr_vis_nlp.view.MainView;
-import emr_vis_nlp.view.MainViewGlassPane;
-import emr_vis_nlp.view.var_bar_chart.VarDatasetRatioRenderer;
 import emr_vis_nlp.view.doc_grid.DocGridTableSelectorModel;
 import emr_vis_nlp.view.doc_grid.DocumentGrid;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.ComponentOrientation;
-import java.awt.FlowLayout;
-import java.awt.Font;
+import emr_vis_nlp.view.doc_table.AttrTableModel;
+import emr_vis_nlp.view.doc_table.DocTableModel;
+import emr_vis_nlp.view.glasspane.MainViewGlassPane;
+import emr_vis_nlp.view.var_bar_chart.JTableCombos;
+import emr_vis_nlp.view.var_bar_chart.VarDatasetRatioRenderer;
+import java.awt.*;
 import java.io.File;
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -31,7 +23,7 @@ import prefuse.util.ui.UILib;
  *
  * @author alexander.p.conrad@gmail.com
  */
-public class MainTabbedView extends javax.swing.JFrame implements MainView {
+public class MainTabbedView extends javax.swing.JFrame {
 
     /**
      * this MainView's governing MainController
@@ -123,13 +115,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jButtonSelectNoneDocGrid = new javax.swing.JButton();
         jButtonReset = new javax.swing.JButton();
         jPanelSearchContainer = new javax.swing.JPanel();
-        jToggleButtonFisheye = new javax.swing.JToggleButton();
-        jPanel3 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jPanel2 = new javax.swing.JPanel();
-        jSplitPane1 = new javax.swing.JSplitPane();
-        jPanel4 = new javax.swing.JPanel();
-        jPanel5 = new javax.swing.JPanel();
+        jProgressBar2 = new javax.swing.JProgressBar();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenuFile = new javax.swing.JMenu();
         jMenuItemLoadDataset = new javax.swing.JMenuItem();
@@ -243,7 +229,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             }
         });
 
-        jSplitPaneDocGrid.setDividerLocation(300);
+        jSplitPaneDocGrid.setDividerLocation(350);
         jSplitPaneDocGrid.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 jSplitPaneDocGridPropertyChange(evt);
@@ -254,7 +240,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         jPanelDocGridDummy.setLayout(jPanelDocGridDummyLayout);
         jPanelDocGridDummyLayout.setHorizontalGroup(
             jPanelDocGridDummyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 489, Short.MAX_VALUE)
+            .addGap(0, 439, Short.MAX_VALUE)
         );
         jPanelDocGridDummyLayout.setVerticalGroup(
             jPanelDocGridDummyLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -323,15 +309,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
             .addGap(0, 32, Short.MAX_VALUE)
         );
 
-        jToggleButtonFisheye.setSelected(true);
-        jToggleButtonFisheye.setText("Toggle Fisheye Distortion");
-        jToggleButtonFisheye.setEnabled(false);
-        jToggleButtonFisheye.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jToggleButtonFisheyeActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -343,8 +320,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
                     .addComponent(jPanelSearchContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonSelectAllDocGrid, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButtonReset, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jToggleButtonFisheye, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonSelectNoneDocGrid, javax.swing.GroupLayout.DEFAULT_SIZE, 275, Short.MAX_VALUE))
+                    .addComponent(jButtonSelectNoneDocGrid, javax.swing.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE)
+                    .addComponent(jProgressBar2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -359,9 +336,9 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButtonSelectNoneDocGrid)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jToggleButtonFisheye)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButtonReset)
+                .addGap(18, 18, 18)
+                .addComponent(jProgressBar2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -380,72 +357,7 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
         jTabbedPane1.addTab("Document Grid", jPanelDocGrid);
 
-        jLabel1.setFont(new java.awt.Font("Tahoma", 0, 36)); // NOI18N
-        jLabel1.setText("Coming Soon! (maybe)");
-
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(32, 32, 32)
-                .addComponent(jLabel1)
-                .addContainerGap(395, Short.MAX_VALUE))
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(37, 37, 37)
-                .addComponent(jLabel1)
-                .addContainerGap(462, Short.MAX_VALUE))
-        );
-
-        jTabbedPane1.addTab("Attribute Graph", jPanel3);
-
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 515, Short.MAX_VALUE)
-        );
-
-        jSplitPane1.setLeftComponent(jPanel4);
-
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 664, Short.MAX_VALUE)
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 515, Short.MAX_VALUE)
-        );
-
-        jSplitPane1.setRightComponent(jPanel5);
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 771, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jSplitPane1)
-                .addContainerGap())
-        );
-
-        jTabbedPane1.addTab("name", jPanel2);
+        jTabbedPane1.setSelectedIndex(1);
 
         jMenuFile.setText("File");
 
@@ -537,11 +449,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         updateDocumentGridSize();
     }//GEN-LAST:event_jSplitPaneDocGridPropertyChange
 
-    private void jToggleButtonFisheyeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButtonFisheyeActionPerformed
-        boolean enableFisheye = jToggleButtonFisheye.isSelected();
-        controller.setFisheyeEnabled(enableFisheye);
-    }//GEN-LAST:event_jToggleButtonFisheyeActionPerformed
-
     private void jButtonResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonResetActionPerformed
         controller.resetDocGridView();
     }//GEN-LAST:event_jButtonResetActionPerformed
@@ -624,8 +531,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 //        nestedGrid = controller.buildNestedGrid();
 //        jSplitPaneDocGrid.setBottomComponent(nestedGrid);
         
-        boolean enableFisheye = jToggleButtonFisheye.isSelected();
-        controller.setFisheyeEnabled(enableFisheye);
+//        boolean enableFisheye = jToggleButtonFisheye.isSelected();
+//        controller.setFisheyeEnabled(enableFisheye);
         updateDocumentGridSize();
 //        controller.updateDocumentGrid();
 //        updateDocumentGridSize();
@@ -714,7 +621,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     
     
     
-    @Override
     public void resetAllViews() {
 
         // reset all views in this MainView; 
@@ -733,7 +639,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
     }
     
-    @Override
     public void attributeSelectionChanged() {
 
         // update relevant panes
@@ -746,8 +651,6 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
 
     }
     
-    
-    @Override
     public void axisAttrSelectionChanged() {
         // update relevant panes
 //        // TODO don't rebuild whole grid, just update existing grid! (for animation)
@@ -757,14 +660,20 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         updateDocumentGridSize();
     }
     
-    @Override
     public void setSearchText(String text) {
         if (search != null) {
             search.setQuery(text);
         }
     }
     
+    public void startProgressBar() {
+        jProgressBar2.setIndeterminate(true);
+    }
     
+    public void stopProgressBar() {
+        jProgressBar2.setIndeterminate(false);
+//        jProgressBar2.setValue(0);
+    }
     
 
     /**
@@ -827,15 +736,8 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
         // setup controller
         MainController controller = MainController.getMainController();
 
-        // setup model
-        MainModel model = new NullMainModel();
-        controller.setModel(model);
-        
-        MLPredictor predictor = new NullPredictor();
-        controller.setPredictor(predictor);
-
         // setup view
-        final MainView mainView = new MainTabbedView();
+        final MainTabbedView mainView = new MainTabbedView();
         controller.setView(mainView);
 
         // if doclist was passed on command line, load it
@@ -864,30 +766,24 @@ public class MainTabbedView extends javax.swing.JFrame implements MainView {
     private javax.swing.JButton jButtonSelectNoneDocGrid;
     private javax.swing.JButton jButtonSelectNoneDocTable;
     private javax.swing.JFileChooser jFileChooser1;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenu jMenuFile;
     private javax.swing.JMenuItem jMenuItemLoadDataset;
     private javax.swing.JMenuItem jMenuItemLoadPredictor;
     private javax.swing.JMenu jMenuML;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanelDocGrid;
     private javax.swing.JPanel jPanelDocGridDummy;
     private javax.swing.JPanel jPanelDocTable;
     private javax.swing.JPanel jPanelSearchContainer;
+    private javax.swing.JProgressBar jProgressBar2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JSplitPane jSplitPaneDocGrid;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTableAttrSelection;
     private javax.swing.JTable jTableAttrSelection3;
     private javax.swing.JTable jTableSimpleDocs;
-    private javax.swing.JToggleButton jToggleButtonFisheye;
     // End of variables declaration//GEN-END:variables
 }
