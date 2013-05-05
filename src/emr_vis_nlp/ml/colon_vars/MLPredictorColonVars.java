@@ -120,24 +120,6 @@ public class MLPredictorColonVars extends MLPredictor {
         
     }
     
-    // tempfile-based prediction methods replaced with in-memory reader-based methods for speedup
-//    public double[][] predictInstance(String fnInstance) {
-//        // assume binary classifiers
-//        double[][] predictions = new double[predictors.size()][2];
-//
-//        // each of these models corresponds to one of the indicators
-//        for (int i = 0; i < predictors.size(); i++) {
-//            try {
-//                predictions[i] = predictors.get(i).predictInstanceDistribution(fnInstance);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                System.out.println("err: "+this.getClass().getName()+": unable to perform prediction on file "+fnInstance+" using model for attr "+modelNames.get(i));
-//            }
-//        }
-//
-//        return predictions;
-//    }
-    
     public double[][] predictInstance(Reader reader) {
         // assume binary classifiers
         double[][] predictions = new double[predictors.size()][2];
@@ -155,38 +137,16 @@ public class MLPredictorColonVars extends MLPredictor {
         return predictions;
     }
     
-    // tempfile-based prediction methods replaced with in-memory reader-based methods for speedup
-//    public double[] predictInstanceSingleAttr(String fnInstance, int p) {
-//        // assume binary classifiers
-//        double[] prediction = new double[2];
-//
-//        // each of these models corresponds to one of the indicators
-////        for (int i = 0; i < predictors.size(); i++) {
-//            try {
-//                prediction = predictors.get(p).predictInstanceDistribution(fnInstance);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                System.out.println("err: "+this.getClass().getName()+": unable to perform prediction on file "+fnInstance+" using model for attr "+modelNames.get(p));
-//            }
-////        }
-//
-//        return prediction;
-//    }
-    
-    
     public double[] predictInstanceSingleAttr(Reader reader, int p) {
         // assume binary classifiers
         double[] prediction = new double[2];
 
-        // each of these models corresponds to one of the indicators
-//        for (int i = 0; i < predictors.size(); i++) {
             try {
                 prediction = predictors.get(p).predictInstanceDistribution(reader);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("err: "+this.getClass().getName()+": unable to perform prediction using reader "+reader.toString()+" using model for attr "+modelNames.get(p));
             }
-//        }
 
         return prediction;
     }
@@ -342,12 +302,18 @@ public class MLPredictorColonVars extends MLPredictor {
 
     @Override
     public Map<String, Double> getTermWeightsForDocForAttr(int globalDocId, int globalAttrId) {
-        Map<String, Double> termWeightMap = predictorsTermWeightMaps.get(globalDocId);
+        if (globalAttrId == -1) {
+            return new HashMap<>();
+        }
+        Map<String, Double> termWeightMap = predictorsTermWeightMaps.get(globalAttrId);
         return termWeightMap;
     }
 
     @Override
     public Map<String, Double> getTermWeightsForDocForAttr(int globalDocId, String globalAttrName) {
+        if (!attrNameToIndexMap.containsKey(globalAttrName)) {
+            return new HashMap<>();
+        }
         return getTermWeightsForDocForAttr(globalDocId, attrNameToIndexMap.get(globalAttrName));
     }
     

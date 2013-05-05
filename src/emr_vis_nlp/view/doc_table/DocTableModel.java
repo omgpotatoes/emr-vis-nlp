@@ -12,8 +12,6 @@ import javax.swing.table.AbstractTableModel;
  * for generating a model of this type in accordance with currently-loaded 
  * MainModel and any filtering applied by MainView. MainController is also 
  * responsible for keeping the references in this class up-to-date.
- * 
- * 
  *
  * @author alexander.p.conrad@gmail.com
  */

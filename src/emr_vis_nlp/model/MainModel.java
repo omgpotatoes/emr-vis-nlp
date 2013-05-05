@@ -46,36 +46,10 @@ public interface MainModel {
     
     /** 
      * 
-     * @return List of flags as to which attributes in model are currently "enabled" (disabled attributes should not be displayed in the visualization)
-     */
-    public List<Boolean> getIsAttributeEnabledList();
-    
-    /** 
-     * 
      * @param attrName String name of an attribute from this model
      * @return map of all possible values & their counts for a given attribute in the model
      */
     public Map<String, Integer> getAttributeValueCountMap(String attrName);
-    
-    /** 
-     * 
-     * @param selectedAttributes List of flags as to which attributes should be enabled
-     */
-    public void setEnabledAttributes(List<Boolean> selectedAttributes);
-    
-    /**
-     * 
-     * @param globalAttrID integer identifier (index into getAllAttributes()) of an attribute used in this model
-     * @param isEnabled boolean indicator as to whether or not this attribute should be enabled
-     */
-    public void setIsAttributeEnabled(int globalAttrID, boolean isEnabled);
-    
-    /**
-     * 
-     * @param attrName name of an attribute used in this model
-     * @param isEnabled boolean indicator as to whether or not this attribute should be enabled
-     */
-    public void setIsAttributeEnabled(String attrName, boolean isEnabled);
     
     /**
      * Updates target document's target attribute with the designated value.

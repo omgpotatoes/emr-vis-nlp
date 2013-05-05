@@ -51,23 +51,6 @@ public class DocumentGridLayoutNested extends Layout {
     
     // axis layout related to this grid
     private DocumentGridAxisLayout docGridAxisLayout = null;
-
-//    public static final Color[] GLYPH_COLOR_PALETTE = {
-//        new Color(176, 95, 220),
-//        new Color(91, 229, 108), 
-//        new Color(99, 148, 220),
-//        new Color(191, 48, 48), 
-//        new Color(18, 178, 37), 
-//        new Color(160, 82, 45), 
-//    };
-    public static final Color[] GLYPH_COLOR_PALETTE = {
-        new Color(206, 125, 250),  //purple (255=white)
-        new Color(121, 255, 138),  //green 
-        new Color(129, 178, 250),  //blue
-        new Color(221, 98, 98),   //red
-        new Color(48, 208, 67),  // lime? green
-        new Color(190, 112, 75), // brown
-    };
     
     private MainController controller;
     
@@ -122,9 +105,9 @@ public class DocumentGridLayoutNested extends Layout {
      * @param xCats
      * @param yCats 
      */
-    public DocumentGridLayoutNested(MainController controller, String group, String xAttr, String yAttr, List<String> xCats, List<String> yCats) {
+    public DocumentGridLayoutNested(String group, String xAttr, String yAttr, List<String> xCats, List<String> yCats) {
         super(group);
-        this.controller = controller;
+        this.controller = MainController.getMainController();
         
         // perform initial attribute assignment
         setXAxis(xAttr, xCats);

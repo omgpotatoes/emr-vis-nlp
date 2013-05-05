@@ -12,6 +12,7 @@ import javax.swing.JPanel;
 import javax.swing.table.AbstractTableModel;
 
 /**
+ * backing TableModel for the document grid selector table containing the JComboBox axes selectors and interactive histograms.
  *
  * @author alexander.p.conrad@gmail.com
  */
@@ -21,10 +22,11 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
     public static final String NOT_SEL_MSG = "";
     public static final String X_AXIS_SEL = "x_axis";
     public static final String Y_AXIS_SEL = "y_axis";
-    public static final String SHAPE_SEL = "shape";
+//    public static final String SHAPE_SEL = "shape";
     public static final String COLOR_SEL = "color";
     
-    private static Map<String, Boolean> abnormalNamesMap = null;
+    // map listing attribute names which do not have normal categorical values
+//    private static Map<String, Boolean> abnormalNamesMap = null;
     
     /**
      * controller to which this model is responsible
@@ -58,16 +60,12 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         this.controller = MainController.getMainController();
 
         // build list of possible combo box items
-        // TODO more interesting / informative selection options? better selection method beyond jcombobox?
         optionList = new String[numOptions];
         optionList[0] = NOT_SEL_MSG;
         optionList[1] = X_AXIS_SEL;
         optionList[2] = Y_AXIS_SEL;
 //        optionList[3] = SHAPE_SEL;
         optionList[3] = COLOR_SEL;
-//        for (int i = 1; i < numOptions; i++) {
-//            optionList[i] = i + "!";
-//        }
 
         allAttributes = new ArrayList<>();
         allAttributesSelectorBoxes = new ArrayList<>();
@@ -85,20 +83,16 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
         }
         
         // build varBarCharts
-        getAbnormalNameMap();
+//        getAbnormalNameMap();
         distribDisplays = new ArrayList<>();
         canSelect = new ArrayList<>();
         for (int a = 0; a < allAttributes.size(); a++) {
-//            if (a == 0) {
-//                selectedFor2dPosition.add(true);
-//                selectedForCluster.add(false);
-//            } else {
             String name = allAttributes.get(a);
-            if (abnormalNamesMap.containsKey(name)) {
-                canSelect.add(false);
-            } else {
+//            if (abnormalNamesMap.containsKey(name)) {
+//                canSelect.add(false);
+//            } else {
                 canSelect.add(true);
-            }
+//            }
             // build varBarChart
             VarBarChartForCell barChart = controller.getVarBarChartForCell(name);
             distribDisplays.add(barChart);
@@ -125,7 +119,7 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
                 }
             }
         } else {
-            // if NOT_SEL_MSG, make sure 2 axes are selected?
+            // if NOT_SEL_MSG, make sure 2 axes are selected? or, simply let fail?
         }
 
     }
@@ -205,7 +199,6 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
                 // inform controller of change
                 controller.updateDocumentGrid();
                 // reset view
-//                controller.resetDocGridView();
                 fireTableDataChanged();
             }
         }
@@ -282,67 +275,6 @@ public class DocGridTableSelectorModel extends AbstractTableModel {
             ((VarBarChartForCell)chart).enableAllCells();
         }
         fireTableDataChanged();
-    }
-    
-    
-    /**
-     * Builds map of abnormal var names (for which we shouldn't expect to have 3 nice categories)
-     * 
-     * @return 
-     */
-    public static Map<String, Boolean> getAbnormalNameMap() {
-        if (abnormalNamesMap != null) {
-            return abnormalNamesMap;
-        }
-
-        Map<String, Boolean> abnormalVarNames = new HashMap<>();
-
-        abnormalVarNames.put("text", true);
-        abnormalVarNames.put("VAR_Indication_type", true);
-        abnormalVarNames.put("VAR_Indication_Type_2", true);
-        abnormalVarNames.put("VAR_Indication_Type_3", true);
-        abnormalVarNames.put("VAR_Pathology_Report_#", true);
-        abnormalVarNames.put("VAR_Polyp_size_largest", true);
-        abnormalVarNames.put("VAR_Polyp_size_path", true);
-        abnormalVarNames.put("VAR_Follow-up_time", true);
-        abnormalVarNames.put("VAR_Nursing_Reports", true);
-        abnormalVarNames.put("VAR_FH", true);
-        abnormalVarNames.put("VAR_ASA", true);
-        
-        // new abnormals, based on debugging from varbarchart
-        abnormalVarNames.put("VAR_Ileo-cecal_valve", true);
-        abnormalVarNames.put("VAR_Prep_adequate", true);
-        abnormalVarNames.put("VAR_Any_complication", true);
-        abnormalVarNames.put("VAR_Informed_consent", true);
-        abnormalVarNames.put("VAR_Appendiceal_orifice", true);
-        abnormalVarNames.put("VAR_Prev_colonoscopy", true);
-        abnormalVarNames.put("VAR_No_polyp", true);
-        abnormalVarNames.put("VAR_No_Pathology_Report", true);
-
-        // lowercase versions
-        abnormalVarNames.put("VAR_Indication_type".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Indication_Type_2".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Indication_Type_3".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Pathology_Report_#".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Polyp_size_largest".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Polyp_size_path".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Follow-up_time".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Nursing_Reports".toLowerCase(), true);
-        abnormalVarNames.put("VAR_FH".toLowerCase(), true);
-        abnormalVarNames.put("VAR_ASA".toLowerCase(), true);
-        // lowercase versions of new abnormals, based on debugging from varbarchart
-        abnormalVarNames.put("VAR_Ileo-cecal_valve".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Prep_adequate".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Any_complication".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Informed_consent".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Appendiceal_orifice".toLowerCase(), true);
-        abnormalVarNames.put("VAR_Prev_colonoscopy".toLowerCase(), true);
-        abnormalVarNames.put("VAR_No_polyp".toLowerCase(), true);
-        abnormalVarNames.put("VAR_No_Pathology_Report".toLowerCase(), true);
-        
-        abnormalNamesMap = abnormalVarNames;
-        return abnormalVarNames;
-
     }
     
     // extention to JComboBox to support sortability within JTable

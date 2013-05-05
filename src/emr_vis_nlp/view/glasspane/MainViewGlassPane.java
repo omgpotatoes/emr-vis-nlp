@@ -48,71 +48,26 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
     
     private MainViewGlassPane() {
         super();
-        // manually position the JScrollPane within the GlassPane
+        // manually position the JScrollPane within the GlassPane as needed
         setLayout(null);
-//        jScrollPaneDocText = new JScrollPane();
-//        jScrollPaneDocText.addMouseListener(new MouseListener() {
-//
-//            @Override
-//            public void mouseClicked(MouseEvent e) {
-//            }
-//
-//            @Override
-//            public void mousePressed(MouseEvent e) {
-//                if (SwingUtilities.isRightMouseButton(e)) {
-//                    // set flag (so that glasspane isn't immediately re-triggered)
-//                    mouseWasClicked = true;
-//                    // hide glasspane
-//                    hidePane();
-//                    // debug
-//                    System.out.println("debug: " + this.getClass().getName() + ": hiding glasspane, mouse-press");
-//                    // pass event to DocGridDragControl
-////                    DocGridDragControl.control.itemPressed(currentItem, e);
-//                    MainController.getMainController().getDocDragControl().itemPressed(currentItem, e);
-//                }
-//            }
-//
-//            @Override
-//            public void mouseReleased(MouseEvent e) {
-//            }
-//
-//            @Override
-//            public void mouseEntered(MouseEvent e) {
-//            }
-//
-//            @Override
-//            public void mouseExited(MouseEvent e) {
-//                // hide glasspane
-//                hidePane();
-//                // debug
-//                System.out.println("debug: "+this.getClass().getName()+": hiding glasspane, mouse-out");
-//            }
-//        });
-//        
-//        jScrollPaneDocText.setBounds(0, 0, width, height);
-//        jTextPaneDocText = new JTextPane();
-//        jScrollPaneDocText.setViewportView(jTextPaneDocText);
-//        add(jScrollPaneDocText);
-//        backgroundColor = Color.WHITE;
-//        setVisible(false);
     }
 
     public AbstractDocument getAbstDoc() {
-//        return (AbstractDocument) jTextPaneDocText.getStyledDocument();
         if (mainPanel != null) {
             return mainPanel.getAbstDoc();
         }
         return null;
     }
-
-//    public void displayPaneAtPoint(int x, int y) {
-//        jScrollPaneDocText.setBounds(x, y, width, height);
-//        setVisible(true);
-//        jScrollPaneDocText.repaint();
-//        jScrollPaneDocText.getHorizontalScrollBar().setValue(0);
-//        jScrollPaneDocText.getVerticalScrollBar().setValue(0);
-//    }
     
+    /**
+     * Make appear at the designated coordinates, and with the designated size, the appropriate multi-function pane
+     * 
+     * @param x
+     * @param y
+     * @param w
+     * @param h
+     * @param item the VisualItem whose details are to be contained in this pane
+     */
     public void displaySizedPane(int x, int y, int w, int h, VisualItem item) {
         
         // create new GlassPaneTextPanel, position appropriately within glasspane
@@ -127,45 +82,7 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
         add(mainPanel);
         setVisible(true);
         
-        // old single-text-panel version
-////        setBounds(x, y, w, h);
-//        currentItem = item;
-//        jScrollPaneDocText.setBounds(x, y, w, h);
-//        setVisible(true);
-//        jScrollPaneDocText.repaint();
-////        jScrollPaneDocText.getHorizontalScrollBar().setValue(0);
-////        jScrollPaneDocText.getVerticalScrollBar().setValue(jScrollPaneDocText.getVerticalScrollBar().getMinimum());
-//        jTextPaneDocText.setCaretPosition(0);
     }
-    
-//    public void updateSizedPanePosition(int x, int y, int w, int h) {
-//        jScrollPaneDocText.setBounds(x, y, w, h);
-//        jScrollPaneDocText.setBackground(backgroundColor);
-//    }
-    
-//    public void displaySizedPaneTimer(int x, int y, int w, int h, final long animationMillis) {
-////        setBounds(x, y, w, h);
-//        currentItem = null;
-//        jScrollPaneDocText.setBounds(x, y, w, h);
-//        jScrollPaneDocText.setBackground(backgroundColor);
-//        jTextPaneDocText.setBackground(backgroundColor);
-//        Runnable runnable = new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    synchronized (this) {
-//                        wait(animationMillis);
-//                    }
-//                    setVisible(true);
-//                    jScrollPaneDocText.repaint();
-////        jScrollPaneDocText.getHorizontalScrollBar().setValue(0);
-////        jScrollPaneDocText.getVerticalScrollBar().setValue(jScrollPaneDocText.getVerticalScrollBar().getMinimum());
-//                    jTextPaneDocText.setCaretPosition(0);
-//                } catch (InterruptedException e) {}
-//            }
-//        };
-//        runnable.run();
-//    }
 
     public void hidePane(MouseEvent e) {
         // get the highlighted text
@@ -180,18 +97,16 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
         }
         // debug
         System.out.println("debug: "+this.getClass().getName()+": selectedText = \""+selectedText+"\"");
-//        if (MainController.getMainController().getDocumentGrid() != null) {
-//            MainController.getMainController().getDocumentGrid().enableMouseListeners();
-//        }
         setVisible(false);
         
         // send signal to docgrid that glyph was pressed, in order to do sizing restore
-//        MainController.getMainController().getDocSelectControl().itemPressed(currentItem, e);
         MainController.getMainController().getDocSelectControl().disableNextZoomOnItem(currentItem);
         VisualItem clickedItem = MainController.getMainController().getDocSelectControl().findClickedItem(e);
         if (clickedItem != null) {
+            // if an item was clicked, pass that item 
             MainController.getMainController().getDocSelectControl().itemClicked(clickedItem, e);
         } else {
+            // if no item was clicked, pass the focusitem so that it will become deselected
             MainController.getMainController().getDocSelectControl().itemClicked(currentItem, e);
         }
     }
@@ -203,32 +118,19 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        // if right-click, hide pane
-        // note: this method should no longer be invoked, the scrollpane should capture mousepress events
-//        if (isVisible() && SwingUtilities.isRightMouseButton(e)) {
-//            hidePane(e);
-//        }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        // do nothing
     }
 
     @Override
     public void mouseEntered(MouseEvent e) {
-                // hide glasspane
-//        hidePane();
-//        // debug
-//        System.out.println("debug: " + this.getClass().getName() + ": hiding glasspane");
     }
+    
 
     @Override
     public void mouseExited(MouseEvent e) {
-//        // hide glasspane
-//        hidePane();
-//        // debug
-//        System.out.println("debug: " + this.getClass().getName() + ": hiding glasspane");
     }
     
     public int getPopupWidth() {
@@ -237,10 +139,6 @@ public class MainViewGlassPane extends JComponent implements MouseListener {
     
     public int getPopupHeight() {
         return height;
-    }
-    
-    public void updateVisualizationInset(int x, int y) {
-        // not yet implemented
     }
 
     public boolean wasMouseClicked() {

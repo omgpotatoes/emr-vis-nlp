@@ -9,20 +9,17 @@ import emr_vis_nlp.model.Document;
 import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
 import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.AbstractDocument;
-import prefuse.visual.VisualItem;
 
 /**
+ * Swing-based class for the dynamically-loaded glasspane-embedded multifunction details panel .
  *
- * @author conrada
+ * @author alexander.p.conrad@gmail.com
  */
 public class GlassPaneTextPanel extends javax.swing.JPanel implements MouseListener {
 
@@ -73,6 +70,9 @@ public class GlassPaneTextPanel extends javax.swing.JPanel implements MouseListe
         
         setBounds(x, y, width, height);
         //repaint();
+        
+        // ensure that we start at the top of the frame
+        jTextPane1.setCaretPosition(0);
         
     }
     
@@ -186,18 +186,12 @@ public class GlassPaneTextPanel extends javax.swing.JPanel implements MouseListe
     
     @Override
     public void mouseClicked(MouseEvent e) {
-//        glasspane.hidePane(e);
+        glasspane.hidePane(e);
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
-        // if right-click, hide pane
-        // note: this method should no longer be invoked, the scrollpane should capture mousepress events
-//        if (isVisible() && SwingUtilities.isRightMouseButton(e)) {
-//            glasspane.hidePane();
-//        }
-        
-        glasspane.hidePane(e);
+//        glasspane.hidePane(e);
     }
 
     @Override
@@ -207,18 +201,10 @@ public class GlassPaneTextPanel extends javax.swing.JPanel implements MouseListe
 
     @Override
     public void mouseEntered(MouseEvent e) {
-                // hide glasspane
-//        hidePane();
-//        // debug
-//        System.out.println("debug: " + this.getClass().getName() + ": hiding glasspane");
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-//        // hide glasspane
-//        hidePane();
-//        // debug
-//        System.out.println("debug: " + this.getClass().getName() + ": hiding glasspane");
     }
     
     

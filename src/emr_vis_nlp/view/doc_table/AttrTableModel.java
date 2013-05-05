@@ -25,9 +25,7 @@ public class AttrTableModel extends AbstractTableModel {
 
     public AttrTableModel(List<String> allAttributes, List<Boolean> allAttributesEnabled, MainController controller) {
         this.controller = controller;
-        // create a copy of the lists, so that changes don't impact the original lists\
-//        this.allAttributes = allAttributes;
-//        this.allAttributesEnabled = allAttributesEnabled;
+        // create a copy of the lists, so that changes don't impact the original lists?
         this.allAttributes = new ArrayList<>();
         this.allAttributesEnabled = new ArrayList<>();
         for (int a=0; a<allAttributes.size(); a++) {

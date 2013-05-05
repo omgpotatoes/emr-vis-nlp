@@ -133,35 +133,9 @@ public class DocumentMedColon extends Document {
                         
                         // if name begins with ``VAR_'' , remove; necessary so that names match with what the predictor model expects
                         if (var.length() >= 4 && var.substring(0,4).equalsIgnoreCase("VAR_")) {
-                            var = var.substring(4);
+                            var = var.substring(4).toLowerCase();
                         }
                         
-                        // don't worry about handling attrs and vars separately
-//                        Scanner varSplitter = new Scanner(var);
-//                        varSplitter.useDelimiter("_");
-//                        String varType = varSplitter.next().toLowerCase();
-
-//                        if (varType.equals("var")) {
-//                            vars.put(var, val);
-//                            attributes.put(var, translateValCode(val));
-//                        } else if (varType.equals("indicator")) {
-//                            try {
-//                                int valInt = Integer.parseInt(val);
-//                                indicators.put(var, valInt);
-//                                attributes.put(var, translateValCode(val));
-//                            } catch (ClassCastException e) {
-//                                assert false;
-//                                e.printStackTrace();
-//                                System.out.println("DocumentMedColon: could not cast indicator val to int: " + val);
-//                            }
-//                        } else {
-//                            // unrecognized type; toss it in vars for now?
-//                            assert false;
-//                            System.out.println("DocumentMedColon: unrecognized varType: " + varType);
-////                            vars.put(var, val);
-//                                attributes.put(var, translateValCode(val));
-//
-//                        }
 
                     } catch (NoSuchElementException e) {
                         // will happen if a value is not present; 
@@ -170,9 +144,10 @@ public class DocumentMedColon extends Document {
                     }
                     
                     if (!var.equals("")) {
-                        String varClean = DatasetTermTranslator.getAttrTranslation(var);
-                        String valClean = DatasetTermTranslator.getValTranslation(val);
-                        attributes.put(varClean, valClean);
+//                        String varClean = DatasetTermTranslator.getAttrTranslation(var);
+//                        String valClean = DatasetTermTranslator.getValTranslation(val);
+//                        attributes.put(varClean, valClean);
+                        attributes.put(var, val);
                     }
 
                 }
@@ -230,33 +205,11 @@ public class DocumentMedColon extends Document {
                         lineSplitter.next();
                         var = lineSplitter.next();
                         val = lineSplitter.next();
-
-//                        Scanner varSplitter = new Scanner(var);
-//                        varSplitter.useDelimiter("_");
-//                        String varType = varSplitter.next().toLowerCase();
-
                         
-//                        if (varType.equals("var")) {
-//                            vars.put(var, val);
-//                                attributes.put(var, translateValCode(val));
-//                        } else if (varType.equals("indicator")) {
-//                            try {
-//                                int valInt = Integer.parseInt(val);
-//                                indicators.put(var, valInt);
-//                                attributes.put(var, translateValCode(val));
-//                            } catch (ClassCastException e) {
-//                                assert false;
-//                                e.printStackTrace();
-//                                System.out.println("DocumentMedColon: could not cast indicator val to int: " + val);
-//                            }
-//                        } else {
-//                            // unrecognized type; toss it in vars for now?
-//                            assert false;
-//                            System.out.println("DocumentMedColon: unrecognized varType: " + varType);
-////                            vars.put(var, val);
-//                                attributes.put(var, translateValCode(val));
-//
-//                        }
+                        // if name begins with ``VAR_'' , remove; necessary so that names match with what the predictor model expects
+                        if (var.length() >= 4 && var.substring(0,4).equalsIgnoreCase("VAR_")) {
+                            var = var.substring(4).toLowerCase();
+                        }
 
                     } catch (NoSuchElementException e) {
                         // will happen if a value is not present
@@ -266,9 +219,10 @@ public class DocumentMedColon extends Document {
                     }
 
                     if (!var.equals("")) {
-                        String varClean = DatasetTermTranslator.getAttrTranslation(var);
-                        String valClean = DatasetTermTranslator.getValTranslation(val);
-                        attributes.put(varClean, valClean);
+//                        String varClean = DatasetTermTranslator.getAttrTranslation(var);
+//                        String valClean = DatasetTermTranslator.getValTranslation(val);
+//                        attributes.put(varClean, valClean);
+                        attributes.put(var, val);
                     }
 
                 }
@@ -286,7 +240,6 @@ public class DocumentMedColon extends Document {
             e.printStackTrace();
             System.out.println("DocumentMedColon: error while reading pathology files");
         }
-
 
         isActive = true;
         

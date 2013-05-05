@@ -119,16 +119,16 @@ public class MainController {
      * 
      * @param model the model with which this controller should be associated.
      */
-    public void setModel(MainModel model) {
-        this.model = model;
-        
-        if (predictor != null) {
-            predictor.loadPredictions(model);
-        }
-        
-        // update view once model loading is complete
-        if (view != null) view.resetAllViews();
-    }
+//    public void setModel(MainModel model) {
+//        this.model = model;
+//        
+//        if (predictor != null) {
+//            predictor.loadPredictions(model);
+//        }
+//        
+//        // update view once model loading is complete
+//        if (view != null) view.resetAllViews();
+//    }
     
     /**
      * Associates the controller with a back-end NLP prediction module.
@@ -159,11 +159,11 @@ public class MainController {
             @Override
             public void run() {
                 predictor = MLPredictor.buildPredictorFromXMLModelList(predictorFile);
-                if (model != null) {
+                if (model != null && predictor != null) {
                     predictor.loadPredictions(model);
                 }
                 attributesEnabled = predictor.getAttributeEnabledList();
-                if (view != null) {
+                if (view != null && model != null) {
                     view.resetAllViews();
                 }
                 if (view != null) view.stopProgressBar();
@@ -203,6 +203,9 @@ public class MainController {
             public void run() {
                 ((MpqaColonMainModel) model).loadDataFromDoclist(file);
                 // update view once model loading is complete
+                if (model != null && predictor != null) {
+                    predictor.loadPredictions(model);
+                }
                 if (view != null && predictor != null) {
                     view.resetAllViews();
                 }
@@ -529,30 +532,30 @@ public class MainController {
             // delegate this to the model, if possible
 //            if (globalAttrId != -1 && model.canWriteDocTextWithHighlights(globalDocId, globalAttrId)) {
 //                model.writeDocTextWithHighlights(abstDoc, globalDocId, globalAttrId);
-            if (globalAttrId != -1 && predictor.canWriteDocTextWithHighlights(globalDocId, globalAttrId)) {
+//            if (globalAttrId != -1 && predictor.canWriteDocTextWithHighlights(globalDocId, globalAttrId)) {
                 predictor.writeDocTextWithHighlights(abstDoc, globalDocId, globalAttrId);
-            } else {
-                // if model doesn't support highlighting for this text, just insert plaintext
-                try {
-                    abstDoc.remove(0, abstDoc.getLength());
-                } catch (BadLocationException e) {
-                    e.printStackTrace();
-                    System.out.println("err: could not reset doc text for doc " + globalDocId + " focus window");
-                }
-
-                int maxFontSize = 32;
-                int minFontSize = 12;
-
-                String docText = model.getAllDocuments().get(globalDocId).getText();
-                SimpleAttributeSet attrSet = new SimpleAttributeSet();
-                StyleConstants.setFontSize(attrSet, minFontSize);
-                try {
-                    abstDoc.insertString(abstDoc.getLength(), docText, attrSet);
-                } catch (BadLocationException e) {
-                    e.printStackTrace();
-                    System.out.println("err: could not update doc text for doc " + globalDocId + " focus window");
-                }
-            }
+//            } else {
+//                // if model doesn't support highlighting for this text, just insert plaintext
+//                try {
+//                    abstDoc.remove(0, abstDoc.getLength());
+//                } catch (BadLocationException e) {
+//                    e.printStackTrace();
+//                    System.out.println("err: could not reset doc text for doc " + globalDocId + " focus window");
+//                }
+//
+//                int maxFontSize = 32;
+//                int minFontSize = 12;
+//
+//                String docText = model.getAllDocuments().get(globalDocId).getText();
+//                SimpleAttributeSet attrSet = new SimpleAttributeSet();
+//                StyleConstants.setFontSize(attrSet, minFontSize);
+//                try {
+//                    abstDoc.insertString(abstDoc.getLength(), docText, attrSet);
+//                } catch (BadLocationException e) {
+//                    e.printStackTrace();
+//                    System.out.println("err: could not update doc text for doc " + globalDocId + " focus window");
+//                }
+//            }
         }
     }
     
@@ -692,7 +695,7 @@ public class MainController {
             documentGrid.updateYAxis(yAxisAttrName);
 //            documentGrid.updateShapeAttr(shapeAttrName);
             documentGrid.updateColorAttr(colorAttrName);
-            documentGrid.updateView(false);
+            documentGrid.updateView();
         }
         
     }
@@ -702,7 +705,7 @@ public class MainController {
      */
     public void resetDocGridView() {
         if (documentGrid != null) {
-            documentGrid.resetView();
+            documentGrid.updateView();
         }
     }
     

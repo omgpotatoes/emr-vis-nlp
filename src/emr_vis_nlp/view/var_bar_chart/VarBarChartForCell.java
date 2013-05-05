@@ -54,38 +54,35 @@ public class VarBarChartForCell extends JPanel {
     public void rebuildComponents() {
         
         removeAll();
-        
-        allCols = new ArrayList<>();
-//        setLayout(null);
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        
-//        Dimension dim = getSize();
-//        int clientWidth = dim.width;
-//        int clientHeight = dim.height;
 
-        Map<String, Boolean> abnormalNameMap = DocGridTableSelectorModel.getAbnormalNameMap();
-        
+        allCols = new ArrayList<>();
+        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+
+//        Map<String, Boolean> abnormalNameMap = DocGridTableSelectorModel.getAbnormalNameMap();
+
         // draw the basic outline of the box
 
-        if (!attrName.equals("") && !abnormalNameMap.containsKey(attrName)) {
+//        if (!attrName.equals("") && !abnormalNameMap.containsKey(attrName)) {
+        if (!attrName.equals("")) {
             // get scores for all docs
 //            List<String> valList = DatasetTermTranslator.getDefaultValList();
             List<String> valList = attrVals;
             String[] vals = new String[valList.size()];
-            for (int v=0; v<valList.size(); v++) {
+            for (int v = 0; v < valList.size(); v++) {
                 vals[v] = valList.get(v);
             }
             Map<String, Integer> valCountMap = new HashMap<>();
             for (String val : vals) {
                 valCountMap.put(val, 0);
             }
-//            int barWidth = clientWidth / vals.length;
 
+            // count up number of times each value occurs
             for (int d = 0; d < allDocs.size(); d++) {
 
                 Document doc = allDocs.get(d);
                 Map<String, String> attributes = doc.getAttributes();
 
+                // use manual annotation if it exists, otherwise use prediction
                 if (attributes.containsKey(attrName)) {
 
                     String val = attributes.get(attrName) + "";
@@ -124,96 +121,41 @@ public class VarBarChartForCell extends JPanel {
                 totalVals += valCounts[v];
             }
 
-            // draw the faint background bars for the whole dataset
+            // TODO : draw the faint background bars for the whole dataset
 //            Font labelFont = new Font("Book Antiqua", Font.PLAIN, 10);
 //            FontMetrics labelFontMetrics = graphics.getFontMetrics(labelFont);
-
-            //int labelHeight = 18;
+            
             int labelHeight = 0;
-//            Insets insets = getInsets();
-//            Dimension dimension = getSize();
-//            add(Box.createHorizontalGlue());
-            add(Box.createRigidArea(new Dimension(1,100)));
+            add(Box.createRigidArea(new Dimension(1, 100)));
             for (int v = 0; v < vals.length; v++) {
 
-//                //int left = v * barWidth + 1;
-//            	int left = v * barWidth;
-//                int top = clientHeight - labelHeight;
-//
-//                //int height = (int) (((double) valCounts[v] / (double) totalVals) * (clientHeight - labelHeight));
-//                int height = (int) (((double) valCounts[v] / (double) allDocs.size()) * (clientHeight - labelHeight)); // base size of box on size of whole dataset, to illustrate sparsely-instantiated vars
-//                valPercs[v] = ((double) valCounts[v] / (double) allDocs.size());
-//                height = -height;
-//                //int width = barWidth - 2;
-//                int width = barWidth;
-//
-//                // if vals for clientWidth, clientHeight are 0, just do as fractions out of 100; BoxLayout should take care of sizing
-//                clientWidth=0;clientHeight=0;
-//                if (clientWidth == 0 || clientHeight == 0) {
-                    int height = (int) (((double) valCounts[v] / (double) allDocs.size()) * (100 - labelHeight)); // base size of box on size of whole dataset, to illustrate sparsely-instantiated vars
-                    valPercs[v] = ((double) valCounts[v] / (double) allDocs.size());
-//                    height = -height;
-                    //int width = barWidth - 2;
-                    int width = 100 / vals.length;
-//                }
-                
-                
-                // debug
-                //System.out.println("debug: VarBarChart: drawing box: " + left + ", " + (top+height) + ", " + width + ", " + (-height));
+                int height = (int) (((double) valCounts[v] / (double) allDocs.size()) * (100 - labelHeight)); // base size of box on size of whole dataset, to illustrate sparsely-instantiated vars
+                valPercs[v] = ((double) valCounts[v] / (double) allDocs.size());
+                int width = 100 / vals.length;
 
-//                graphics.setColor(Color.gray);
-                
-//                graphics.setColor(Color.blue);
-//                graphics.fillRect(left, top + height, width, -height);
-                
-                //graphics.setColor(Color.black);
-                //graphics.drawRect(left, top, width, height);
-                
-//                VarBarChartColumn varBarChartCol = new VarBarChartColumn(attrName, vals[v], left + insets.left, top + insets.top, width, height);
-//                VarBarChartColumn varBarChartCol = new VarBarChartColumn(attrName, vals[v], left + insets.left, top + height + insets.top, width, -height);
-                
                 VarBarChartColumn varBarChartCol = new VarBarChartColumn(attrName, vals[v], width, height, valPercs[v]);
                 add(varBarChartCol);
                 allCols.add(varBarChartCol);
                 add(Box.createRigidArea(new Dimension(1, 100)));
-//                add(Box.createHorizontalGlue());
-
-//                JLabel label = new JLabel("sometext");
-//                label.setAlignmentY(Component.BOTTOM_ALIGNMENT);
-//                label.setPreferredSize(new Dimension(width, height));
-//                this.add(label);
-                
-                
-//                int q = clientHeight - labelFontMetrics.getDescent();
-//                int labelWidth = labelFontMetrics.stringWidth(vals[v]);
-//                int p = v * barWidth + (barWidth - labelWidth) / 2;
-//                graphics.setColor(Color.black);
-//                graphics.drawString(vals[v], p, q);
 
             }
 
-
-//            // old alpha code for incorporating cluster selection no longer needed; see previous version's code if needed
-            
             // update tooltip text
 //            toolTipText = attrName+":  "+((int)(100*valPercs[0]))+"% N/A, "+((int)(100*valPercs[1]))+"% Fail, "+((int)(100*valPercs[2]))+"% Pass (click to select)";
-            toolTipText = attrName+": ";
-            for (int i=0; i<attrVals.size(); i++) {
+            toolTipText = attrName + ": ";
+            for (int i = 0; i < attrVals.size(); i++) {
                 String attrVal = attrVals.get(i);
-                toolTipText += ((int)(100*valPercs[i]))+"% "+attrVal;
-                if (i < attrVals.size()-1) {
+                toolTipText += ((int) (100 * valPercs[i])) + "% " + attrVal;
+                if (i < attrVals.size() - 1) {
                     toolTipText += ", ";
                 } else {
                     toolTipText += " (click to select/de-select)";
                 }
             }
-            
+
             setToolTipText(toolTipText);
-            
+
         }
-        
-//        setOpaque(false);
-//        repaint();
         
     }
     
@@ -276,33 +218,6 @@ public class VarBarChartForCell extends JPanel {
         private boolean isEnabled;
         private boolean isHighlighted;
         
-//        public VarBarChartColumn(String attrName, String attrVal, int x, int y, int width, int height) {
-//            this.attrName = attrName;
-//            this.attrVal = attrVal;
-//            this.x = x;
-//            this.y = y;
-//            this.height = height;
-//            this.width = width;
-//            isEnabled = true;
-//            isHighlighted = false;
-//            
-//            setSize(width, height);
-//            if (isEnabled) {
-//                if (isHighlighted) {
-//                    setBackground(colorHighlighted);
-//                } else {
-//                    setBackground(colorDefault);
-//                }
-//            } else {
-//                setBackground(colorDisabled);
-//            }
-//            setOpaque(true);
-//            setBorder(BorderFactory.createLineBorder(Color.black));
-//            
-//            setBounds(x, y, width, height);
-//            repaint();
-//        }
-        
         public VarBarChartColumn(String attrName, String attrVal, int width, int height, double fracFull) {
             super();
             this.attrName = attrName;
@@ -317,43 +232,10 @@ public class VarBarChartForCell extends JPanel {
             setMinimumSize(new Dimension(0, 0));
             setPreferredSize(new Dimension(width, height));
             setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
-//            setMaximumSize(new Dimension(width, height));
-//            if (isEnabled) {
-//                if (isHighlighted) {
-//                    setBackground(colorHighlighted);
-//                } else {
-//                    setBackground(colorDefault);
-//                }
-//            } else {
-//                setBackground(colorDisabled);
-//            }
-//            setOpaque(true);
-//            setBorder(BorderFactory.createLineBorder(Color.black));
-//            setBounds(x, y, width, height);
-//            repaint();
             
             addMouseListener(this);
             
         }
-        
-//        public void refresh() {
-//            
-//            setSize(width, height);
-//            if (isEnabled) {
-//                if (isHighlighted) {
-//                    setBackground(colorHighlighted);
-//                } else {
-//                    setBackground(colorDefault);
-//                }
-//            } else {
-//                setBackground(colorDisabled);
-//            }
-//            setOpaque(true);
-//            setBorder(BorderFactory.createLineBorder(Color.black));
-//            
-//            setBounds(x, y, width, height);
-//            repaint();
-//        }
         
         @Override
         public void paintComponent(Graphics graphics) {
@@ -382,7 +264,6 @@ public class VarBarChartForCell extends JPanel {
                 graphics.setColor(colorDefault);
                 graphics.fillRect(left, top, width, height);
             }
-            
 
         }
 
@@ -401,14 +282,6 @@ public class VarBarChartForCell extends JPanel {
             // debug
             System.out.println("debug: varBarChartColumn: mouseClicked for attrName = "+attrName+", attrVal = "+attrVal);
             if (isEnabled) {
-//                // for testing, just highlight
-//                if (isHighlighted) {
-//                    controller.unhighlightAllDocs();
-//                    isHighlighted = false;
-//                } else {
-//                    controller.highlightDocsWithAttrVal(attrName, attrVal);
-//                    isHighlighted = true;
-//                }
                 // disable designated docs
                 isEnabled = false;
                 controller.disableDocsWithAttrVal(attrName, attrVal);
@@ -435,19 +308,21 @@ public class VarBarChartForCell extends JPanel {
         @Override
         public void mouseEntered(MouseEvent e) {
             // highlight docs in group
+            // note: this method does not currently work, because events are intercepted by the containing JTable!
             // debug
-            System.out.println("debug: varBarChartColumn: mouseEntered for attrName = "+attrName+", attrVal = "+attrVal);
-            isHighlighted = true;
-            controller.highlightDocsWithAttrVal(attrName, attrVal);
+//            System.out.println("debug: varBarChartColumn: mouseEntered for attrName = "+attrName+", attrVal = "+attrVal);
+//            isHighlighted = true;
+//            controller.highlightDocsWithAttrVal(attrName, attrVal);
         }
 
         @Override
         public void mouseExited(MouseEvent e) {
             // disable doc highlight for docs in group
+            // note: this method does not currently work, because events are intercepted by the containing JTable!
             // debug
-            System.out.println("debug: varBarChartColumn: mouseExited for attrName = "+attrName+", attrVal = "+attrVal);
-            isHighlighted = false;
-            controller.unhighlightAllDocs();
+//            System.out.println("debug: varBarChartColumn: mouseExited for attrName = "+attrName+", attrVal = "+attrVal);
+//            isHighlighted = false;
+//            controller.unhighlightAllDocs();
         }
         
         

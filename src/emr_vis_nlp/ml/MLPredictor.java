@@ -131,29 +131,35 @@ public abstract class MLPredictor {
      * @param globalAttrId global int identifier for attribute; serves as index into attributeList
      * @return true if predictor possesses necessary functionality to build highlighted version of document text, false otherwise
      */
-    public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId) {
-        // if we have a predictor for the doc, return true else false
-        String selectedAttr = attributeList.get(globalAttrId).getName();
-        // translate old raw name from backend (ie, Indicator_25) into its more-useful extended form
-        // TODO : this is colonoscopy-specific; ideally, we should move the entire translation proceedure into the model-specific code, to isolate the front-end from this!
-        selectedAttr = DatasetTermTranslator.getRevAttrTranslation(selectedAttr);
-//        Map<String, Boolean> abnormalNameMap = DatasetVarsTableModel.getAbnormalNameMap();
-        Map<String, Boolean> predictionNameMap = RuntimeIndicatorPrediction.getPredictionNameMap();
-//        if (!abnormalNameMap.containsKey(selectedAttr) && predictionNameMap.containsKey(selectedAttr)) {
-        if (predictionNameMap.containsKey(selectedAttr)) {
-            return true;
-        }
-        return false;
-    }
+//    public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId) {
+//        // if we have a predictor for the doc, return true else false
+//        String selectedAttr = attributeList.get(globalAttrId).getName();
+//        // translate old raw name from backend (ie, Indicator_25) into its more-useful extended form
+//        // TODO : this is colonoscopy-specific; ideally, we should move the entire translation proceedure into the model-specific code, to isolate the front-end from this!
+//        selectedAttr = DatasetTermTranslator.getRevAttrTranslation(selectedAttr);
+////        Map<String, Boolean> abnormalNameMap = DatasetVarsTableModel.getAbnormalNameMap();
+//        Map<String, Boolean> predictionNameMap = RuntimeIndicatorPrediction.getPredictionNameMap();
+////        if (!abnormalNameMap.containsKey(selectedAttr) && predictionNameMap.containsKey(selectedAttr)) {
+//        if (predictionNameMap.containsKey(selectedAttr)) {
+//            return true;
+//        }
+//        return false;
+//    }
     
     /**
-     * Given a document ID and attribute ID, builds a highlighted version of that document's text. This highlighted text is written into abstDoc.
-     * TODO : move this out of MLPredictor?
-     * 
-     * @param abstDoc AbstractDocument whose content is to be replaced with that of the highlighted document text
-     * @param globalDocId global int identifier for Document; serves as index into documentList
-     * @param globalAttrId global int identifier for attribute; serves as index into attributeList
-     * @see emr_vis_nlp.ml.deprecated.DeprecatedMLPredictor.writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId)
+     * Given a document ID and attribute ID, builds a highlighted version of
+     * that document's text. This highlighted text is written into abstDoc. TODO
+     * : move this out of MLPredictor?
+     *
+     * @param abstDoc AbstractDocument whose content is to be replaced with that
+     * of the highlighted document text
+     * @param globalDocId global int identifier for Document; serves as index
+     * into documentList
+     * @param globalAttrId global int identifier for attribute; serves as index
+     * into attributeList
+     * @see
+     * emr_vis_nlp.ml.deprecated.DeprecatedMLPredictor.writeDocTextWithHighlights(AbstractDocument
+     * abstDoc, int globalDocId, int globalAttrId)
      */
     public void writeDocTextWithHighlights(AbstractDocument abstDoc, int globalDocId, int globalAttrId) {
 
@@ -172,11 +178,6 @@ public abstract class MLPredictor {
         int minFontSize = 12;
         int maxFontSize = 32;
 
-//        RuntimeIndicatorPrediction.buildTemporaryFileForText(documentList.get(globalDocId).getText());
-//        RuntimeIndicatorPrediction.predictIndicatorsForTempFile();
-//        // get top-ranked terms for selected indicator
-//        Map<String, Double> termWeightMap = RuntimeIndicatorPrediction.getTermWeightsForIndicator(attributeList.get(globalAttrId));
-
         Map<String, Double> termWeightMap = getTermWeightsForDocForAttr(globalDocId, globalAttrId);
 
         // find max, min (abs?) vals
@@ -185,214 +186,94 @@ public abstract class MLPredictor {
 
         // TODO make sure it's an indicator for which we're doing prediction! else we get an exception here
         // translate selected attr into its deprecated form
-        String selectedAttr = attributeList.get(globalAttrId).getName();
-        selectedAttr = DatasetTermTranslator.getRevAttrTranslation(selectedAttr);
-//        Map<String, Boolean> abnormalNameMap = DatasetVarsTableModel.getAbnormalNameMap();
-        Map<String, Boolean> predictionNameMap = RuntimeIndicatorPrediction.getPredictionNameMap();
-        boolean isSimpleSQVar = false;
-        String simpleSQVarRegExpStr = "";
-//        if (!abnormalNameMap.containsKey(selectedAttr) && predictionNameMap.containsKey(selectedAttr)) {
-        if (predictionNameMap.containsKey(selectedAttr)) {
-            for (Double weight : termWeightMap.values()) {
+//        String selectedAttr = attributeList.get(globalAttrId).getName();
 
-                if (weight > maxWeight) {
-                    maxWeight = weight;
-                }
+//        if (predictionNameMap.containsKey(selectedAttr)) {
+        for (Double weight : termWeightMap.values()) {
 
-                if (Math.abs(weight) < minWeight) {
-                    minWeight = Math.abs(weight);
-                }
-
+            if (weight > maxWeight) {
+                maxWeight = weight;
             }
 
-            // debug
-            System.out.println("debug: max and min weights for attr " + selectedAttr + ": " + maxWeight + ", " + minWeight);
-
-        } else {
-            // not an indicator for which we're doing prediction; so, detect for being a SimpleSQ var with patterns
-            Map<String, String> simpleSQVarsToRegExp = SimpleSQMatcher.getVarNameToPatternMap();
-            if (simpleSQVarsToRegExp.containsKey(selectedAttr)) {
-                isSimpleSQVar = true;
-                simpleSQVarRegExpStr = simpleSQVarsToRegExp.get(selectedAttr);
+            if (Math.abs(weight) < minWeight) {
+                minWeight = Math.abs(weight);
             }
 
         }
 
-        // if feature is a regexp
-        if (isSimpleSQVar) {
-            // highlight regexp
-            Pattern varRegExpPattern = Pattern.compile(simpleSQVarRegExpStr);
-            Matcher varRegExpMatcher = varRegExpPattern.matcher(docText);
-            boolean hasPattern = varRegExpMatcher.find();
+        // debug
+//        System.out.println("debug: max and min weights for attr " + globalAttrId + ": " + maxWeight + ", " + minWeight);
 
+        // perform highlighting for terms above ~x% of range bewteen min and max?
+        // for now, use all nonzero weights? (since the vast majority of terms in the current model near zero weight)
+        // TODO : decide on highlight threshold in more principled manner!
+//        double highlightCutoff = (maxWeight / 20.0) + minWeight;
+        double highlightCutoff = 0;
 
-            // strategy: while hasPattern == true, continue to look for matches; 
-            //  store start, end match indices in a list
-            List<Integer> startIndices = new ArrayList<>();
-            List<Integer> endIndices = new ArrayList<>();
+        // highlight sufficiently-weighted terms, if any
+        Scanner docTextLineSplitter = new Scanner(docText);
+        while (docTextLineSplitter.hasNextLine()) {
+            String line = docTextLineSplitter.nextLine();
+            Scanner lineSplitter = new Scanner(line);
+            while (lineSplitter.hasNext()) {
 
-            while (hasPattern) {
+                String term = lineSplitter.next();
 
-                int start = varRegExpMatcher.start();
-                int end = varRegExpMatcher.end();
-                String matchedSubstring = varRegExpMatcher.group();
+                // if term is highly weighted, draw with emphasis;
+                // otherwise, draw normally
+                double weight = 0.;
+                // check both raw and lower-case version of term
+                if ((termWeightMap.containsKey(term) && (weight = termWeightMap.get(term)) > highlightCutoff) || (termWeightMap.containsKey(term.toLowerCase()) && (weight = termWeightMap.get(term.toLowerCase())) > highlightCutoff)) {
 
-                // debug
-                System.out.println("debug: found match in doc " + MainController.getMainController().getDocument(globalDocId).getName() + " for attr " + selectedAttr + ": \"" + matchedSubstring + "\"");
+                    // if term is weighted sufficiently for the indicator
+                    try {
+                        int fontSize = (int) (minFontSize + (maxFontSize - minFontSize) * (weight / maxWeight));
+                        SimpleAttributeSet attrSet = new SimpleAttributeSet();
+                        StyleConstants.setFontSize(attrSet, fontSize);
+                        int minBackgroundAlpha = 50;
+                        int maxBackgroundAlpha = 255;
+                        StyleConstants.setBackground(attrSet, new Color(0,
+                                255, 255,
+                                (int) (minBackgroundAlpha + (maxBackgroundAlpha - minBackgroundAlpha) * (weight / maxWeight))));
+                        abstDoc.insertString(abstDoc.getLength(), term
+                                + " ", attrSet);
+                    } catch (BadLocationException e) {
+                        e.printStackTrace();
+                        System.out.println("err: could not add weighted term to report panel: "
+                                + term);
+                    }
 
-                startIndices.add(start);
-                endIndices.add(end);
+                } else {
 
-                hasPattern = varRegExpMatcher.find();
-            }
-
-            int lastEndIndex = 0;
-            if (startIndices.size() > 0) {
-
-                while (startIndices.size() > 0) {
-
-                    // iterate through indices, writing the previous unmatched
-                    // portion and following matched portion
-
-                    int plainIndexStart = lastEndIndex;
-                    int plainIndexEnd = startIndices.remove(0);
-                    int matchedIndexEnd = endIndices.remove(0);
-
-                    // unmatched
+                    // term is not weighted sufficiently for indicator
                     try {
                         int fontSize = minFontSize;
                         SimpleAttributeSet attrSet = new SimpleAttributeSet();
                         StyleConstants.setFontSize(attrSet, fontSize);
-                        abstDoc.insertString(abstDoc.getLength(), docText.substring(plainIndexStart, plainIndexEnd),
-                                attrSet);
+                        abstDoc.insertString(abstDoc.getLength(), term
+                                + " ", attrSet);
                     } catch (BadLocationException e) {
                         e.printStackTrace();
                         System.out.println("err: could not add unweighted term to report panel: "
-                                + docText.substring(plainIndexStart,
-                                plainIndexEnd));
+                                + term);
                     }
 
-                    // matched
-                    try {
-//						double weight = 1.0;
-                        double weight = 0.8;
-                        int fontSize = (int) (maxFontSize * weight);
-                        if (fontSize < minFontSize) {
-                            fontSize = minFontSize;
-                        }
-                        SimpleAttributeSet attrSet = new SimpleAttributeSet();
-                        StyleConstants.setFontSize(attrSet, fontSize);
-                        StyleConstants.setBackground(attrSet, new Color(0, 255,
-                                255, (int) (255 * weight)));
-                        abstDoc.insertString(abstDoc.getLength(), docText.substring(plainIndexEnd, matchedIndexEnd),
-                                attrSet);
-                    } catch (BadLocationException e) {
-                        e.printStackTrace();
-                        System.out.println("err: could not add weighted term to report panel: "
-                                + docText.substring(plainIndexEnd,
-                                matchedIndexEnd));
-                    }
-
-                    lastEndIndex = matchedIndexEnd;
-
                 }
 
-                // print the last bit of unmatched text, if present (should be)
-                try {
-                    int fontSize = minFontSize;
-                    SimpleAttributeSet attrSet = new SimpleAttributeSet();
-                    StyleConstants.setFontSize(attrSet, fontSize);
-                    abstDoc.insertString(abstDoc.getLength(), docText.substring(lastEndIndex),
-                            attrSet);
-                } catch (BadLocationException e) {
-                    e.printStackTrace();
-                    System.out.println("err: could not add unweighted term to report panel: "
-                            + docText.substring(lastEndIndex));
-                }
-
-            } else {
-                // regexp doesn't match, so just load plain doc
-                try {
-                    int fontSize = minFontSize;
-                    SimpleAttributeSet attrSet = new SimpleAttributeSet();
-                    StyleConstants.setFontSize(attrSet, fontSize);
-                    abstDoc.insertString(abstDoc.getLength(), docText, attrSet);
-                } catch (BadLocationException e) {
-                    e.printStackTrace();
-                    System.out.println("err: could not load plain doc in panel (regexp not matched)");
-                }
             }
-        } else {
-            // highlight sufficiently-weighted terms, if any
-            Scanner docTextLineSplitter = new Scanner(docText);
-            while (docTextLineSplitter.hasNextLine()) {
-                String line = docTextLineSplitter.nextLine();
-                Scanner lineSplitter = new Scanner(line);
-                while (lineSplitter.hasNext()) {
 
-                    String term = lineSplitter.next();
-
-                    // if term is highly weighted, draw with emphasis;
-                    // otherwise, draw normally
-                    double weight = 0.;
-                    double weightDiffMult = 1.3; // the larger this is, the
-                    // higher the threshold for
-                    // highlighting
-//                        if (!abnormalNameMap.containsKey(selectedAttr) && 
-                    if (predictionNameMap.containsKey(selectedAttr)
-                            && ((termWeightMap.containsKey(term) && (weight = termWeightMap.get(term)) > (maxWeight - ((maxWeight - minWeight) / weightDiffMult))) || (termWeightMap.containsKey(term.toLowerCase()) && (weight = termWeightMap.get(term.toLowerCase())) > (maxWeight - ((maxWeight - minWeight) / weightDiffMult))))) {
-
-                        // if term is weighted sufficiently for the indicator
-                        try {
-                            int fontSize = (int) (maxFontSize * (weight / maxWeight));
-                            if (fontSize < minFontSize) {
-                                fontSize = minFontSize;
-                            }
-                            SimpleAttributeSet attrSet = new SimpleAttributeSet();
-                            StyleConstants.setFontSize(attrSet, fontSize);
-                            StyleConstants.setBackground(attrSet, new Color(0,
-                                    255, 255,
-                                    (int) (255 * (weight / maxWeight))));
-                            abstDoc.insertString(abstDoc.getLength(), term
-                                    + " ", attrSet);
-                        } catch (BadLocationException e) {
-                            e.printStackTrace();
-                            System.out.println("err: could not add weighted term to report panel: "
-                                    + term);
-                        }
-
-                    } else {
-
-                        // term is not weighted sufficiently for indicator
-                        try {
-                            int fontSize = minFontSize;
-                            SimpleAttributeSet attrSet = new SimpleAttributeSet();
-                            StyleConstants.setFontSize(attrSet, fontSize);
-                            abstDoc.insertString(abstDoc.getLength(), term
-                                    + " ", attrSet);
-                        } catch (BadLocationException e) {
-                            e.printStackTrace();
-                            System.out.println("err: could not add unweighted term to report panel: "
-                                    + term);
-                        }
-
-                    }
-
-                }
-
-                // add a newline at the end of the line
-                try {
-                    int fontSize = minFontSize;
-                    SimpleAttributeSet attrSet = new SimpleAttributeSet();
-                    StyleConstants.setFontSize(attrSet, fontSize);
-                    abstDoc.insertString(abstDoc.getLength(), "\n", attrSet);
-                } catch (BadLocationException e) {
-                    e.printStackTrace();
-                    System.out.println("err: could not add newline to report panel");
-                }
-
+            // add a newline at the end of the line
+            try {
+                int fontSize = minFontSize;
+                SimpleAttributeSet attrSet = new SimpleAttributeSet();
+                StyleConstants.setFontSize(attrSet, fontSize);
+                abstDoc.insertString(abstDoc.getLength(), "\n", attrSet);
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+                System.out.println("err: could not add newline to report panel");
             }
         }
+        
     }
     
     
