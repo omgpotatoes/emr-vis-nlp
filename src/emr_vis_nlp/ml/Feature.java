@@ -8,6 +8,8 @@ import java.util.List;
  * document-independent, instead representing a property used by the ML 
  * classifier to assign a class, along with a weight value.
  *
+ * NOTE : class is currently unused, but may be useful later for assessing classifier quality
+ * 
  * @author alexander.p.conrad@gmail.com
  */
 public class Feature {

@@ -11,6 +11,9 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.util.*;
 
+/**
+ * @deprecated 
+ */
 public class WekaWrapper {
 	/** the classifier used internally */
 	protected Classifier m_Classifier = null;

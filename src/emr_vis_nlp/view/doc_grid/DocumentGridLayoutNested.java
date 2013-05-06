@@ -64,7 +64,7 @@ public class DocumentGridLayoutNested extends Layout {
     private Rectangle2D bounds;
     
     // attributes for plotting points
-    // TODO eliminate this group of lists by defining new objects for category positioning information for each category?
+    // TODO : eliminate this group of lists by defining new objects for category positioning information for each category?
     // name of attribute on x-axis
     private String xAttr;
     // name of arrtibute on y-axis
@@ -85,15 +85,6 @@ public class DocumentGridLayoutNested extends Layout {
     private Map<String, Integer> xCatPositionMap;
     // map from y-attribute category name to its index in the other lists
     private Map<String, Integer> yCatPositionMap;
-    // counts for number of documents in each cell created by the x- and y-attribute categories
-    private int[][] gridCellItemCount;
-    
-    // buffer between items (when using static positioning)
-    private static double buffer = 8.;
-    
-    // buffer on edges of each region, as % of region
-    private static double regionBuff = 0.25;
-    
     
     /**
      * 
@@ -158,18 +149,6 @@ public class DocumentGridLayoutNested extends Layout {
         Iterator iter = m_vis.items(m_group);  // optionally, can add predicatefilter as second argument, if needed
         int numItems = m_vis.size(m_group);
 
-//            removeAllChildren();
-
-        // reset all docGridNodes, to ensure that any to-be-hidden glyphs are not shown
-//            for (int d=0; d<docGridNodes.size(); d++) {
-//                NestedFisheyeGrid.DocGridNode docGridNode = docGridNodes.get(d);
-//                docGridNode.setValIndexX(-1);
-//                docGridNode.setValIndexY(-1);
-//                docGridNode.setValIndexColor(-1);
-//                docGridNode.setGlobalX(-1);
-//                docGridNode.setGlobalY(-1);
-//            }
-
         int[][] gridCellItemCountInit = new int[attrValsX.size()][attrValsY.size()];
         int[] rowItemCountInit = new int[attrValsY.size()];
         int[] colItemCountInit = new int[attrValsX.size()];
@@ -184,8 +163,6 @@ public class DocumentGridLayoutNested extends Layout {
             // reset item's location
             item.setX(-1.);
             item.setY(-1.);
-//            avgHeight += item.getBounds().getHeight();
-//            avgWidth += item.getBounds().getWidth();
             // get category values for the target attributes for item
             // note: fields should always be populated; we shouldn't have to check whether they're available 1st (but safest to do it anyway)
             String xAttrVal = "";
@@ -218,8 +195,6 @@ public class DocumentGridLayoutNested extends Layout {
             }
         }
 
-//        double regionSmoothingPerc = 0.05;  // give each region's axis 10% of the space by default
-
         // compute percentages of full area for each region
         for (int x = 0; x < attrValsX.size(); x++) {
             int valCounter = 0;
@@ -228,8 +203,7 @@ public class DocumentGridLayoutNested extends Layout {
                     valCounter += gridCellItems[x][y].size();
                 }
             }
-//            regionCountsX[x] = valCounter;
-            // NOTE: regionPercs considers all documents, not just enabled; is this what we want?
+            // NOTE : regionPercs considers all documents, not just enabled; is this what we want?
             regionPercsX[x] = ((double) valCounter / (double) numItems) * (1. - (REGION_AREA_SMOOTH * attrValsX.size())) + REGION_AREA_SMOOTH;
         }
 
@@ -240,7 +214,6 @@ public class DocumentGridLayoutNested extends Layout {
                     valCounter += gridCellItems[x][y].size();
                 }
             }
-//            regionCountsY[y] = valCounter;
             // NOTE: regionPercs considers all documents, not just enabled; is this what we want?
             regionPercsY[y] = ((double) valCounter / (double) numItems) * (1. - (REGION_AREA_SMOOTH * attrValsY.size())) + REGION_AREA_SMOOTH;
         }
@@ -303,25 +276,6 @@ public class DocumentGridLayoutNested extends Layout {
             glyphsPerInnerRowInCol[y] = pxInRegion / glyphWidthPx;
         }
 
-        // assign region sizes, percentages based on adjusted region sizes
-//        int regionAccumulator = (int)x_min;
-//        xCatPositions.add((int)x_min);
-//        for (int i=0; i<regionPercsX.length; i++) {
-//            double regionPerc = regionPercsX[i];
-//            xCatRegionSizes.add((int)(regionPerc*x_range));
-//            regionAccumulator += (int)(regionPerc*x_range);
-//            xCatPositions.add(regionAccumulator);
-//        }
-//        regionAccumulator = (int)y_min;
-//        yCatPositions.add((int)y_min);
-//        for (int i=0; i<regionPercsY.length; i++) {
-//            double regionPerc = regionPercsY[i];
-//            yCatRegionSizes.add((int)(regionPerc*y_range));
-//            regionAccumulator += (int)(regionPerc*y_range);
-//            yCatPositions.add(regionAccumulator);
-//        }
-
-
         // TODO : sort by certainties: 
         //  for each nested grid, sort first by the y-attr certainty (for predictions; manual annotations automatically pushed to front of list)
         //  to build an inner row of n items, take next n nodes from this sorted list
@@ -336,17 +290,12 @@ public class DocumentGridLayoutNested extends Layout {
 
         // pre-compute item counts at which we should switch to next cell
         // make sure to account for blank glyph space between cats!
-//            int numGaps = attrValsX.size()-1;
         int[] gridEndingGlyphCountsX = new int[attrValsX.size()];
         int counter = 0;
         numGaps = attrValsX.size() - 1;
         for (int x = 0; x < attrValsX.size(); x++) {
             int pxInRegion = (int) ((x_range - numGaps * glyphWidthPx) * regionPercsX[x]);
             int glyphsPerRowWithinCol = pxInRegion / glyphWidthPx;
-            // reduce # of glyphs by 1, to ensure a buffer?
-//                if (glyphsPerRowWithinCol > 1) {
-//                    glyphsPerRowWithinCol--;
-//                } 
             if (glyphsPerRowWithinCol == 0) {
                 glyphsPerRowWithinCol = 1;
             }
@@ -359,10 +308,6 @@ public class DocumentGridLayoutNested extends Layout {
         for (int y = 0; y < attrValsY.size(); y++) {
             int pxInRegion = (int) ((y_range - numGaps * glyphHeightPx) * regionPercsY[y]);
             int glyphsPerColWithinRow = pxInRegion / glyphHeightPx;
-            // reduce # of glyphs by 1, to ensure a buffer?
-//                if (glyphsPerColWithinRow > 1) {
-//                    glyphsPerColWithinRow--;
-//                } 
             if (glyphsPerColWithinRow == 0) {
                 glyphsPerColWithinRow = 1;
             }
@@ -448,7 +393,6 @@ public class DocumentGridLayoutNested extends Layout {
         lastZoomWidth = (int) focusWidth;
         // divide by number of global rows/cols
         double collapsedHeight = (y_range - focusHeight) / (globalRowCount + regionPercsY.length - 1);
-//            double collapsedWidth = (widthPx - focusWidth) / (documents.size());
         double collapsedWidth = (x_range - focusWidth) / (globalColCount + regionPercsX.length - 1);
 
         // store positions at which regions end, where boundaries should be drawn
@@ -511,7 +455,6 @@ public class DocumentGridLayoutNested extends Layout {
                 if (currentCol >= metaGridXThresh) {
                     metaGridX++;
                     // add a buffer, to ensure gap between groups
-//                        currentCol++;
                     xOffset += glyphWidthPx;
                     regionAccumulatorX += glyphWidthPx;
 
@@ -547,18 +490,6 @@ public class DocumentGridLayoutNested extends Layout {
                     // store its global position info
                     docGridNode.setInt(GLOBAL_COL, currentCol);
                     docGridNode.setInt(GLOBAL_ROW, currentRow);
-                    // add node to the visualization
-                    // do this earlier, at initialization; don't add multiple times
-//                        addChild(docGridNode);
-
-//                        if (animate) {
-//                            docGridNode.animateToBounds(xOffset, yOffset, width, height, DEFAULT_ANIMATION_MILLIS).setStepRate(0);
-//                        } else {
-//                            docGridNode.setBounds(xOffset, yOffset, width, height);
-//                        }
-
-//                        docGridNode.setBounds(Double.MIN_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
-
                     // set the Start* fields for animation
                     double oldX = docGridNode.getDouble(VisualItem.X);
                     double oldY = docGridNode.getDouble(VisualItem.Y);
@@ -576,13 +507,11 @@ public class DocumentGridLayoutNested extends Layout {
                     // i can find no direct relationship between the "size" value and the actual size in pixels of what's drawn to the screen; this is very important for my application
                     docGridNode.setSize(width * height);  // size no longer being used for rendering (because it seems bizarrly unrelated to pixel size?), but we need it to be set in order for listeners to work properly
                     docGridNode.setEndSize(width * height);
-//                    docGridNode.setSize(width);   // renderer will map this back to glyph appropriately?
-//                    docGridNode.setEndSize(width); 
+                    
                     docGridNode.setDouble(WIDTH, width);
                     docGridNode.setDouble(WIDTH_END, width);
                     docGridNode.setDouble(HEIGHT, height);
                     docGridNode.setDouble(HEIGHT_END, height);
-//                    Rectangle2D rect = new Rectangle((int)xOffset, (int)yOffset, (int)width, (int)height);
                     docGridNode.setBounds(xOffset, yOffset, width, height);
                     docGridNode.setShape(Constants.SHAPE_RECTANGLE);
 

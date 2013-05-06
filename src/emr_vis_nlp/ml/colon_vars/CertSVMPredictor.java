@@ -1,10 +1,6 @@
 package emr_vis_nlp.ml.colon_vars;
 
-import emr_vis_nlp.ml.deprecated.RuntimeIndicatorPrediction;
 import java.io.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import weka.classifiers.Classifier;
 import weka.classifiers.functions.LibSVM;
 import weka.core.Instances;
@@ -50,8 +46,6 @@ public class CertSVMPredictor {
 //            System.out.println("debug: "+this.getClass().getName()+": classifier: "+m_Classifier.toString());
             LibSVM libsvm = (LibSVM) m_Classifier;
             libsvm.setProbabilityEstimates(true);
-//            libsvm.buildClassifier(trainSet);
-//            double[] instanceDist = m_Classifier.distributionForInstance(unlabeled.instance(i));  // BUG: this is simply returning array of [0, 1] or [1, 0] ?
             double[] instanceDist = libsvm.distributionForInstance(unlabeled.instance(i));
             dist[i] = instanceDist;
         }
@@ -67,7 +61,6 @@ public class CertSVMPredictor {
     public double[] predictInstanceDistribution(Reader reader) throws Exception {
         // assume that the file contains only 1 instance
         // load instances
-        // TODO: eliminate intermediate file, use StringReader instead!
         Instances data = new Instances(reader);
         // remove reportID attribute
         String[] options = weka.core.Utils.splitOptions("-R 1");  // removes the first attribute in instances (should be the document id?)
@@ -154,53 +147,5 @@ public class CertSVMPredictor {
         writer.flush();
         writer.close();
     }
-
-    // termWeights are not stored in MLPredictorColonVars, read straight from file
-//    public Map<String, Double> getTermWeights() {
-//
-//        try {
-//            
-//            // get weights
-//            double[] weights = ((LibSVM) m_Classifier).getFeatureWeights();
-////            String weightStr = ((LibSVM) m_Classifier).getWeights();
-////            // debug
-////            System.out.println("debug: ColonsopyModel.getTermWeights: weightStr: "+weightStr);
-////            List<Double> weightList = new ArrayList<>();
-////            Scanner weightStrSplitter = new Scanner(weightStr);
-////            while (weightStrSplitter.hasNextDouble()) {
-////                weightList.add(weightStrSplitter.nextDouble());
-////            }
-////            double[] weights = new double[weightList.size()];
-////            for (int w=0; w<weightList.size(); w++)  {
-////                weights[w] = weightList.get(w);
-////            }
-//
-//            // map weights to terms
-//            List<String> bowTerms = RuntimeIndicatorPrediction.getListOfBOWTerms();
-//
-//            assert weights.length == bowTerms.size();
-//            
-//            if (weights.length != bowTerms.size()) {
-//                
-//                System.err.println("weights and bowTerms not of same length! "+weights.length+" vs "+bowTerms.size());
-//                return null;
-//                
-//            }
-//            
-//            Map<String, Double> termWeightMap = new HashMap<>();
-//            for (int t=0; t<bowTerms.size(); t++) {
-//                termWeightMap.put(bowTerms.get(t), weights[t]);
-//            }
-//            
-//            return termWeightMap;
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            System.out.println("err: could not get feature weights from model: " + m_Classifier.toString());
-//        }
-//
-//        return null;
-//
-//    }
     
 }

@@ -3,6 +3,9 @@ package emr_vis_nlp.ml.deprecated;
 import java.io.File;
 import java.util.Map;
 
+/**
+ * @deprecated 
+ */
 public class ColonoscopyDemo {
 	protected String m_modelPath = "resources/backend/Models";
 	protected String[] m_fnModels = {"Indicator2.model", "Indicator3.model",

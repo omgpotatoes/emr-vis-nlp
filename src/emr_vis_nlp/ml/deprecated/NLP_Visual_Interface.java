@@ -11,6 +11,9 @@ import weka.core.Instances;
 import weka.core.OptionHandler;
 import weka.filters.Filter;
 
+/**
+ * @deprecated 
+ */
 public class NLP_Visual_Interface {
 	protected Classifier m_Classifier = null;
 	

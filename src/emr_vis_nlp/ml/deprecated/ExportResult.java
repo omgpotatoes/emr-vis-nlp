@@ -1,7 +1,9 @@
 package emr_vis_nlp.ml.deprecated;
 
 
-
+/**
+ * @deprecated 
+ */
 public class ExportResult {
 	protected String m_outputPath;
 	protected String m_expCounter;

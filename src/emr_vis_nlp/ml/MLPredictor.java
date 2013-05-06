@@ -2,22 +2,11 @@ package emr_vis_nlp.ml;
 
 import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.ml.colon_vars.MLPredictorColonVars;
-import emr_vis_nlp.ml.deprecated.RuntimeIndicatorPrediction;
-import emr_vis_nlp.ml.deprecated.SimpleSQMatcher;
-import emr_vis_nlp.model.Document;
 import emr_vis_nlp.model.MainModel;
-import emr_vis_nlp.model.mpqa_colon.DatasetMedColonDoclist;
-import emr_vis_nlp.model.mpqa_colon.DatasetTermTranslator;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -106,8 +95,6 @@ public abstract class MLPredictor {
         return new ArrayList<>();
     }
     
-    
-    
     /**
      * Loads and/or generates appropriate attribute predictions for the model
      * data. Namely, this method is responsible for appropriately populating
@@ -115,36 +102,27 @@ public abstract class MLPredictor {
      */
     public abstract void loadPredictions(MainModel model);
     
+    /**
+     * Given a document and an attribute, returns a map containing all words used by the predictor for predicting the attribute class label mapped to each of their weights.
+     * 
+     * @param globalDocId
+     * @param globalAttrId
+     * @return 
+     */
     public abstract Map<String, Double> getTermWeightsForDocForAttr(int globalDocId, int globalAttrId);
     
     public abstract Map<String, Double> getTermWeightsForDocForAttr(int globalDocId, String globalAttrName);
     
+    /**
+     * Returns a list of all valid values for a given attribute.
+     * 
+     * @param attrName
+     * @return 
+     */
     public abstract List<String> getAttributeValues(String attrName);
     
     
     /******* text highlighting methods *******/
-    
-    /**
-     * Given a document ID and attribute ID, determines whether the predictor currently supports building of a highlighted version of the document.
-     * 
-     * @param globalDocId global int identifier for Document; serves as index into documentList
-     * @param globalAttrId global int identifier for attribute; serves as index into attributeList
-     * @return true if predictor possesses necessary functionality to build highlighted version of document text, false otherwise
-     */
-//    public boolean canWriteDocTextWithHighlights(int globalDocId, int globalAttrId) {
-//        // if we have a predictor for the doc, return true else false
-//        String selectedAttr = attributeList.get(globalAttrId).getName();
-//        // translate old raw name from backend (ie, Indicator_25) into its more-useful extended form
-//        // TODO : this is colonoscopy-specific; ideally, we should move the entire translation proceedure into the model-specific code, to isolate the front-end from this!
-//        selectedAttr = DatasetTermTranslator.getRevAttrTranslation(selectedAttr);
-////        Map<String, Boolean> abnormalNameMap = DatasetVarsTableModel.getAbnormalNameMap();
-//        Map<String, Boolean> predictionNameMap = RuntimeIndicatorPrediction.getPredictionNameMap();
-////        if (!abnormalNameMap.containsKey(selectedAttr) && predictionNameMap.containsKey(selectedAttr)) {
-//        if (predictionNameMap.containsKey(selectedAttr)) {
-//            return true;
-//        }
-//        return false;
-//    }
     
     /**
      * Given a document ID and attribute ID, builds a highlighted version of
@@ -183,10 +161,6 @@ public abstract class MLPredictor {
         // find max, min (abs?) vals
         double maxWeight = Double.MIN_VALUE;
         double minWeight = 0;
-
-        // TODO make sure it's an indicator for which we're doing prediction! else we get an exception here
-        // translate selected attr into its deprecated form
-//        String selectedAttr = attributeList.get(globalAttrId).getName();
 
 //        if (predictionNameMap.containsKey(selectedAttr)) {
         for (Double weight : termWeightMap.values()) {
@@ -319,10 +293,11 @@ public abstract class MLPredictor {
         List<WeightedSentence> summaryLines = buildSummaryLines(globalDocId, globalAttrId);
         
         // concatenate summary lines
+        String summarySplitter = " ... ";
         StringBuilder summary = new StringBuilder();
         for (WeightedSentence wSent: summaryLines) {
             String summaryLine = wSent.getText();
-            summary.append(summaryLine);
+            summary.append(summarySplitter+summaryLine+summarySplitter);
             summary.append("\n");
         }
         return summary.toString();

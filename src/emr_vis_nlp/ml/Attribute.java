@@ -11,12 +11,13 @@ import java.util.List;
  */
 public class Attribute {
 
+    // kind of attribute that this is
     private AttributeType attributeType;
-    
+    // name of this attribute
     private String name;
-    
+    // extended name of this attribute
     private String elaboration;
-    
+    // legal values for this attribute
     private List<String> legalValues;
     
     public Attribute(AttributeType attributeType, String name, String elaboration, List<String> legalValues) {
@@ -63,7 +64,9 @@ public class Attribute {
         return "Attribute{" + "attributeType=" + attributeType + ", name=" + name + ", elaboration=" + elaboration + ", legalValues=" + legalValues + '}';
     }
     
-    
+    /**
+     * Represents the general categories of attributes we may encounter, with respect to kinds of things represented and kinds of values possible.
+     */
     public static enum AttributeType {
         
         VARIABLE_CATEGORICAL,

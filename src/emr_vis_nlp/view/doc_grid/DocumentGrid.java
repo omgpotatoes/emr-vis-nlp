@@ -17,12 +17,9 @@ import prefuse.Display;
 import prefuse.Visualization;
 import prefuse.action.ActionList;
 import prefuse.action.RepaintAction;
-import prefuse.action.animate.LocationAnimator;
 import prefuse.action.assignment.ColorAction;
 import prefuse.action.assignment.ShapeAction;
-import prefuse.action.assignment.SizeAction;
 import prefuse.action.filter.VisibilityFilter;
-import prefuse.activity.SlowInSlowOutPacer;
 import prefuse.controls.ControlAdapter;
 import prefuse.controls.DragControl;
 import prefuse.data.Tuple;
@@ -573,11 +570,17 @@ public class DocumentGrid extends Display {
                     String s = "";
 
                     // set text: full document if no search term, else excerpts containing the search term
+                    String queryStr = searchQ.getSearchSet().getQuery();
                     String focusText = item.getString(DocumentGridTable.NODE_FOCUS_TEXT);
-                    if (focusText != null && !focusText.equals("null") && !focusText.equals("")) {
+                    if (queryStr != null && !queryStr.isEmpty() && focusText != null && !focusText.equals("null") && !focusText.equals("")) {
+                        // if search query and terms present in document, use term-containing spans
                         s += focusText;
-                    } else if (focusText.equals(FOCUS_SENT_SPLITTER)) {
+                    } else if (queryStr != null && !queryStr.isEmpty() && focusText.equals(FOCUS_SENT_SPLITTER)) {
+                        // if search query but no terms present in document, use blank
                         s += "";
+                    } else if ((queryStr == null || queryStr.isEmpty()) && item.canGetInt(NODE_ID)) {
+                        // if no search query, build feature-oriented summary based on color attribute
+                        s = controller.getDocumentSummary(item.getInt(NODE_ID), colorAttrName);
                     }
 
                     // TODO : idea: set font size dynamically based on number of active nodes? based on size of rect?

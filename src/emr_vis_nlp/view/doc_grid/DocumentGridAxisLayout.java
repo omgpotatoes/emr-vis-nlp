@@ -29,8 +29,7 @@ public class DocumentGridAxisLayout extends Layout {
     public static final String CAT_LABEL = "cat_label";
     public static final String MID_POINT = "mid_point";
     
-//    private DocumentGridLayout docGridLayout;  // pointer to DocumentGridLayout for which this instance is drawing the axes
-    private DocumentGridLayoutNested docGridLayout;
+    private DocumentGridLayoutNested docGridLayout;  // pointer to DocumentGridLayout for which this instance is drawing the axes
     
     private double x_min;
     private double x_max;
@@ -135,9 +134,7 @@ public class DocumentGridAxisLayout extends Layout {
         // - ordered list of x, y labels
         // - heights of each region (based on number of documents contained therein, and whether a selected document is contained)
         
-        
         // build grid and labels
-//        Rectangle2D b = getLayoutBounds();
         setMinMax(xCatPositions, xCatRegionSizes, yCatPositions, yCatRegionSizes);
         
         // mark previously visible labels
@@ -186,7 +183,6 @@ public class DocumentGridAxisLayout extends Layout {
 //            item.setDouble(VisualItem.VALUE, catIndex);
             item.setDouble(VisualItem.VALUE, value);
             item.setVisible(true);
-//            item.setStartVisible(true);
             item.setEndVisible(true);
             if (!isLabel) {
 //                set(item, value, b, isX);
@@ -230,7 +226,6 @@ public class DocumentGridAxisLayout extends Layout {
 //                item.setStartVisible(true);
                 item.setEndVisible(true);
 
-//                set(item, indexVal, b, isX);
                 set(item, indexVal, isX, midPoint);
             }
             
@@ -252,7 +247,6 @@ public class DocumentGridAxisLayout extends Layout {
             item.setVisible(true);
 //            item.setStartVisible(true);
             item.setEndVisible(true);
-//            set(item, indexVal, b, isX);
             set(item, indexVal, isX, indexVal);
         }
         
@@ -278,8 +272,6 @@ public class DocumentGridAxisLayout extends Layout {
                 item.setVisible(true);
 //                item.setStartVisible(true);
                 item.setEndVisible(true);
-
-//                set(item, indexVal, b, isX);
                 set(item, indexVal, isX, midPoint);
             }
 
@@ -309,36 +301,9 @@ public class DocumentGridAxisLayout extends Layout {
         garbageCollect(labels);
     }
     
-    /**
-     * Set the layout values for an axis label item.
-     */
-//    protected void set(VisualItem item, double xOrY, Rectangle2D b, boolean onX) {
-//        if (onX) {
-//            // if it's an x-axis value
-//            // m_asc == isAscending? (default == true)
-//            // xOrY == position for x or y (1-axis-per-class assumption)
-////            xOrY = m_asc ? xOrY + b.getMinX() : b.getMaxX() - xOrY;
-//            PrefuseLib.updateDouble(item, VisualItem.X,  xOrY);
-//            PrefuseLib.updateDouble(item, VisualItem.Y,  b.getMinY());
-////            PrefuseLib.updateDouble(item, VisualItem.Y,  0);
-//            PrefuseLib.updateDouble(item, VisualItem.X2, xOrY);
-//            PrefuseLib.updateDouble(item, VisualItem.Y2, b.getMaxY());
-//        } else {
-//            // if it's a y-axis value
-////            xOrY = m_asc ? b.getMaxY() - xOrY - 1 : xOrY + b.getMinY();
-//            PrefuseLib.updateDouble(item, VisualItem.X,  b.getMinX());
-//            PrefuseLib.updateDouble(item, VisualItem.Y,  xOrY);
-//            PrefuseLib.updateDouble(item, VisualItem.X2, b.getMaxX());
-//            PrefuseLib.updateDouble(item, VisualItem.Y2, xOrY);
-//        }
-//    }
-    
     protected void set(VisualItem item, double xOrY, boolean onX, double midPoint) {
         if (onX) {
             // if it's an x-axis value
-            // m_asc == isAscending? (default == true)
-            // xOrY == position for x or y (1-axis-per-class assumption)
-//            xOrY = m_asc ? xOrY + b.getMinX() : b.getMaxX() - xOrY;
             PrefuseLib.updateDouble(item, VisualItem.X,  xOrY);
             PrefuseLib.updateDouble(item, VisualItem.Y,  y_min);
             PrefuseLib.updateDouble(item, VisualItem.X2, xOrY);
@@ -347,7 +312,6 @@ public class DocumentGridAxisLayout extends Layout {
             item.set(MID_POINT, midPoint);
         } else {
             // if it's a y-axis value
-//            xOrY = m_asc ? b.getMaxY() - xOrY - 1 : xOrY + b.getMinY();
             PrefuseLib.updateDouble(item, VisualItem.X,  x_min);
             PrefuseLib.updateDouble(item, VisualItem.Y,  xOrY);
             PrefuseLib.updateDouble(item, VisualItem.X2, x_max);

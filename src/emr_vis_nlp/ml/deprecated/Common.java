@@ -8,6 +8,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.System;
 
+/**
+ * @deprecated 
+ */
 public class Common {
 	public static String getOSPath(String[] paths) throws Exception{
 		String path = "";

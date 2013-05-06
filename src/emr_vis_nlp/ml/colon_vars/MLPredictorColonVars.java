@@ -1,19 +1,13 @@
 
 package emr_vis_nlp.ml.colon_vars;
 
-import emr_vis_nlp.controller.MainController;
 import emr_vis_nlp.ml.Attribute;
 import emr_vis_nlp.ml.MLPredictor;
 import emr_vis_nlp.ml.PredictionCertaintyTuple;
 import emr_vis_nlp.model.Document;
 import emr_vis_nlp.model.MainModel;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * MLPredictor oriented around predicting variables for the colonoscopy data. 
@@ -171,131 +165,59 @@ public class MLPredictorColonVars extends MLPredictor {
             for (int p = 0; p < predictorsTermWeightMaps.size(); p++) {
 
                 // build temporary file for this document
-                //RuntimeIndicatorPrediction.buildTemporaryFileForText(documentList.get(d).getText());
                 String documentText = documentList.get(d).getText();
-                
-                // eliminate tempFile, build reader directly
-//                File tempFile = null;
-//                FileWriter tempFileWriter = null;
+
+                // eliminate tempFile, build reader directly without writing to disk
                 StringBuilder tempFileBuilder = new StringBuilder();
                 StringReader strReader = null;
-//                try {
-//                    tempFile = new File(TEMP_ARFF_FILE);
-//                    tempFile.delete();
-//                    tempFileWriter = new FileWriter(tempFile);
 
-//                    String header = "% This is the Colonoscopy problem\n@relation current_working_report\n@attribute [ReportID] numeric\n";
-                    String header = "% This is the Colonoscopy problem\n@relation current_working_report\n@attribute [report_identifier] numeric\n";
-//                    String header = "% This is the Colonoscopy problem\n@relation current_working_report\n";
-//                    tempFileWriter.write(header);
-                    tempFileBuilder.append(header);
+                String header = "% This is the Colonoscopy problem\n@relation current_working_report\n@attribute [report_identifier] numeric\n";
 
-                    List<Integer> termVals = new ArrayList<>();
-                    Map<String, Double> predictorTermWeightMap = predictorsTermWeightMaps.get(p);
+                tempFileBuilder.append(header);
 
-                    for (String termName : predictorTermWeightMap.keySet()) {
-                        String line = "@attribute \"" + termName + "\" {0, 1}\n";
-//                        tempFileWriter.write(line);
-                        tempFileBuilder.append(line);
+                List<Integer> termVals = new ArrayList<>();
+                Map<String, Double> predictorTermWeightMap = predictorsTermWeightMaps.get(p);
 
-                        if (documentText.contains(termName)) {
-                            termVals.add(1);
-                        } else {
-                            termVals.add(0);
-                        }
+                for (String termName : predictorTermWeightMap.keySet()) {
+                    String line = "@attribute \"" + termName + "\" {0, 1}\n";
+                    tempFileBuilder.append(line);
 
+                    if (documentText.contains(termName)) {
+                        termVals.add(1);
+                    } else {
+                        termVals.add(0);
                     }
 
-//                    String attrFooter = "@attribute \"[classLabel]\" {-1, 0, 1}\n@data\n'4'";
-                    String attrFooter = "@attribute \"[classLabel]\" {0, 1}\n@data\n0";
-//                    tempFileWriter.write(attrFooter);
-                    tempFileBuilder.append(attrFooter);
-                    boolean isFirst = true;
-                    for (Integer termVal : termVals) {
+                }
 
-                        String termValStr = "," + termVal;
-//                        if (isFirst) {
-//                            termValStr = "" + termVal;
-//                            isFirst = false;
-//                        }
-//                        tempFileWriter.write(termValStr);
-                        tempFileBuilder.append(termValStr);
+                String attrFooter = "@attribute \"[classLabel]\" {0, 1}\n@data\n0";
+                tempFileBuilder.append(attrFooter);
+                for (Integer termVal : termVals) {
 
-                    }
+                    String termValStr = "," + termVal;
+                    tempFileBuilder.append(termValStr);
 
-//                    tempFileWriter.write(",0\n");
-                    // append final value for classlabel; doesn't matter, since we're doing prediction on this document?
-                    tempFileBuilder.append(",0\n");
+                }
 
-//                    tempFileWriter.write(tempFileBuilder.toString());
-//                    tempFileWriter.close();
-                    strReader = new StringReader(tempFileBuilder.toString());
-                    
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                    System.out.println("error writing temp file: " + TEMP_ARFF_FILE);
-//                } finally {
-//                    if (tempFileWriter != null) {
-//                        try {
-//                            tempFileWriter.close();
-//                        } catch (IOException e) {
-//                        }
-//                    }
-//                }
+                // append final value for classlabel; doesn't matter, since we're doing prediction on this document?
+                tempFileBuilder.append(",0\n");
+
+                strReader = new StringReader(tempFileBuilder.toString());
                 
-                
-                
-                // d1 = indicator; d2 = probs. for each val [-1, 0, 1]
-//            double[][] predictions = RuntimeIndicatorPrediction.predictIndicatorsForTempFile();
-//                double[][] predictions = predictInstance(TEMP_ARFF_FILE);
+                // d1 = indicator; d2 = probs. for each val [0, 1]
                 double[] prediction = predictInstanceSingleAttr(strReader, p);
-//            int[] predictedIndicatorScores = new int[predictions.length];
-//                String[] predictedIndicatorScores = new String[predictions.length];
-//                double[] predictedIndicatorCerts = new double[predictions.length];
-                // find largest value for each indicator; store value and certainty
-                //for (int p = 0; p < predictions.length; p++) {
-//                String attributeNamePretty = DatasetTermTranslator.getAttrTranslation(RuntimeIndicatorPrediction.predictedIndicatorNames[p]);
-//                double negOneVal = predictions[p][0];
-//                double zeroVal = predictions[p][1];
-//                double oneVal = predictions[p][2];
-//                double zeroVal = predictions[p][0];
-//                double oneVal = predictions[p][1];
                 double zeroVal = prediction[0];
                 double oneVal = prediction[1];
                 String attributeName = attributeList.get(p).getName();
                 PredictionCertaintyTuple predCertTuple = null;
                 if (zeroVal >= oneVal) {
-//                    predictedIndicatorScores[p] = attributeList.get(p).getLegalValues().get(0);
-//                    predictedIndicatorCerts[p] = zeroVal;
                     predCertTuple = new PredictionCertaintyTuple(attributeName, attributeList.get(p).getLegalValues().get(0), zeroVal);
                 } else {
-//                    predictedIndicatorScores[p] = attributeList.get(p).getLegalValues().get(1);
-//                    predictedIndicatorCerts[p] = oneVal;
                     predCertTuple = new PredictionCertaintyTuple(attributeName, attributeList.get(p).getLegalValues().get(1), oneVal);
                 }
 
-//                if (negOneVal >= zeroVal && negOneVal >= oneVal) {
-////                    predictedIndicatorScores[p] = -1;
-//                    predictedIndicatorScores[p] = defaultValList.get(0);
-//                    predictedIndicatorCerts[p] = negOneVal;
-//                    predCertTuple = new PredictionCertaintyTuple(attributeNamePretty, defaultValList.get(0), negOneVal);
-//                } else if (zeroVal >= negOneVal && zeroVal >= oneVal) {
-//                    predictedIndicatorScores[p] = defaultValList.get(1);
-////                    predictedIndicatorScores[p] = 0;
-//                    predictedIndicatorCerts[p] = zeroVal;
-//                    predCertTuple = new PredictionCertaintyTuple(attributeNamePretty, defaultValList.get(1), zeroVal);
-//                } else {
-//                    predictedIndicatorScores[p] = defaultValList.get(2);
-////                    predictedIndicatorScores[p] = 1;
-//                    predictedIndicatorCerts[p] = oneVal;
-//                    predCertTuple = new PredictionCertaintyTuple(attributeNamePretty, defaultValList.get(2), oneVal);
-//                }
-
                 predictionMap.put(attributeName, predCertTuple);
             }
-//            predictionCatList.add(predictedIndicatorScores);
-//            predictionCertList.add(predictedIndicatorCerts);
-//            predictionList.add(predictions);
             predictionMapList.add(predictionMap);
         }
     }

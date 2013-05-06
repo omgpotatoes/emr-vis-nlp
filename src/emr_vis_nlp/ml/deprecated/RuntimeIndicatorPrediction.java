@@ -13,6 +13,7 @@ import java.util.*;
  * Phuong's back-end models for prediction of indicators. This class serves as
  * an intermediary between the visualization and the back-end models.
  *
+ * @deprecated 
  * @author alexander.p.conrad@gmail.com
  */
 public class RuntimeIndicatorPrediction {

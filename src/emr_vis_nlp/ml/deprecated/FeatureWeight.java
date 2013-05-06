@@ -1,6 +1,8 @@
 package emr_vis_nlp.ml.deprecated;
 
-
+/**
+ * @deprecated 
+ */
 public class FeatureWeight {
 	public int index = 0;
 	public double weight = 0.0;

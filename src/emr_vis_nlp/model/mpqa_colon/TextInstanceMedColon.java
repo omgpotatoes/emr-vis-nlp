@@ -3,7 +3,6 @@ package emr_vis_nlp.model.mpqa_colon;
 
 import emr_vis_nlp.model.TextInstance;
 
-
 /**
  * 
  * Represents a single medical record (report or pathology) for the biovis 
@@ -27,7 +26,6 @@ public class TextInstanceMedColon extends TextInstance {
         
     }
     
-    
     public TextInstanceMedColon(String type, String text) {
         super();
         
@@ -40,6 +38,5 @@ public class TextInstanceMedColon extends TextInstance {
     public String toString() {
         return "TextInstanceMedColon{" + "type=" + type + ", textStr=\""+textStr+"\"}";
     }
-    
     
 }

@@ -1,7 +1,6 @@
 package emr_vis_nlp.view.doc_grid;
 
 import emr_vis_nlp.controller.MainController;
-import emr_vis_nlp.ml.MLPredictor;
 import emr_vis_nlp.ml.PredictionCertaintyTuple;
 import emr_vis_nlp.model.Document;
 import java.util.*;
@@ -85,24 +84,6 @@ public class DocumentGridTable extends Table {
         // find all possible values for each attribute
         // map each value to an integer
         attrToValueToIntMap = new HashMap<>();
-//        for (String attrName : allAttributes) {
-//            Map<String, Integer> valueToIntMap = new HashMap<>();
-//            attrToValueToIntMap.put(attrName, valueToIntMap);
-//            int valueCounter = 0;  // will prefuse complain if we start indexing at 0?
-//            for (int d = 0; d < allDocs.size(); d++) {
-//                Document doc = allDocs.get(d);
-//                Map<String, String> docAttrs = doc.getAttributes();
-//                String value = "";
-//                if (docAttrs.containsKey(attrName)) {
-//                    value = docAttrs.get(attrName);
-//                }
-//                if (!valueToIntMap.containsKey(value)) {
-//                    valueToIntMap.put(value, valueCounter);
-//                    valueCounter++;
-//                }
-//            }
-//        }
-        // pull values from model rather than model now
         for (String attrName : allAttributes) {
             Map<String, Integer> valueToIntMap = new HashMap<>();
             attrToValueToIntMap.put(attrName, valueToIntMap);
@@ -112,7 +93,6 @@ public class DocumentGridTable extends Table {
             }
             
         }
-        
         
         // populate table data
         // include continuous-value-based attribute for display
@@ -128,7 +108,7 @@ public class DocumentGridTable extends Table {
             set(rowCounter, NODE_ID, rowCounter);
             set(rowCounter, NODE_NAME, name);
             set(rowCounter, NODE_TEXT, text);
-            set(rowCounter, NODE_FOCUS_TEXT, text);
+            set(rowCounter, NODE_FOCUS_TEXT, "");
             set(rowCounter, NODE_ISACTIVE, isActive);
             for (String attrName : allAttributes) {
                 String value = "";

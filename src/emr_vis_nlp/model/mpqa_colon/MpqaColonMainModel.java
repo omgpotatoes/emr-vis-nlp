@@ -57,20 +57,20 @@ public class MpqaColonMainModel implements MainModel {
 
     }
 
-//    @Override
     public void loadDataFromDoclist(String doclistPath) {
         loadDataFromDoclist(new File(doclistPath));
     }
 
-//    @Override
     public void loadDataFromDoclist(File doclist) {
         dataset = Dataset.loadDatasetFromDoclist(doclist);
-        documentList = dataset.getDocuments();
-        // by default, enable docs
-        enableAllDocuments();
-        // get attributes from dataset
-        attributeList = dataset.getAllAttributesFromDocs();
-        
+        if (dataset != null) {
+            documentList = dataset.getDocuments();
+            // by default, enable docs
+            enableAllDocuments();
+            // get attributes from dataset
+            attributeList = dataset.getAllAttributesFromDocs();
+        }
+
     }
     
     public void enableAllDocuments() {

@@ -1,6 +1,8 @@
 package emr_vis_nlp.ml.deprecated;
 
-
+/**
+ * @deprecated 
+ */
 public class demo {
 
 	/**

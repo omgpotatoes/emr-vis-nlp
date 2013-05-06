@@ -223,7 +223,7 @@ public class GlassPaneTextPanel extends javax.swing.JPanel implements MouseListe
         jScrollPaneTable = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
 
-        jSplitPane1.setDividerLocation(325);
+        jSplitPane1.setDividerLocation(375);
 
         jTextPane1.setBackground(new java.awt.Color(240, 240, 240));
         jScrollPaneText.setViewportView(jTextPane1);
@@ -249,14 +249,14 @@ public class GlassPaneTextPanel extends javax.swing.JPanel implements MouseListe
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 480, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 274, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 286, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents

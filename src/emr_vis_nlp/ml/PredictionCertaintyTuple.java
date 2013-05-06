@@ -8,8 +8,11 @@ package emr_vis_nlp.ml;
  */
 public class PredictionCertaintyTuple {
     
+    // name of attribute being predicted
     private String attribute;
+    // value of this prediction
     private String value;
+    // certainty score on range (0,1) representing confidence of prediction
     private double cert;
 
     public PredictionCertaintyTuple(String attribute, String value, double cert) {
@@ -41,7 +44,5 @@ public class PredictionCertaintyTuple {
     public void setValue(String value) {
         this.value = value;
     }
-    
-    
     
 }

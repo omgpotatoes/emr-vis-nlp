@@ -8,6 +8,7 @@ import java.util.Map;
  * Java adaptation of Phuong's SimpleSQ for pattern matching for the simpler 
  * variables. 
  * 
+ * @deprecated 
  * @author Phuong Pham, alexander.p.conrad@gmail.com
  *
  */

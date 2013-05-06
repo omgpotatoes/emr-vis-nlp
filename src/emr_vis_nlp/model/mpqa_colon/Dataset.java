@@ -30,23 +30,10 @@ public abstract class Dataset {
     protected String path = "";
     protected String rootDir = "";
     protected String type = "";
-    // for similarity computations
-//    protected Map<String, Integer> datasetTermCounts = null;
-//    protected Map<String, Integer> datasetDocTermCounts = null;
-//    protected List<List<Double>> similarityMatrixCosineCounts = null;
-//    protected List<List<Double>> similarityMatrixCosineTfIdf = null;
 
     public Dataset(String path) {
         this.path = path;
     }
-
-//    public boolean isActive() {
-//        return isActive;
-//    }
-//
-//    public void setActive(boolean isActive) {
-//        this.isActive = isActive;
-//    }
 
     public String getName() {
         return name;
@@ -99,141 +86,6 @@ public abstract class Dataset {
     }
 
     public abstract void writeDoclist();
-
-    // TODO refactor parsing, similarity code
-    // disable similarity-computation code for now; take care of this in other modules
-//    /**
-//     *
-//     * @return map from terms to counts for entire dataset
-//     */
-//    public Map<String, Integer> getDatasetTermCountMap() {
-//
-//        if (datasetTermCounts != null) {
-//            return datasetTermCounts;
-//        }
-//
-//        datasetTermCounts = new HashMap<>();
-//
-//        for (Document doc : documents) {
-//
-//            Map<String, Integer> docTermCountMap = doc.getTermCountMap();
-//            Set<String> docTerms = docTermCountMap.keySet();
-//            for (String docTerm : docTerms) {
-//                int docTermCount = docTermCountMap.get(docTerm);
-//                if (!datasetTermCounts.containsKey(docTerm)) {
-//                    datasetTermCounts.put(docTerm, docTermCount);
-//                } else {
-//                    datasetTermCounts.put(docTerm, datasetTermCounts.get(docTerm) + docTermCount);
-//                }
-//            }
-//
-//        }
-//
-//        return datasetTermCounts;
-//
-//    }
-//
-//    /**
-//     *
-//     * @return map from terms to # of docs in which they occur for entire
-//     * dataset
-//     */
-//    public Map<String, Integer> getDatasetDocTermCountMap() {
-//
-//        if (datasetDocTermCounts != null) {
-//            return datasetDocTermCounts;
-//        }
-//
-//        datasetDocTermCounts = new HashMap<>();
-//
-//        for (Document doc : documents) {
-//
-//            Map<String, Integer> docTermCountMap = doc.getTermCountMap();
-//            Set<String> docTerms = docTermCountMap.keySet();
-//            for (String docTerm : docTerms) {
-//                if (!datasetDocTermCounts.containsKey(docTerm)) {
-//                    datasetDocTermCounts.put(docTerm, 1);
-//                } else {
-//                    datasetDocTermCounts.put(docTerm, datasetDocTermCounts.get(docTerm) + 1);
-//                }
-//            }
-//
-//        }
-//
-//        return datasetDocTermCounts;
-//
-//    }
-//
-//    /**
-//     * similarity matrices should be reset whenever document collection is
-//     * altered
-//     */
-//    public void resetSimilarityMatrices() {
-//        similarityMatrixCosineCounts = null;
-//        similarityMatrixCosineTfIdf = null;
-//    }
-//
-//    /**
-//     *
-//     * @return a matrix containing cosine similarity scores on term frequencies
-//     * between each pair of docs
-//     */
-//    public List<List<Double>> getSimilarityMatrixCosineCounts() {
-//
-//        if (similarityMatrixCosineCounts != null) {
-//            return similarityMatrixCosineCounts;
-//        }
-//
-//        similarityMatrixCosineCounts = new ArrayList<>();
-//
-//        for (int d1 = 0; d1 < documents.size(); d1++) {
-//
-//            Document doc1 = documents.get(d1);
-//            Map<String, Integer> doc1TermCountMap = doc1.getTermCountMap();
-//            double d1VecMag = SimUtils.computeVectorMagnitude(doc1TermCountMap);
-//
-//            List<Double> similarityScores = new ArrayList<>();
-//            similarityMatrixCosineCounts.add(similarityScores);
-//
-//            for (int d2 = 0; d2 < documents.size(); d2++) {
-//
-//                Document doc2 = documents.get(d2);
-//                Map<String, Integer> doc2TermCountMap = doc2.getTermCountMap();
-//                double d2VecMag = SimUtils.computeVectorMagnitude(doc2TermCountMap);
-//
-//                // if d1 == d2, sim=1 (debug: compute for sanity check)
-//                // if d2 < d1, sim=matrix.get(d2).get(d1) (if symmetric) (debug: compute for sanity check)
-//                double dotProd = SimUtils.computeDotProduct(doc1TermCountMap, doc2TermCountMap);
-//                double sim = dotProd / (d1VecMag * d2VecMag);
-//
-//                // debug
-//                //System.out.println("debug: d1="+d1+", d2="+d2+", dotProd="+dotProd+", d1VecMag="+d1VecMag+", d2VecMag="+d2VecMag+", cosineSim="+sim);
-//
-//                similarityScores.add(sim);
-//
-//            }
-//
-//        }
-//
-//        return similarityMatrixCosineCounts;
-//
-//    }
-//
-//    /**
-//     *
-//     * @return a matrix containing cosine similarity scores on term frequencies
-//     * between each pair of docs
-//     */
-//    public List<List<Double>> getSimilarityMatrixCosineTfIdf() {
-//
-//        throw new UnsupportedOperationException();
-//
-//
-//
-//
-//    }
-
-    
     
     public static Dataset loadDatasetFromDoclist(File doclistFile) {
         return loadDatasetFromDoclist(doclistFile.getAbsolutePath());
@@ -276,7 +128,5 @@ public abstract class Dataset {
         return dataset;
 
     }
-    
-    
     
 }

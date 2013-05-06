@@ -11,8 +11,13 @@ import javax.swing.table.TableRowSorter;
 import javax.swing.text.AbstractDocument;
 
 /**
+ * Popup window for displaying details for a given document; also allows
+ * attribute reassignment. NOTE : this class may be eliminated in the future;
+ * same functionality is present using an embedded pane by
+ * emr_vis_nlp.glasspane.GlassPaneTextPanel
  *
- * @author conrada
+ * @deprecated 
+ * @author alexander.p.conrad@gmail.com
  */
 public class DocFocusPopup extends javax.swing.JFrame {
 

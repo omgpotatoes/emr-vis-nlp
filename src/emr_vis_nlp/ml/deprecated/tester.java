@@ -13,6 +13,9 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.util.*;
 
+/**
+ * @deprecated 
+ */
 public class tester {
 	protected Instances m_Training = null;
 	protected Filter m_Filter = null;

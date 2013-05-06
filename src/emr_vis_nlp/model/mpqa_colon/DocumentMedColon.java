@@ -22,15 +22,8 @@ public class DocumentMedColon extends Document {
     public static final Pattern BIO_NUM_PATTERN = Pattern.compile("[a-zA-Z]?[0-9]*");
     
     // note: DocMedColon will only have 1 (or 2?) text instances, representing the medical record
-//    private List<String> bowVector = null;
-//    private Map<String, Integer> termCountMap = null;
-//    private Map<String, Double> termTfIdfMap = null;
     int numTermsInDoc = -1;
     private String databaseRoot;
-    
-    // no longer using colonoscopy-specific var/indi maps; instead, now using general attribute map
-//    private Map<String, String> vars;
-//    private Map<String, Integer> indicators;
     
     private boolean isPathologyPresent;
     
@@ -47,8 +40,6 @@ public class DocumentMedColon extends Document {
         textInstances = new ArrayList<>();
         isActive = true;
         databaseRoot = "";
-//        vars = new HashMap<>();
-//        indicators = new HashMap<>();
         
         isPathologyPresent = false;
         
@@ -84,8 +75,6 @@ public class DocumentMedColon extends Document {
         // read the files: everything in docs/id/ and man_anns/id/
         //  will definitely be report.txt, may also be pathology.txt
         textInstances = new ArrayList<>();
-//        vars = new HashMap<>();
-//        indicators = new HashMap<>();
         try {
 
             // read docs/id/report.txt
@@ -136,6 +125,10 @@ public class DocumentMedColon extends Document {
                             var = var.substring(4).toLowerCase();
                         }
                         
+                        if (val != null) {
+                            val = DatasetTermTranslator.getValTranslation(val);
+                        }
+                        
 
                     } catch (NoSuchElementException e) {
                         // will happen if a value is not present; 
@@ -144,9 +137,6 @@ public class DocumentMedColon extends Document {
                     }
                     
                     if (!var.equals("")) {
-//                        String varClean = DatasetTermTranslator.getAttrTranslation(var);
-//                        String valClean = DatasetTermTranslator.getValTranslation(val);
-//                        attributes.put(varClean, valClean);
                         attributes.put(var, val);
                     }
 
@@ -210,18 +200,18 @@ public class DocumentMedColon extends Document {
                         if (var.length() >= 4 && var.substring(0,4).equalsIgnoreCase("VAR_")) {
                             var = var.substring(4).toLowerCase();
                         }
+                        
+                        if (val != null) {
+                            val = DatasetTermTranslator.getValTranslation(val);
+                        }
 
                     } catch (NoSuchElementException e) {
                         // will happen if a value is not present
-                        // @TODO how should we handle this? ask harry?
 //                        assert false;
 //                        System.err.println("DocumentMedColon: anomalous man_anns line:   "+nextLine);
                     }
 
                     if (!var.equals("")) {
-//                        String varClean = DatasetTermTranslator.getAttrTranslation(var);
-//                        String valClean = DatasetTermTranslator.getValTranslation(val);
-//                        attributes.put(varClean, valClean);
                         attributes.put(var, val);
                     }
 
